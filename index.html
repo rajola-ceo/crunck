@@ -1,0 +1,62 @@
+<!--created by rajola-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./login.css">
+<title>Crunk Games Login</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+  import { getAuth, signInWithPhoneNumber, RecaptchaVerifier } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBWW5kT1GqpIGou84aOfmo3y0osUd7rRQ",
+    authDomain: "zchat-7b59a.firebaseapp.com",
+    projectId: "zchat-7b59a",
+    storageBucket: "zchat-7b59a.firebasestorage.app",
+    messagingSenderId: "391204652656",
+    appId: "1:391204652656:web:7c88d2bfb7ca2261ecd6b5",
+    measurementId: "G-YB4MSXJ6QC"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  window.auth = auth; // make auth accessible globally
+</script>
+</head>
+<body>
+
+<div class="container">
+  <h1>Welcome to Crunk Games</h1>
+  <form id="loginForm">
+    <div class="form-control">
+      <input type="text" id="username" required>
+      <label>Username</label>
+    </div>
+    <div class="form-control">
+      <input type="email" id="email" required>
+      <label>Email</label>
+    </div>
+    <div class="form-control">
+      <input type="tel" id="phone" required>
+      <label>Phone Number</label>
+    </div>
+    <button type="submit" class="btn">Login</button>
+    <p class="text" id="message"></p>
+  </form>
+  <br>
+  <!-- Google Login -->
+  <div id="g_id_onload"
+       data-client_id="623364824323-6n36q5038b563v81ep4eb7fcb86093o9.apps.googleusercontent.com"
+       data-callback="handleCredentialResponse">
+  </div>
+  <div class="g_id_signin" data-type="standard"></div>
+</div>
+<script type="module" src="./login.js"></script>
+</body>
+</html>
