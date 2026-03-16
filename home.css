@@ -294,25 +294,25 @@ body {
     justify-content: center;
     z-index: 999;
 }
-
 /* Centered modal popup style */
 .popup-content {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 600px;
-    max-height: 80vh;
+    position: fixed;           /* stay above content */
+    top: 50%;                  /* vertical center */
+    left: 50%;                 /* horizontal center */
+    transform: translate(-50%, -50%); /* center exactly */
+    width: 90%;                /* wider */
+    max-width: 600px;          /* max width */
+    max-height: 80vh;          /* prevent overflow */
     background: #05070d;
     border-radius: 16px;
     padding: 20px 20px 80px 20px; /* bottom padding for nav */
     border: 1px solid #1f2937;
-    overflow-y: auto;
+    overflow-y: auto;          /* scrollable if content large */
     box-shadow: 0 4px 30px rgba(0,0,0,0.7);
-    z-index: 1000;
-    margin: 0;
+    z-index: 1000;             /* above everything */
+    transition: transform 0.3s ease, max-height 0.3s ease;
 }
+
 .popup-content img {
     width: 100%;
     border-radius: 12px;
