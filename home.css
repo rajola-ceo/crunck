@@ -72,24 +72,30 @@ body {
     border: 2px solid #34d399;
 }
 
-.profile-popup {
-    display: none;
-    position: absolute;
-    top: 45px;
-    right: 0;
-    width: 220px;
-    background: rgba(5, 7, 13, 0.95);
+.popup-content {
+    position: fixed;
+    width: 90%;
+    max-width: 600px;
+    max-height: 80vh;
+    background: rgba(5, 7, 13, 0.95); /* transparent dark background, so you can see content */
+    border-radius: 16px;
+    padding: 20px 20px 80px 20px;
     border: 1px solid #1f2937;
-    border-radius: 12px;
-    padding: 12px;
+    overflow-y: auto;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.7);
     z-index: 1000;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+    opacity: 0;
+    visibility: hidden;
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
-.profile-popup.active {
-    display: block;
+.popup-content.active {
+    opacity: 1;
+    visibility: visible;
 }
-
 .account-info {
     display: flex;
     gap: 10px;
