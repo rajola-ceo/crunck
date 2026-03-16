@@ -1,16 +1,17 @@
 // nav.js
 document.addEventListener("DOMContentLoaded", () => {
-  // inject nav into all pages
+  // inject nav into #nav-placeholder
+  const placeholder = document.getElementById("nav-placeholder");
+  if(!placeholder) return;
+
   fetch("nav.html")
     .then(res => res.text())
     .then(data => {
-      const navContainer = document.createElement("div");
-      navContainer.innerHTML = data;
-      document.body.appendChild(navContainer);
+      placeholder.innerHTML = data;
 
       // highlight active tab
       const currentPage = window.location.pathname.split("/").pop().replace(".html","");
-      const navItems = document.querySelectorAll(".bottom-nav .nav-item");
+      const navItems = placeholder.querySelectorAll(".nav-item");
       navItems.forEach(item => {
         if(item.dataset.tab === currentPage){
           item.classList.add("active");
