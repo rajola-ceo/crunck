@@ -303,8 +303,10 @@ body {
     overflow-y: auto;
     border-radius: 16px;
     padding: 15px;
+    padding-bottom: 80px;
     border: 1px solid #1f2937;
     position: relative;
+    margin-bottom: 20px auto;
 }
 
 .popup-content img {
