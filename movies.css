@@ -1,0 +1,12 @@
+body{font-family:Roboto,sans-serif;padding:10px;background:#05070d;color:#e6e6e6}
+h1,h2{margin:10px 0}
+.movies-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:15px;margin:10px 0}
+.movie-card{background:#111827;padding:10px;border-radius:12px;text-align:center;transition:transform .3s}
+.movie-card:hover{transform:scale(1.05)}
+.movie-card img{width:100%;border-radius:12px;object-fit:cover;height:300px}
+.watch-btn, .download-btn{display:inline-block;margin-top:8px;padding:6px 12px;border-radius:6px;font-weight:bold;text-decoration:none;cursor:pointer}
+.watch-btn{background:#34d399;color:#000}
+.download-btn{background:#facc15;color:#000;margin-left:5px}
+.categories-nav{display:flex;gap:10px;overflow-x:auto;margin:10px 0}
+.category-btn{padding:6px 12px;background:#222;text-decoration:none;color:#fff;border-radius:8px;cursor:pointer;white-space:nowrap;transition:0.2s}
+.category-btn.active{background:#34d399;color:#000}
