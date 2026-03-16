@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="./movies.css">
+<title>Crunk Movies</title>
+</head>
+<body>
+
+<!-- PROFILE CHECK -->
+<script>
+const user = JSON.parse(localStorage.getItem("crunkUser"));
+if(!user) window.location.href = "index.html"; // redirect if not logged in
+</script>
+
+<h1>🎬 Crunk Movies</h1>
+
+<!-- TRENDING SECTION -->
+<section id="trending">
+  <h2>🔥 Trending</h2>
+  <div class="movies-container" id="trendingContainer"></div>
+</section>
+
+<!-- CATEGORIES SECTION -->
+<section id="categories">
+  <h2>📂 Categories</h2>
+  <div class="categories-nav" id="categoriesNav"></div>
+  <div class="movies-container" id="categoryMovies"></div>
+</section>
+
+<!-- BOTTOM NAV -->
+<div id="nav-placeholder"></div>
+<script src="nav.js"></script>
+<script type="module" src="./movies.js"></script>
+</body>
+</html>
