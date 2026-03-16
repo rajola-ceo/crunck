@@ -1,27 +1,32 @@
-// ================= LABEL ANIMATION & SESSION CHECK =================
+// ================= SESSION CHECK =================
+
+const savedUser = localStorage.getItem("crunkUser");
+
+if(savedUser){
+window.location.href = "home.html";
+}
+
+// ================= LABEL ANIMATION =================
+
 window.addEventListener('load', () => {
-    const container = document.querySelector('.container');
-    const user = localStorage.getItem("crunkUser");
 
-    if (user) {
-        // User already logged in → go directly to home
-        window.location.href = "home.html";
-        return;
-    }
+const container = document.querySelector('.container');
 
-    // Show login page only if user not logged in
-    container.style.opacity = 1;
+container.style.opacity = 1;
 
-    // Animate labels
-    const labels = document.querySelectorAll('.form-control label');
-    labels.forEach(label => {
-        label.innerHTML = label.innerText
-            .split('')
-            .map((letter, idx) =>
-                `<span style="transition-delay:${idx * 30}ms">${letter}</span>`
-            )
-            .join('');
-    });
+const labels = document.querySelectorAll('.form-control label');
+
+labels.forEach(label => {
+
+label.innerHTML = label.innerText
+.split('')
+.map((letter, idx)=>
+`<span style="transition-delay:${idx*30}ms">${letter}</span>`
+)
+.join('');
+
+});
+
 });
 
 // ================= FIREBASE MODULAR SETUP =================
