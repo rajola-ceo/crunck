@@ -268,3 +268,63 @@ if ("serviceWorker" in navigator) {
         .catch(err => console.log("SW Error", err));
     });
 }
+// Sidebar
+const menuBtn = document.getElementById("menuBtn");
+const sidebar = document.getElementById("sidebar");
+const closeSidebar = document.getElementById("closeSidebar");
+
+menuBtn.addEventListener("click", () => sidebar.classList.add("open"));
+closeSidebar.addEventListener("click", () => sidebar.classList.remove("open"));
+window.addEventListener("click", e => {
+  if (!sidebar.contains(e.target) && !menuBtn.contains(e.target)) sidebar.classList.remove("open");
+});
+
+// Sidebar menu items
+document.getElementById("menuSettings").onclick = () => location.href="settings.html";
+document.getElementById("menuPrivacy").onclick = () => location.href="privacy.html";
+document.getElementById("menuHelp").onclick = () => location.href="help.html";
+document.getElementById("menuAbout").onclick = () => location.href="about.html";
+document.getElementById("menuRate").onclick = () => location.href="rate.html";
+document.getElementById("menuShare").onclick = () => {
+  if(navigator.share){navigator.share({title:"Crunk Games",url:window.location.href});}
+  else alert("Share not supported!");
+};
+
+// Theme toggle
+const menuTheme = document.getElementById("menuTheme");
+const themeLabel = document.getElementById("themeLabel");
+menuTheme.addEventListener("click", ()=>{
+  document.body.classList.toggle("light-theme");
+  themeLabel.innerText = document.body.classList.contains("light-theme") ? "Light":"Dark";
+});
+
+// Profile popup
+const profileDropdown = document.getElementById("profileDropdown");
+const profilePopup = document.getElementById("profilePopup");
+profileDropdown.addEventListener("click", e=>{
+  e.stopPropagation();
+  profilePopup.classList.toggle("active");
+});
+window.addEventListener("click", ()=>profilePopup.classList.remove("active"));
+profilePopup.addEventListener("click", e=>e.stopPropagation());
+
+// Logout
+document.getElementById("logoutBtn").onclick = ()=>{
+  localStorage.removeItem("crunkUser");
+  window.location.href = "index.html";
+};
+
+// Loader
+const loader = document.getElementById("loader");
+function showLoader(){loader.style.display="flex";}
+function hideLoader(){loader.style.display="none";}
+
+// Game popup
+const gamePopup = document.getElementById("gamePopup");
+const popupContent = document.querySelector(".popup-content");
+const popupClose = document.querySelector(".popup .close");
+popupClose.addEventListener("click",()=>gamePopup.style.display="none");
+gamePopup.addEventListener("click",e=>{if(e.target===gamePopup) gamePopup.style.display="none";});
+popupContent.addEventListener("click",e=>e.stopPropagation());
+
+// Games & Slider (keep your fetch logic here)
