@@ -116,7 +116,10 @@ function createMovieCard(movie){
       <div class="movie-sub">${movie.release_date || "N/A"}</div>
     </div>
   `;
-  card.addEventListener("click",()=>openWatchPopup(movie));
+   card.addEventListener("click", ()=>
+    window.location.href = `video.html?id=${movie.id}`;
+  });
+
   return card;
 }
 
