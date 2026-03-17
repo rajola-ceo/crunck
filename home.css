@@ -71,26 +71,19 @@ body {
     object-fit: cover;
     border: 2px solid #34d399;
 }
-
 .popup-content {
-    position: fixed;
     width: 90%;
     max-width: 600px;
     max-height: 80vh;
-    background: rgba(5, 7, 13, 0.95); /* transparent dark background, so you can see content */
+    background: rgba(5, 7, 13, 0.95); /* dark translucent */
     border-radius: 16px;
-    padding: 20px 20px 80px 20px;
+    padding: 20px; /* remove extra bottom padding for now */
     border: 1px solid #1f2937;
     overflow-y: auto;
     box-shadow: 0 4px 30px rgba(0,0,0,0.7);
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: transform 0.3s ease, opacity 0.3s ease;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    padding-bottom:120px;
+
+    /* remove these: z-index:1000; transform; position; */
+    /* flex centering is handled by parent .popup */
 }
 
 .popup-content.active {
@@ -325,8 +318,12 @@ body {
     border: 1px solid #1f2937;
 
     position: relative;
-    opacity: 1; /* muhimu */
-    visibility: visible; /* muhimu */
+    opacity: 1;
+    visibility: visible;
+
+    display: flex;           /* add */
+    flex-direction: column;  /* add */
+    align-items: center;     /* center horizontally */
 }
 
 .popup-content img {
@@ -336,23 +333,25 @@ body {
 }
 
 .popup-content .download-btn {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    background: #34d399;
+    display: inline-block;
+    width: auto;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #34d399, #2bb078);
     color: black;
-    font-weight: 600;
+    font-weight: 700;
+    text-transform: uppercase;
     text-align: center;
-    border-radius: 12px;
+    border-radius: 30px;
     cursor: pointer;
     margin-top: 20px;
-    transition: background 0.3s ease;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
 }
 
 .popup-content .download-btn:hover {
-    background: #2bb078;
+    background: linear-gradient(135deg, #2bb078, #34d399);
+    transform: scale(1.05);
 }
-
 .close {
     position: absolute;
     top: 15px;
