@@ -66,3 +66,75 @@
   cursor: pointer;
   color: black;
 }
+/* ===== NEW CONTROLS ===== */
+
+#qualitySelect {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  border-radius: 10px;
+  border: none;
+  font-weight: 600;
+}
+
+/* Buttons layout */
+#playBtn, #trailerBtn, #downloadToggle, #watchListBtn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* Individual colors */
+#playBtn {
+  background: black;
+  color: #34d399;
+}
+
+#trailerBtn {
+  background: #065f46;
+  color: #34d399;
+}
+
+#downloadToggle {
+  background: #047857;
+  color: white;
+}
+
+/* Download section */
+#downloadOptions {
+  width: 100%;
+  margin-top: 10px;
+  background: rgba(0,0,0,0.2);
+  padding: 10px;
+  border-radius: 10px;
+}
+
+#downloadOptions button {
+  width: 100%;
+  margin: 5px 0;
+  padding: 8px;
+  border-radius: 8px;
+  border: none;
+  background: black;
+  color: #34d399;
+  font-weight: 600;
+}
+
+/* Series */
+#seriesSection {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 10px;
+}
+
+#episodeSelect {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  margin-top: 5px;
+}
