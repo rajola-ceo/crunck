@@ -1,7 +1,5 @@
-// ELEMENTS
 const moviesSections = document.getElementById("moviesSections");
 const categoryBtns = document.querySelectorAll(".nav-item");
-const searchInput = document.getElementById("searchInput");
 const popup = document.getElementById("popup");
 const popupImage = document.getElementById("popupImage");
 const popupTitle = document.getElementById("popupTitle");
@@ -11,60 +9,72 @@ const hero = document.getElementById("heroSection");
 const heroBadge = document.getElementById("heroBadge");
 const heroTitle = document.getElementById("heroTitle");
 const heroMeta = document.getElementById("heroMeta");
+const searchInput = document.getElementById("searchInput");
 
-// DUMMY MOVIES DATA
-const moviesData = {
-  "for-you":[
-    {title:"Running Man", sub:"03-15", img:"https://via.placeholder.com/140x200", overlay:"Top 10"},
-    {title:"The Earth 4", sub:"8 Episodes", img:"https://via.placeholder.com/140x200", overlay:"Top 10"},
-    {title:"How Dare You!?", sub:"32 Episodes", img:"https://via.placeholder.com/140x200", overlay:"Top 10"}
-  ],
-  "drama":[{title:"Cutie Pie", sub:"12 Episodes", img:"https://via.placeholder.com/140x200", overlay:"Free"},{title:"Love Story", sub:"8 Episodes", img:"https://via.placeholder.com/140x200", overlay:"Top 5"}],
-  "movie":[{title:"Action Movie", sub:"2h", img:"https://via.placeholder.com/140x200", overlay:"HD"}],
-  "comedy":[{title:"Funny Life", sub:"10 Episodes", img:"https://via.placeholder.com/140x200", overlay:"Top 10"}],
-  "adventure":[{title:"Jungle Quest", sub:"5 Episodes", img:"https://via.placeholder.com/140x200", overlay:"New"}],
-  "horror":[{title:"Haunted Night", sub:"6 Episodes", img:"https://via.placeholder.com/140x200", overlay:"Top 3"}],
-  "series":[{title:"Series One", sub:"12 Episodes", img:"https://via.placeholder.com/140x200", overlay:"HD"}],
-  "action":[{title:"Action Blast", sub:"2h", img:"https://via.placeholder.com/140x200", overlay:"HD"}],
-  "top-rating":[{title:"Top Movie", sub:"2h", img:"https://via.placeholder.com/140x200", overlay:"Top"}]
-};
+// ================= TMDB CONFIG =================
+const TMDB_KEY = "YOUR_TMDB_API_KEY"; // replace with your key
+const TMDB_BASE = "https://api.themoviedb.org/3";
+const IMG_BASE = "https://image.tmdb.org/t/p/w500";
 
-// HERO CHANGING IMAGES + DATA
-const heroData = [
-  {img:"https://via.placeholder.com/500x200?text=Hero+1", badge:"Free", title:"THE LAST STAND", meta:"★ 9.8 | 2024 | 18+ | Action"},
-  {img:"https://via.placeholder.com/500x200?text=Hero+2", badge:"HD", title:"BATTLEFIELD", meta:"★ 9.0 | 2023 | 16+ | Action"},
-  {img:"https://via.placeholder.com/500x200?text=Hero+3", badge:"New", title:"ADVENTURE QUEST", meta:"★ 8.5 | 2024 | 12+ | Adventure"}
-];
+// Hero trending movies
+let heroData = [];
 let heroIndex = 0;
-setInterval(()=>{
-  const h = heroData[heroIndex];
-  hero.style.backgroundImage = `url(${h.img})`;
-  heroBadge.innerText = h.badge;
-  heroTitle.innerText = h.title;
-  heroMeta.innerHTML = h.meta;
-  heroIndex = (heroIndex+1)%heroData.length;
-}, 3000);
 
-// LOADING
+// ================= LOADING =================
 function showLoading(){ loading.classList.add("active"); }
 function hideLoading(){ loading.classList.remove("active"); }
 
-// CREATE MOVIE CARD
+// ================= FETCH TRENDING =================
+async function fetchTrending(){
+  try{
+    showLoading();
+    const res = await fetch(`${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`);
+    const data = await res.json();
+    hideLoading();
+    heroData = data.results.slice(0,3); // first 3 for hero
+    startHeroSlider();
+    renderMovies("for-you", data.results); // initial carousel
+  }catch(err){
+    console.error(err);
+    hideLoading();
+    moviesSections.innerHTML="<p style='margin:20px;color:#888;'>Error fetching movies</p>";
+  }
+}
+
+// ================= HERO SLIDER =================
+function startHeroSlider(){
+  if(heroData.length===0) return;
+  updateHero(heroData[heroIndex]);
+  setInterval(()=>{
+    heroIndex = (heroIndex+1)%heroData.length;
+    updateHero(heroData[heroIndex]);
+  },3000);
+}
+function updateHero(movie){
+  hero.style.backgroundImage = `url(${IMG_BASE+movie.poster_path})`;
+  heroBadge.innerText = "Trending";
+  heroTitle.innerText = movie.title;
+  heroMeta.innerText = `★ ${movie.vote_average} | ${movie.release_date?.slice(0,4)||"N/A"} | ${movie.adult ? "18+" : "All"} | Movie`;
+}
+
+// ================= CREATE CARD =================
 function createMovieCard(movie){
   const card = document.createElement("div");
   card.classList.add("movie-card");
-  card.innerHTML = `<img src="${movie.img}" alt="${movie.title}">
-    <div class="overlay">${movie.overlay||""}</div>
+  card.innerHTML = `
+    <img src="${movie.poster_path ? IMG_BASE+movie.poster_path : 'https://via.placeholder.com/140x200'}" alt="${movie.title}">
+    <div class="overlay">Trending</div>
     <div class="movie-info">
       <div class="movie-title">${movie.title}</div>
-      <div class="movie-sub">${movie.sub||""}</div>
-    </div>`;
+      <div class="movie-sub">${movie.release_date || "N/A"}</div>
+    </div>
+  `;
   card.addEventListener("click",()=>openPopup(movie));
   return card;
 }
 
-// RENDER MOVIES
-function renderMovies(category){
+// ================= RENDER MOVIES =================
+function renderMovies(category, movies){
   showLoading();
   setTimeout(()=>{
     moviesSections.innerHTML="";
@@ -72,50 +82,62 @@ function renderMovies(category){
     section.classList.add("carousel");
     const container = document.createElement("div");
     container.classList.add("carousel-container");
-    (moviesData[category]||[]).forEach(m=>container.appendChild(createMovieCard(m)));
+    movies.forEach(m=>container.appendChild(createMovieCard(m)));
     section.appendChild(container);
     moviesSections.appendChild(section);
     hideLoading();
-  },500);
+  },300);
 }
 
-// POPUP
+// ================= POPUP =================
 function openPopup(movie){
   popup.classList.add("active");
-  popupImage.src = movie.img;
+  popupImage.src = movie.poster_path ? IMG_BASE+movie.poster_path : '';
   popupTitle.innerText = movie.title;
-  popupDesc.innerText = `Episodes/info: ${movie.sub || "N/A"}`;
+  popupDesc.innerText = `Release: ${movie.release_date} | Rating: ${movie.vote_average}`;
 }
 function closePopup(){ popup.classList.remove("active"); }
 
-// CATEGORY BUTTONS
+// ================= CATEGORY BUTTONS =================
 categoryBtns.forEach(btn=>{
-  btn.addEventListener("click",()=>{
+  btn.addEventListener("click", async ()=>{
     categoryBtns.forEach(b=>b.classList.remove("active"));
     btn.classList.add("active");
-    const cat = btn.dataset.category;
-    renderMovies(cat);
+    let genreMap = {
+      "action":28,"horror":27,"adventure":12,"comedy":35,"drama":18,"top-rating":"" // example
+    };
+    const genreId = genreMap[btn.dataset.category]||"";
+    showLoading();
+    try{
+      const url = genreId ? `${TMDB_BASE}/discover/movie?api_key=${TMDB_KEY}&with_genres=${genreId}` :
+                            `${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      renderMovies(btn.dataset.category, data.results);
+    }catch(err){
+      console.error(err);
+      moviesSections.innerHTML="<p style='margin:20px;color:#888;'>Error fetching movies</p>";
+    }finally{
+      hideLoading();
+    }
   });
 });
 
-// INITIAL RENDER
-renderMovies("for-you");
-
-// SEARCH
-searchInput.addEventListener("input", e=>{
-  const query = e.target.value.toLowerCase();
-  const currentCategory = document.querySelector(".nav-item.active").dataset.category;
-  const filtered = (moviesData[currentCategory]||[]).filter(m=>m.title.toLowerCase().includes(query));
-  moviesSections.innerHTML="";
-  if(filtered.length>0){
-    const section = document.createElement("div");
-    section.classList.add("carousel");
-    const container = document.createElement("div");
-    container.classList.add("carousel-container");
-    filtered.forEach(m=>container.appendChild(createMovieCard(m)));
-    section.appendChild(container);
-    moviesSections.appendChild(section);
-  } else {
-    moviesSections.innerHTML="<p style='margin:20px; color:#888;'>No movies found.</p>";
+// ================= SEARCH =================
+searchInput.addEventListener("input", async e=>{
+  const query = e.target.value;
+  if(query.length<1) return;
+  showLoading();
+  try{
+    const res = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${query}`);
+    const data = await res.json();
+    renderMovies("search", data.results);
+  }catch(err){
+    console.error(err);
+  }finally{
+    hideLoading();
   }
 });
+
+// ================= INITIAL LOAD =================
+fetchTrending();
