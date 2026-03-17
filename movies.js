@@ -131,7 +131,7 @@ categoryBtns.forEach(btn=>{
       "action":28,"horror":27,"adventure":12,"comedy":35,"drama":18,"top-rating":"" // example
     };
     const genreId = genreMap[btn.dataset.category]||"";
-    showLoading();
+    //showLoading();//
     try{
       const url = genreId ? `${TMDB_BASE}/discover/movie?api_key=${TMDB_KEY}&with_genres=${genreId}` :
                             `${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`;
@@ -142,7 +142,7 @@ categoryBtns.forEach(btn=>{
       console.error(err);
       moviesSections.innerHTML="<p style='margin:20px;color:#888;'>Error fetching movies</p>";
     }finally{
-      hideLoading();
+      //hideLoading();//
     }
   });
 });
@@ -151,7 +151,7 @@ categoryBtns.forEach(btn=>{
 searchInput.addEventListener("input", async e=>{
   const query = e.target.value;
   if(query.length<1) return;
-  showLoading();
+  //showLoading(); //
   try{
     const res = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${query}`);
     const data = await res.json();
@@ -159,7 +159,7 @@ searchInput.addEventListener("input", async e=>{
   }catch(err){
     console.error(err);
   }finally{
-    hideLoading();
+  //  hideLoading();  //
   }
 });
 
