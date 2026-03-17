@@ -6,8 +6,9 @@
     <!-- IMAGE -->
     <img id="watchPopupImage" src="" alt="Movie Poster">
 
-    <!-- VIDEO -->
-    <iframe id="watchPopupVideo" allowfullscreen></iframe>
+    <!-- VIDEO (iframe for streaming) -->
+    <iframe id="watchPopupVideo" frameborder="0" allowfullscreen style="display:none;"></iframe>
+
     <!-- INFO -->
     <h2 id="watchPopupTitle">Movie Title</h2>
     <p id="watchPopupDesc">Movie description...</p>
@@ -33,7 +34,7 @@
       <button onclick="downloadMovie('1080')">1080p (1.5GB)</button>
     </div>
 
-    <!-- SERIES (hidden by default) -->
+    <!-- SERIES -->
     <div id="seriesSection" style="display:none;">
       <p>Episodes:</p>
       <select id="episodeSelect"></select>
