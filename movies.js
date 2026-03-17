@@ -57,13 +57,21 @@ function updateHero(movie){
   heroMeta.innerText = `★ ${movie.vote_average} | ${movie.release_date?.slice(0,4)||"N/A"} | ${movie.adult ? "18+" : "All"} | Movie`;
 }
 
-// ================= CREATE CARD =================
+// ================= CREATE CARD WITH BADGES =================
 function createMovieCard(movie){
   const card = document.createElement("div");
   card.classList.add("movie-card");
+
+  // Determine badge
+  let badge = "HD"; // default
+  const year = movie.release_date ? parseInt(movie.release_date.slice(0,4)) : 0;
+  const currentYear = new Date().getFullYear();
+  if(movie.vote_average >= 8.5) badge = "Top";
+  else if(year === currentYear) badge = "New";
+
   card.innerHTML = `
     <img src="${movie.poster_path ? IMG_BASE+movie.poster_path : 'https://via.placeholder.com/140x200'}" alt="${movie.title}">
-    <div class="overlay">Trending</div>
+    <div class="overlay">${badge}</div>
     <div class="movie-info">
       <div class="movie-title">${movie.title}</div>
       <div class="movie-sub">${movie.release_date || "N/A"}</div>
@@ -73,6 +81,21 @@ function createMovieCard(movie){
   return card;
 }
 
+// ================= UPDATE HERO WITH BADGE =================
+function updateHero(movie){
+  hero.style.backgroundImage = `url(${IMG_BASE+movie.poster_path})`;
+
+  // Hero badge logic
+  let badge = "HD";
+  const year = movie.release_date ? parseInt(movie.release_date.slice(0,4)) : 0;
+  const currentYear = new Date().getFullYear();
+  if(movie.vote_average >= 8.5) badge = "Top";
+  else if(year === currentYear) badge = "New";
+
+  heroBadge.innerText = badge;
+  heroTitle.innerText = movie.title;
+  heroMeta.innerText = `★ ${movie.vote_average} | ${movie.release_date?.slice(0,4)||"N/A"} | ${movie.adult ? "18+" : "All"} | Movie`;
+}
 // ================= RENDER MOVIES =================
 function renderMovies(category, movies){
   showLoading();
