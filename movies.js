@@ -165,3 +165,38 @@ searchInput.addEventListener("input", async e=>{
 
 // ================= INITIAL LOAD =================
 fetchTrending();
+// Open video popup
+function openVideoPopup(movie) {
+    const popup = document.getElementById("popup");
+    const video = document.getElementById("popupVideo");
+    document.getElementById("popupTitle").innerText = movie.title;
+    document.getElementById("popupDesc").innerText = movie.description || "";
+    
+    // set video source
+    video.src = movie.video || "";  // movie.video = API link
+    video.play();
+    
+    popup.classList.add("active");
+}
+
+// Close popup
+function closePopup() {
+    const popup = document.getElementById("popup");
+    const video = document.getElementById("popupVideo");
+    video.pause();
+    video.currentTime = 0;
+    popup.classList.remove("active");
+}
+
+// Watch List (LocalStorage)
+function addToWatchList() {
+    const title = document.getElementById("popupTitle").innerText;
+    let list = JSON.parse(localStorage.getItem("watchList") || "[]");
+    if (!list.includes(title)) {
+        list.push(title);
+        localStorage.setItem("watchList", JSON.stringify(list));
+        alert(`${title} added to Watch List`);
+    } else {
+        alert(`${title} is already in Watch List`);
+    }
+}
