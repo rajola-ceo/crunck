@@ -1,140 +1,144 @@
-/* Watch Popup */
-#watchPopup {
-  position: fixed;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(0,0,0,0.8);
-  display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 20000;
+// popup.js
+
+const watchPopup = document.getElementById("watchPopup");
+const watchPopupImage = document.getElementById("watchPopupImage");
+const watchPopupVideo = document.getElementById("watchPopupVideo");
+const watchPopupTitle = document.getElementById("watchPopupTitle");
+const watchPopupDesc = document.getElementById("watchPopupDesc");
+
+const playBtn = document.getElementById("playBtn");
+const trailerBtn = document.getElementById("trailerBtn");
+const qualitySelect = document.getElementById("qualitySelect");
+
+const downloadToggle = document.getElementById("downloadToggle");
+const downloadOptions = document.getElementById("downloadOptions");
+
+const episodeSelect = document.getElementById("episodeSelect");
+const seriesSection = document.getElementById("seriesSection");
+
+// IMPORTANT
+const TMDB_KEY = "2a48fa3779af50f428b6d5f73d4d8ba7";
+const TMDB_BASE = "https://api.themoviedb.org/3";
+
+let currentMovie = null;
+
+// ================= OPEN POPUP =================
+function openWatchPopup(movie){
+    currentMovie = movie;
+
+    watchPopup.classList.add("active");
+    watchPopupImage.style.display = "block";
+    watchPopupVideo.style.display = "none";
+
+    watchPopupImage.src = movie.poster_path ? IMG_BASE + movie.poster_path : '';
+    watchPopupTitle.innerText = movie.title;
+    watchPopupDesc.innerText = `Release: ${movie.release_date || "N/A"} | ⭐ ${movie.vote_average}`;
+
+    // reset video
+    watchPopupVideo.src = "";
+
+    // hide download panel
+    downloadOptions.style.display = "none";
+
+    // SERIES (basic detection)
+    if(movie.name){ // series
+        seriesSection.style.display = "block";
+        loadEpisodes();
+    } else {
+        seriesSection.style.display = "none";
+    }
 }
 
-#watchPopup.active { display: flex; }
-
-#watchPopup .popup-content {
-  background: #34d399; /* Kijani */
-  color: black;
-  width: 90%;
-  max-width: 500px;
-  max-height: 90vh;
-  border-radius: 16px;
-  padding: 15px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
+// ================= CLOSE =================
+function closeWatchPopup(){
+    watchPopupVideo.pause();
+    watchPopupVideo.currentTime = 0;
+    watchPopup.classList.remove("active");
 }
 
-#watchPopup .popup-content img {
-  width: 100%;
-  border-radius: 12px;
-  cursor: pointer;
+// ================= PLAY MOVIE =================
+playBtn.addEventListener("click", ()=>{
+    const quality = qualitySelect.value;
+
+    // ⚠️ HAPA utaweka API yako ya movie stream
+    // mfano dummy:
+  const videoURL = `https://www.2embed.cc/embed/${currentMovie.id}`;
+
+    watchPopupVideo.src = videoURL;
+
+    watchPopupImage.style.display = "none";
+    watchPopupVideo.style.display = "block";
+
+    watchPopupVideo.play();
+});
+
+// ================= TRAILER =================
+trailerBtn.addEventListener("click", async ()=>{
+    if(!currentMovie) return;
+
+    try{
+        const res = await fetch(`${TMDB_BASE}/movie/${currentMovie.id}/videos?api_key=${TMDB_KEY}`);
+        const data = await res.json();
+
+        const trailer = data.results.find(v => v.type === "Trailer");
+
+        if(trailer){
+            // kutumia YouTube embed (hakuna direct video kutoka TMDB)
+            const url = `https://www.youtube.com/embed/${trailer.key}`;
+
+            watchPopupVideo.src = url;
+            watchPopupImage.style.display = "none";
+            watchPopupVideo.style.display = "block";
+        } else {
+            alert("No trailer available");
+        }
+
+    }catch(err){
+        console.error(err);
+        alert("Error loading trailer");
+    }
+});
+
+// ================= DOWNLOAD TOGGLE =================
+downloadToggle.addEventListener("click", ()=>{
+    downloadOptions.style.display =
+        downloadOptions.style.display === "none" ? "block" : "none";
+});
+
+// ================= DOWNLOAD =================
+function downloadMovie(quality){
+    // ⚠️ replace na API yako
+  window.open(`https://vidsrc.to/embed/movie/${currentMovie.id}`);
+
+    const a = document.createElement("a");
+    a.href = downloadLink;
+    a.download = `${watchPopupTitle.innerText}-${quality}.mp4`;
+    a.click();
 }
 
-#watchPopup .popup-content video {
-  width: 100%;
-  border-radius: 12px;
-  margin-top: 10px;
+// ================= WATCHLIST =================
+function addToWatchListPopup(){
+    const title = watchPopupTitle.innerText;
+    let list = JSON.parse(localStorage.getItem("watchList") || "[]");
+
+    if(!list.includes(title)){
+        list.push(title);
+        localStorage.setItem("watchList", JSON.stringify(list));
+        alert(`${title} added to Watch List`);
+    } else {
+        alert(`${title} already in Watch List`);
+    }
 }
 
-#watchPopup .popup-content h2 {
-  margin: 12px 0 6px 0;
-}
+// ================= SERIES =================
+function loadEpisodes(){
+    episodeSelect.innerHTML = "";
 
-#watchPopup .popup-content p {
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-
-#watchPopup .popup-content button {
-  padding: 8px 16px;
-  margin: 6px 0;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-#downloadBtn { background: #2bb078; color: black; }
-#watchListBtn { background: #1f7f3e; color: white; }
-
-#watchPopup .close {
-  position: absolute;
-  top: 10px; right: 12px;
-  font-size: 24px;
-  cursor: pointer;
-  color: black;
-}
-/* ===== NEW CONTROLS ===== */
-
-#qualitySelect {
-  width: 100%;
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 10px;
-  border: none;
-  font-weight: 600;
-}
-
-/* Buttons layout */
-#playBtn, #trailerBtn, #downloadToggle, #watchListBtn {
-  width: 100%;
-  margin-top: 8px;
-  padding: 10px;
-  border-radius: 10px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-/* Individual colors */
-#playBtn {
-  background: black;
-  color: #34d399;
-}
-
-#trailerBtn {
-  background: #065f46;
-  color: #34d399;
-}
-
-#downloadToggle {
-  background: #047857;
-  color: white;
-}
-
-/* Download section */
-#downloadOptions {
-  width: 100%;
-  margin-top: 10px;
-  background: rgba(0,0,0,0.2);
-  padding: 10px;
-  border-radius: 10px;
-}
-
-#downloadOptions button {
-  width: 100%;
-  margin: 5px 0;
-  padding: 8px;
-  border-radius: 8px;
-  border: none;
-  background: black;
-  color: #34d399;
-  font-weight: 600;
-}
-
-/* Series */
-#seriesSection {
-  width: 100%;
-  margin-top: 10px;
-  padding: 10px;
-  background: rgba(0,0,0,0.2);
-  border-radius: 10px;
-}
-
-#episodeSelect {
-  width: 100%;
-  padding: 8px;
-  border-radius: 8px;
-  margin-top: 5px;
+    // dummy episodes
+    for(let i=1; i<=10; i++){
+        const opt = document.createElement("option");
+        opt.value = i;
+        opt.innerText = "Episode " + i;
+        episodeSelect.appendChild(opt);
+    }
 }
