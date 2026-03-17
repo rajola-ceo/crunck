@@ -109,7 +109,7 @@ function renderMovies(category, movies){
     movies.forEach(m=>container.appendChild(createMovieCard(m)));
     section.appendChild(container);
     moviesSections.appendChild(section);
-   //hideLoading();//
+   hideLoading();
   },300);
 }
 
