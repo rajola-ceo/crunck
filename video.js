@@ -131,3 +131,21 @@ function playTrailer(trailerUrl){
 
 // ================= INITIAL LOAD =================
 if(movieId) fetchMovieData(movieId);
+const TMDB_KEY = "2a48fa3779af50f428b6d5f73d4d8ba7"; // replace with your key
+const TMDB_BASE = "https://api.themoviedb.org/3";
+
+async function fetchMovieTrailer(movieId) {
+    try {
+        const res = await fetch(`${TMDB_BASE}/movie/${movieId}/videos?api_key=${TMDB_KEY}&language=en-US`);
+        const data = await res.json();
+        // Filter YouTube trailers
+        const trailer = data.results.find(v => v.type === "Trailer" && v.site === "YouTube");
+        if (trailer) {
+            return `https://www.youtube.com/watch?v=${trailer.key}`;
+        }
+        return null; // no trailer
+    } catch(err) {
+        console.error(err);
+        return null;
+    }
+}
