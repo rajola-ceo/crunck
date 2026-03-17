@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Video Page</title>
+<link rel="stylesheet" href="video.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="video-page">
+
+    <!-- BACK ARROW -->
+    <div class="back-arrow" onclick="goBack()">
+        <i class="fa fa-arrow-left"></i> Back
+    </div>
+
+    <!-- VIDEO PLAYER -->
+    <div class="video-player">
+        <iframe id="videoPlayer" allowfullscreen></iframe>
+    </div>
+
+    <!-- MOVIE INFO -->
+    <div class="movie-info">
+        <h1 id="videoTitle">Movie Title</h1>
+        <p id="videoDesc">Movie description...</p>
+
+        <!-- QUALITY SELECT -->
+        <select id="qualitySelect">
+            <option value="480">480p</option>
+            <option value="720">720p</option>
+            <option value="1080">1080p</option>
+        </select>
+
+        <!-- ACTION BUTTONS -->
+        <div class="buttons">
+            <button id="playBtn">▶ Play Movie</button>
+            <button id="trailerBtn">🎬 Watch Trailer</button>
+            <button id="downloadToggle">⬇ Download</button>
+            <button id="watchListBtn">+ Watch List</button>
+        </div>
+
+        <!-- DOWNLOAD OPTIONS -->
+        <div id="downloadOptions" style="display:none;">
+            <p>Select Quality:</p>
+            <button onclick="downloadMovie('480')">480p (300MB)</button>
+            <button onclick="downloadMovie('720')">720p (700MB)</button>
+            <button onclick="downloadMovie('1080')">1080p (1.5GB)</button>
+        </div>
+
+    </div>
+</div>
+
+<script src="video.js"></script>
+</body>
+</html>
