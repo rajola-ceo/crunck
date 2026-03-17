@@ -3,6 +3,44 @@ const watchPopupImage = document.getElementById("watchPopupImage");
 const watchPopupVideo = document.getElementById("watchPopupVideo");
 const watchPopupTitle = document.getElementById("watchPopupTitle");
 const watchPopupDesc = document.getElementById("watchPopupDesc");
+
+function openWatchPopup(movie){
+    watchPopup.classList.add("active");
+    watchPopupImage.style.display = "block";
+    watchPopupVideo.style.display = "none";
+    watchPopupImage.src = movie.poster_path ? IMG_BASE+movie.poster_path : '';
+    watchPopupTitle.innerText = movie.title;
+    watchPopupDesc.innerText = `Release: ${movie.release_date || "N/A"} | Rating: ${movie.vote_average || "N/A"}`;
+    watchPopupVideo.src = movie.video || "";
+}
+
+function closeWatchPopup(){
+    watchPopupVideo.pause();
+    watchPopupVideo.currentTime = 0;
+    watchPopup.classList.remove("active");
+}
+
+watchPopupImage.addEventListener("click", ()=>{
+    watchPopupImage.style.display = "none";
+    watchPopupVideo.style.display = "block";
+    watchPopupVideo.play();
+});
+
+function addToWatchListPopup(){
+    const title = watchPopupTitle.innerText;
+    let list = JSON.parse(localStorage.getItem("watchList") || "[]");
+    if(!list.includes(title)){
+        list.push(title);
+        localStorage.setItem("watchList", JSON.stringify(list));
+        alert(`${title} added to Watch List`);
+    } else {
+        alert(`${title} is already in Watch List`);
+    }
+}
+
+function downloadMovie(quality){
+    alert(`Downloading movie in ${quality}p...`);
+}
 const moviesSections = document.getElementById("moviesSections");
 const categoryBtns = document.querySelectorAll(".nav-item");
 const loading = document.getElementById("loading");
@@ -99,18 +137,52 @@ function updateHero(movie){
 }
 // ================= RENDER MOVIES =================
 function renderMovies(category, movies){
- showLoading();
-  setTimeout(()=>{
-    moviesSections.innerHTML="";
-    const section = document.createElement("div");
-    section.classList.add("carousel");
-    const container = document.createElement("div");
-    container.classList.add("carousel-container");
-    movies.forEach(m=>container.appendChild(createMovieCard(m)));
-    section.appendChild(container);
-    moviesSections.appendChild(section);
-   hideLoading();
-  },300);
+    showLoading();
+
+    // Use setTimeout to simulate loading (optional)
+    setTimeout(() => {
+        // clear previous movies
+        moviesSections.innerHTML = "";
+
+        // create carousel section
+        const section = document.createElement("div");
+        section.classList.add("carousel");
+
+        const container = document.createElement("div");
+        container.classList.add("carousel-container");
+
+        // append each movie card
+        movies.forEach(movie => {
+            const card = document.createElement("div");
+            card.classList.add("movie-card");
+
+            // Determine badge
+            let badge = "HD";
+            const year = movie.release_date ? parseInt(movie.release_date.slice(0,4)) : 0;
+            const currentYear = new Date().getFullYear();
+            if(movie.vote_average >= 8.5) badge = "Top";
+            else if(year === currentYear) badge = "New";
+
+            card.innerHTML = `
+                <img src="${movie.poster_path ? IMG_BASE + movie.poster_path : 'https://via.placeholder.com/140x200'}" alt="${movie.title}">
+                <div class="overlay">${badge}</div>
+                <div class="movie-info">
+                    <div class="movie-title">${movie.title}</div>
+                    <div class="movie-sub">${movie.release_date || "N/A"}</div>
+                </div>
+            `;
+
+            // Connect the card click to the new popup
+            card.addEventListener("click", () => openWatchPopup(movie));
+
+            container.appendChild(card);
+        });
+
+        section.appendChild(container);
+        moviesSections.appendChild(section);
+
+        hideLoading();
+    }, 300);
 }
 // ================= CATEGORY BUTTONS =================
 categoryBtns.forEach(btn=>{
