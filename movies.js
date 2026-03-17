@@ -27,7 +27,7 @@ function hideLoading(){ loading.classList.remove("active"); }
 async function fetchTrending(){
   try{
     showLoading();
-    const res = await fetch(`${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`);
+    const res = await fetch('http://localhost:3000/movies/trending');
     const data = await res.json();
     hideLoading();
     heroData = data.results.slice(0,3); // first 3 for hero
