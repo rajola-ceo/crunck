@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Video Page</title>
+<title>Movie Player</title>
 <link rel="stylesheet" href="video.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -18,7 +18,7 @@
 
     <!-- VIDEO PLAYER -->
     <div class="video-player">
-        <iframe id="videoPlayer" allowfullscreen></iframe>
+        <video id="videoPlayer" controls poster=""></video>
     </div>
 
     <!-- MOVIE INFO -->
@@ -44,12 +44,13 @@
         <!-- DOWNLOAD OPTIONS -->
         <div id="downloadOptions" style="display:none;">
             <p>Select Quality:</p>
-            <button onclick="downloadMovie('480')">480p (300MB)</button>
-            <button onclick="downloadMovie('720')">720p (700MB)</button>
-            <button onclick="downloadMovie('1080')">1080p (1.5GB)</button>
+            <button id="download480">480p</button>
+            <button id="download720">720p</button>
+            <button id="download1080">1080p</button>
         </div>
 
     </div>
+
 </div>
 
 <script src="video.js"></script>
