@@ -176,7 +176,10 @@ function renderMovies(category, movies){
             `;
 
             // Connect the card click to the new popup
-            card.addEventListener("click", () => openWatchPopup(movie));
+            card.addEventListener("click", ()=>{
+    // Link kwenye video.html ikipewa movie ID
+    window.location.href = `video.html?id=${movie.id}`;
+});
 
             container.appendChild(card);
         });
