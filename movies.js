@@ -77,10 +77,6 @@ function createMovieCard(movie){
       <div class="movie-title">${movie.title}</div>
       <div class="movie-sub">${movie.release_date || "N/A"}</div>
     </div>
-      <div class="card-buttons">
-    <a class="watch-btn" onclick='openVideoPopup(${JSON.stringify(movie)})'>▶ Watch Trailer</a>
-    <button class="watchlist-btn" onclick='addToWatchList(${JSON.stringify(movie)})'>+ Watch List</button>
-  </div>
   `;
   card.addEventListener("click",()=>openPopup(movie));
   return card;
