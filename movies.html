@@ -3,35 +3,57 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="stylesheet" href="./movies.css">
-<title>Crunk Movies</title>
+<title>Movies</title>
+<link rel="stylesheet" href="movies.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
-<!-- PROFILE CHECK -->
-<script>
-const user = JSON.parse(localStorage.getItem("crunkUser"));
-if(!user) window.location.href = "index.html"; // redirect if not logged in
-</script>
+<div class="app">
 
-<h1>🎬 Crunk Movies</h1>
+    <!-- SEARCH -->
+    <div class="search">
+        <i class="fa fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Search movies...">
+    </div>
 
-<!-- TRENDING SECTION -->
-<section id="trending">
-  <h2>🔥 Trending</h2>
-  <div class="movies-container" id="trendingContainer"></div>
-</section>
+    <!-- CATEGORIES -->
+    <div class="categories-container">
+        <div class="category active" data-category="for-you">For You</div>
+        <div class="category" data-category="drama">Drama</div>
+        <div class="category" data-category="movie">Movie</div>
+        <div class="category" data-category="anime">Anime</div>
+        <div class="category" data-category="comedy">Comedy</div>
+        <div class="category" data-category="adventure">Adventure</div>
+        <div class="category" data-category="horror">Horror</div>
+    </div>
 
-<!-- CATEGORIES SECTION -->
-<section id="categories">
-  <h2>📂 Categories</h2>
-  <div class="categories-nav" id="categoriesNav"></div>
-  <div class="movies-container" id="categoryMovies"></div>
-</section>
+    <!-- MOVIES SECTIONS -->
+    <div id="moviesSections">
+        <!-- JS will inject carousels here -->
+    </div>
+
+</div>
+
+<!-- POPUP -->
+<div class="popup" id="popup">
+    <div class="popup-content">
+        <span class="close" onclick="closePopup()">×</span>
+        <img id="popupImage" src="" alt="Movie Poster">
+        <h2 id="popupTitle">Movie Title</h2>
+        <p id="popupDesc">Movie description goes here...</p>
+        <div class="download-btn">Download</div>
+    </div>
+</div>
 
 <!-- BOTTOM NAV -->
-<div id="nav-placeholder"></div>
-<script src="nav.js"></script>
-<script type="module" src="./movies.js"></script>
+<div class="bottom-nav">
+    <div><i class="fa fa-home"></i>Home</div>
+    <div><i class="fa fa-film"></i>Movies</div>
+    <div><i class="fa fa-heart"></i>Favorites</div>
+    <div><i class="fa fa-user"></i>Profile</div>
+</div>
+
+<script src="movies.js"></script>
 </body>
 </html>
