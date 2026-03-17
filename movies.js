@@ -1,46 +1,4 @@
-const watchPopup = document.getElementById("watchPopup");
-const watchPopupImage = document.getElementById("watchPopupImage");
-const watchPopupVideo = document.getElementById("watchPopupVideo");
-const watchPopupTitle = document.getElementById("watchPopupTitle");
-const watchPopupDesc = document.getElementById("watchPopupDesc");
-
-function openWatchPopup(movie){
-    watchPopup.classList.add("active");
-    watchPopupImage.style.display = "block";
-    watchPopupVideo.style.display = "none";
-    watchPopupImage.src = movie.poster_path ? IMG_BASE+movie.poster_path : '';
-    watchPopupTitle.innerText = movie.title;
-    watchPopupDesc.innerText = `Release: ${movie.release_date || "N/A"} | Rating: ${movie.vote_average || "N/A"}`;
-    watchPopupVideo.src = movie.video || "";
-}
-
-function closeWatchPopup(){
-    watchPopupVideo.pause();
-    watchPopupVideo.currentTime = 0;
-    watchPopup.classList.remove("active");
-}
-
-watchPopupImage.addEventListener("click", ()=>{
-    watchPopupImage.style.display = "none";
-    watchPopupVideo.style.display = "block";
-    watchPopupVideo.play();
-});
-
-function addToWatchListPopup(){
-    const title = watchPopupTitle.innerText;
-    let list = JSON.parse(localStorage.getItem("watchList") || "[]");
-    if(!list.includes(title)){
-        list.push(title);
-        localStorage.setItem("watchList", JSON.stringify(list));
-        alert(`${title} added to Watch List`);
-    } else {
-        alert(`${title} is already in Watch List`);
-    }
-}
-
-function downloadMovie(quality){
-    alert(`Downloading movie in ${quality}p...`);
-}
+let page = 1;
 const moviesSections = document.getElementById("moviesSections");
 const categoryBtns = document.querySelectorAll(".nav-item");
 const loading = document.getElementById("loading");
@@ -58,7 +16,9 @@ const IMG_BASE = "https://image.tmdb.org/t/p/w500";
 // Hero trending movies
 let heroData = [];
 let heroIndex = 0;
-
+function goToVideo(id){
+    window.location.href = `video.html?id=${id}`;
+}
 // ================= LOADING =================
 function showLoading(){ loading.classList.add("active"); }
 function hideLoading(){ loading.classList.remove("active"); }
@@ -89,22 +49,17 @@ function startHeroSlider(){
     updateHero(heroData[heroIndex]);
   },3000);
 }
-function updateHero(movie){
-  hero.style.backgroundImage = `url(${IMG_BASE+movie.poster_path})`;
-  heroBadge.innerText = "Trending";
-  heroTitle.innerText = movie.title;
-  heroMeta.innerText = `★ ${movie.vote_average} | ${movie.release_date?.slice(0,4)||"N/A"} | ${movie.adult ? "18+" : "All"} | Movie`;
-}
 
+// ================= CREATE CARD WITH BADGES =================
 // ================= CREATE CARD WITH BADGES =================
 function createMovieCard(movie){
   const card = document.createElement("div");
   card.classList.add("movie-card");
 
-  // Determine badge
-  let badge = "HD"; // default
+  let badge = "HD";
   const year = movie.release_date ? parseInt(movie.release_date.slice(0,4)) : 0;
   const currentYear = new Date().getFullYear();
+
   if(movie.vote_average >= 8.5) badge = "Top";
   else if(year === currentYear) badge = "New";
 
@@ -116,12 +71,12 @@ function createMovieCard(movie){
       <div class="movie-sub">${movie.release_date || "N/A"}</div>
     </div>
   `;
-   card.addEventListener("click", ()=>
-    window.location.href = `video.html?id=${movie.id}`;
-  });
+
+  card.addEventListener("click", ()=>goToVideo(movie.id));
 
   return card;
 }
+
 
 // ================= UPDATE HERO WITH BADGE =================
 function updateHero(movie){
@@ -155,35 +110,10 @@ function renderMovies(category, movies){
         container.classList.add("carousel-container");
 
         // append each movie card
-        movies.forEach(movie => {
-            const card = document.createElement("div");
-            card.classList.add("movie-card");
-
-            // Determine badge
-            let badge = "HD";
-            const year = movie.release_date ? parseInt(movie.release_date.slice(0,4)) : 0;
-            const currentYear = new Date().getFullYear();
-            if(movie.vote_average >= 8.5) badge = "Top";
-            else if(year === currentYear) badge = "New";
-
-            card.innerHTML = `
-                <img src="${movie.poster_path ? IMG_BASE + movie.poster_path : 'https://via.placeholder.com/140x200'}" alt="${movie.title}">
-                <div class="overlay">${badge}</div>
-                <div class="movie-info">
-                    <div class="movie-title">${movie.title}</div>
-                    <div class="movie-sub">${movie.release_date || "N/A"}</div>
-                </div>
-            `;
-
-            // Connect the card click to the new popup
-            card.addEventListener("click", ()=>{
-    // Link kwenye video.html ikipewa movie ID
-    window.location.href = `video.html?id=${movie.id}`;
+movies.forEach(movie => {
+    const card = createMovieCard(movie);
+    container.appendChild(card);
 });
-
-            container.appendChild(card);
-        });
-
         section.appendChild(container);
         moviesSections.appendChild(section);
 
