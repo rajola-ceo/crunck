@@ -99,7 +99,7 @@ function updateHero(movie){
 }
 // ================= RENDER MOVIES =================
 function renderMovies(category, movies){
- //showLoading();//
+ showLoading();
   setTimeout(()=>{
     moviesSections.innerHTML="";
     const section = document.createElement("div");
