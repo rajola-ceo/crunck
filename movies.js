@@ -1,3 +1,5 @@
+let currentPage = 1;
+let isFetching = false;
 const moviesSections = document.getElementById("moviesSections");
 const categoryBtns = document.querySelectorAll(".nav-item");
 const popup = document.getElementById("popup");
@@ -25,20 +27,15 @@ function showLoading(){ loading.classList.add("active"); }
 function hideLoading(){ loading.classList.remove("active"); }
 
 // ================= FETCH TRENDING =================
-async function fetchTrending(){
-  try{
-    showLoading();
-    const res = await fetch(`${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`);
+async function fetchMovies(page = 1){
+    if(isFetching) return;        // prevent double fetch
+    isFetching = true;
+
+    const res = await fetch(`${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}&page=${page}`);
     const data = await res.json();
-    hideLoading();
-    heroData = data.results.slice(0,3); // first 3 for hero
-    startHeroSlider();
-    renderMovies("for-you", data.results); // initial carousel
-  }catch(err){
-    console.error(err);
-    hideLoading();
-    moviesSections.innerHTML="<p style='margin:20px;color:#888;'>Error fetching movies</p>";
-  }
+    displayMovies(data.results);  // append instead of clearing
+    isFetching = false;
+    currentPage++;
 }
 
 // ================= HERO SLIDER =================
@@ -164,3 +161,8 @@ searchInput.addEventListener("input", async e=>{
 
 // ================= INITIAL LOAD =================
 fetchTrending();
+window.addEventListener("scroll", () => {
+    if((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500){
+        fetchMovies(currentPage);
+    }
+});
