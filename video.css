@@ -1,8 +1,8 @@
-/* GLOBAL RESET */
+/* RESET */
 * { margin:0; padding:0; box-sizing:border-box; font-family: system-ui,Segoe UI,Roboto,-apple-system; }
 body { background:#05070d; color:#e6e6e6; }
 
-/* PAGE CONTAINER */
+/* CONTAINER */
 .video-page { max-width:1000px; margin:auto; padding:20px; }
 
 /* BACK ARROW */
@@ -13,7 +13,7 @@ body { background:#05070d; color:#e6e6e6; }
     display:flex;
     align-items:center;
     gap:8px;
-    color:#34d399; /* green arrow */
+    color:#34d399;
     font-weight:700;
     transition: color 0.2s ease;
 }
@@ -21,7 +21,7 @@ body { background:#05070d; color:#e6e6e6; }
 .back-arrow i { font-size:22px; }
 
 /* VIDEO PLAYER */
-.video-player iframe {
+.video-player video {
     width:100%;
     height:60vh;
     border-radius:12px;
@@ -64,7 +64,7 @@ select#qualitySelect {
 
 .buttons button {
     padding:10px 15px;
-    background:#34d399;  /* green primary buttons */
+    background:#34d399;
     color:black;
     font-weight:700;
     border:none;
@@ -108,7 +108,7 @@ select#qualitySelect {
 
 /* RESPONSIVE */
 @media(max-width:768px){
-    .video-player iframe { height:45vh; }
+    .video-player video { height:45vh; }
     .buttons { flex-direction:column; }
     select#qualitySelect { width:100%; }
 }
