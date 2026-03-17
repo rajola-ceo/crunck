@@ -1,83 +1,66 @@
-let currentMovie = null;
-// popup.js
-const watchPopup = document.getElementById("watchPopup");
-const watchPopupImage = document.getElementById("watchPopupImage");
-const watchPopupVideo = document.getElementById("watchPopupVideo");
-const watchPopupTitle = document.getElementById("watchPopupTitle");
-const watchPopupDesc = document.getElementById("watchPopupDesc");
-
-// open popup with movie data
-function openWatchPopup(movie){
-    currentMovie = movie;
-    watchPopup.classList.add("active");
-    watchPopupImage.style.display = "block";
-    watchPopupVideo.style.display = "none";
-    watchPopupImage.src = movie.poster_path ? IMG_BASE+movie.poster_path : '';
-    watchPopupTitle.innerText = movie.title;
-    watchPopupDesc.innerText = `Release: ${movie.release_date || "N/A"} | Rating: ${movie.vote_average || "N/A"}`;
-    
-}
-function closeWatchPopup(){
-    watchPopupVideo.src = ""; // muhimu sana
-    watchPopup.classList.remove("active");
-}
-watchPopupImage.addEventListener("click", ()=>{
-    const url = `https://vidsrc.to/embed/movie/${currentMovie.id}`;
-
-    watchPopupVideo.src = url;
-
-    watchPopupImage.style.display = "none";
-    watchPopupVideo.style.display = "block";
-});
-
-// add to watch list
-function addToWatchListPopup(){
-    const title = watchPopupTitle.innerText;
-    let list = JSON.parse(localStorage.getItem("watchList") || "[]");
-    if(!list.includes(title)){
-        list.push(title);
-        localStorage.setItem("watchList", JSON.stringify(list));
-        alert(`${title} added to Watch List`);
-    } else {
-        alert(`${title} is already in Watch List`);
-    }
+// Go back to movies page
+function goBack(){
+    window.location.href = "movies.html";
 }
 
-// dummy download
-function downloadMovie(quality){
-    window.open(`https://vidsrc.to/embed/movie/${currentMovie.id}`);
-}
-document.getElementById("playBtn").addEventListener("click", ()=>{
-    const url = `https://vidsrc.to/embed/movie/${currentMovie.id}`;
+// Get movie ID from URL
+const params = new URLSearchParams(window.location.search);
+const movieId = params.get("id");
 
-    watchPopupVideo.src = url;
+// Elements
+const videoPlayer = document.getElementById("videoPlayer");
+const videoTitle = document.getElementById("videoTitle");
+const videoDesc = document.getElementById("videoDesc");
+const playBtn = document.getElementById("playBtn");
+const trailerBtn = document.getElementById("trailerBtn");
+const watchListBtn = document.getElementById("watchListBtn");
+const downloadToggle = document.getElementById("downloadToggle");
+const downloadOptions = document.getElementById("downloadOptions");
+const qualitySelect = document.getElementById("qualitySelect");
 
-    watchPopupImage.style.display = "none";
-    watchPopupVideo.style.display = "block";
-});
-document.getElementById("trailerBtn").addEventListener("click", async ()=>{
-    if(!currentMovie) return;
+// ================= TMDB CONFIG =================
+const TMDB_KEY = "2a48fa3779af50f428b6d5f73d4d8ba7";
+const TMDB_BASE = "https://api.themoviedb.org/3";
+const IMG_BASE = "https://image.tmdb.org/t/p/w500";
 
+// Fetch single movie details
+async function fetchMovieDetails(id){
     try{
-        const res = await fetch(`${TMDB_BASE}/movie/${currentMovie.id}/videos?api_key=${TMDB_KEY}`);
+        const res = await fetch(`${TMDB_BASE}/movie/${id}?api_key=${TMDB_KEY}`);
         const data = await res.json();
 
-        // tafuta trailer
-        const trailer = data.results.find(v => v.type === "Trailer");
-
-        if(trailer){
-            const url = `https://www.youtube.com/embed/${trailer.key}`;
-
-            watchPopupVideo.src = url;
-
-            watchPopupImage.style.display = "none";
-            watchPopupVideo.style.display = "block";
-        }else{
-            alert("Trailer haipatikani");
-        }
-
+        videoTitle.innerText = data.title;
+        videoDesc.innerText = `Release: ${data.release_date || "N/A"} | Rating: ${data.vote_average || "N/A"}`;
+        videoPlayer.src = `https://www.example.com/movies/${id}.mp4`; // replace with actual video URL
+        trailerBtn.onclick = ()=>window.open(`https://www.example.com/trailer/${id}.mp4`,"_blank");
     }catch(err){
         console.error(err);
-        alert("Error loading trailer");
+        videoTitle.innerText = "Movie not found";
+        videoDesc.innerText = "";
     }
+}
+
+// Buttons
+playBtn.addEventListener("click",()=>{
+    videoPlayer.src = `https://www.example.com/movies/${movieId}.mp4?quality=${qualitySelect.value}`;
 });
+
+downloadToggle.addEventListener("click",()=>{
+    downloadOptions.style.display = downloadOptions.style.display==="none"?"block":"none";
+});
+
+function downloadMovie(quality){
+    alert(`Downloading movie in ${quality}p...`);
+}
+
+watchListBtn.addEventListener("click",()=>{
+    let list = JSON.parse(localStorage.getItem("watchList")||"[]");
+    if(!list.includes(videoTitle.innerText)){
+        list.push(videoTitle.innerText);
+        localStorage.setItem("watchList", JSON.stringify(list));
+        alert(videoTitle.innerText+" added to Watchlist!");
+    }else alert(videoTitle.innerText+" is already in Watchlist!");
+});
+
+// Initial load
+if(movieId) fetchMovieDetails(movieId);
