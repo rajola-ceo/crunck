@@ -12,7 +12,7 @@ const heroMeta = document.getElementById("heroMeta");
 const searchInput = document.getElementById("searchInput");
 
 // ================= TMDB CONFIG =================
-const TMDB_KEY = "YOUR_TMDB_API_KEY"; // replace with your key
+const TMDB_KEY = "2a48fa3779af50f428b6d5f73d4d8ba7"; // replace with your key
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const IMG_BASE = "https://image.tmdb.org/t/p/w500";
 
