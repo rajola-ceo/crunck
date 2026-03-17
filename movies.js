@@ -1,4 +1,8 @@
-
+const watchPopup = document.getElementById("watchPopup");
+const watchPopupImage = document.getElementById("watchPopupImage");
+const watchPopupVideo = document.getElementById("watchPopupVideo");
+const watchPopupTitle = document.getElementById("watchPopupTitle");
+const watchPopupDesc = document.getElementById("watchPopupDesc");
 const moviesSections = document.getElementById("moviesSections");
 const categoryBtns = document.querySelectorAll(".nav-item");
 const loading = document.getElementById("loading");
