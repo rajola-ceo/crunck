@@ -30,7 +30,7 @@ const IMG_BASE = "https://image.tmdb.org/t/p/w500";
 let movieData = {};
 async function fetchMovieData(id){
     try{
-        const res = await fetch(`https://api.themoviedb.org/3/movie/${id}?api_key=${TMDB_KEY}&append_to_response=videos`);
+        const res = await fetch(`http://localhost:3000/movies/${id}`);
         if(!res.ok) throw new Error("Movie not found");
         const movie = await res.json();
         movieData = movie;
