@@ -154,3 +154,5 @@ searchInput.addEventListener("input", e=>{
 // ================= INITIAL LOAD =================
 fetchTrending();
 fetchCategory(categories[0].id, document.querySelectorAll(".category-btn")[0]);
+function showLoading(){ document.getElementById("loading").classList.add("active"); }
+function hideLoading(){ document.getElementById("loading").classList.remove("active"); }
