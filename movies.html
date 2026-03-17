@@ -13,6 +13,7 @@
 
 <div class="app">
     <h1 class="page-heading">Crunk movies</h1>
+
     <!-- LOADING DOTS -->
     <div id="loading">
         <div class="loading-dots">
@@ -54,53 +55,56 @@
     <div id="moviesSections">
         <!-- JS will inject carousels here -->
     </div>
-<div class="popup" id="watchPopup">
-  <div class="popup-content">
-    <span class="close" onclick="closeWatchPopup()">×</span>
 
-    <!-- IMAGE -->
-    <img id="watchPopupImage" src="" alt="Movie Poster">
+    <!-- WATCH POPUP -->
+    <div class="popup" id="watchPopup">
+      <div class="popup-content">
+        <span class="close" onclick="closeWatchPopup()">×</span>
 
-    <!-- VIDEO -->
-    <iframe id="watchPopupVideo" allowfullscreen></iframe>
+        <!-- IMAGE -->
+        <img id="watchPopupImage" src="" alt="Movie Poster">
 
-    <!-- INFO -->
-    <h2 id="watchPopupTitle">Movie Title</h2>
-    <p id="watchPopupDesc">Movie description...</p>
+        <!-- VIDEO -->
+        <iframe id="watchPopupVideo" allowfullscreen></iframe>
 
-    <!-- QUALITY -->
-    <select id="qualitySelect">
-      <option value="480">480p</option>
-      <option value="720">720p</option>
-      <option value="1080">1080p</option>
-    </select>
+        <!-- INFO -->
+        <h2 id="watchPopupTitle">Movie Title</h2>
+        <p id="watchPopupDesc">Movie description...</p>
 
-    <!-- ACTION BUTTONS -->
-    <button id="playBtn">▶ Play Movie</button>
-    <button id="trailerBtn">🎬 Watch Trailer</button>
-    <button id="downloadToggle">⬇ Download</button>
-    <button id="watchListBtn" onclick="addToWatchListPopup()">+ Watch List</button>
+        <!-- QUALITY -->
+        <select id="qualitySelect">
+          <option value="480">480p</option>
+          <option value="720">720p</option>
+          <option value="1080">1080p</option>
+        </select>
 
-    <!-- DOWNLOAD OPTIONS -->
-    <div id="downloadOptions" style="display:none;">
-      <p>Select Quality:</p>
-      <button onclick="downloadMovie('480')">480p (300MB)</button>
-      <button onclick="downloadMovie('720')">720p (700MB)</button>
-      <button onclick="downloadMovie('1080')">1080p (1.5GB)</button>
+        <!-- ACTION BUTTONS -->
+        <button id="playBtn">▶ Play Movie</button>
+        <button id="trailerBtn">🎬 Watch Trailer</button>
+        <button id="downloadToggle">⬇ Download</button>
+        <button id="watchListBtn" onclick="addToWatchListPopup()">+ Watch List</button>
+
+        <!-- DOWNLOAD OPTIONS -->
+        <div id="downloadOptions" style="display:none;">
+          <p>Select Quality:</p>
+          <button onclick="downloadMovie('480')">480p (300MB)</button>
+          <button onclick="downloadMovie('720')">720p (700MB)</button>
+          <button onclick="downloadMovie('1080')">1080p (1.5GB)</button>
+        </div>
+
+        <!-- SERIES (hidden by default) -->
+        <div id="seriesSection" style="display:none;">
+          <p>Episodes:</p>
+          <select id="episodeSelect"></select>
+        </div>
+      </div>
     </div>
-
-    <!-- SERIES (hidden by default) -->
-    <div id="seriesSection" style="display:none;">
-      <p>Episodes:</p>
-      <select id="episodeSelect"></select>
-    </div>
-
-  </div>
 </div>
-</div>
+
 <!-- NAV PLACEHOLDER -->
 <div id="nav-placeholder"></div>
 <div id="videoContainer"></div>
+
 <script src="movies.js"></script>
 <script src="video.js"></script>
 <script src="nav.js"></script>
