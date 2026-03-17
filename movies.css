@@ -7,11 +7,35 @@ body { margin:0; padding:0; font-family: system-ui,Segoe UI,Roboto,-apple-system
 .search i { color:#34d399; font-size:18px; margin-right:8px; }
 .search input { flex:1; background:transparent; border:none; outline:none; color:white; font-size:14px; }
 
-/* CATEGORY BUTTONS */
-.nav-tabs { display:flex; overflow-x:auto; gap:10px; padding:10px; }
-.nav-tabs::-webkit-scrollbar { display:none; }
-.nav-item { padding:8px 16px; border-radius:20px; background:#0b1222; border:1px solid #1f2937; cursor:pointer; white-space:nowrap; font-size:14px; color:#e6e6e6; font-weight:600; }
-.nav-item.active { background:#34d399; color:black; }
+/* Category nav on top */
+.nav-tabs {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 8px 12px;
+}
+
+.nav-item {
+    padding: 4px 8px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #e6e6e6;   /* neutral, not green */
+    background: transparent;
+    border-radius: 0; /* no rounding */
+    white-space: nowrap;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.nav-item:hover {
+    color: #34d399; /* subtle hover effect */
+}
+
+.nav-item.active {
+    color: #34d399; /* just text green, no bg, no round */
+    background: transparent;
+    border-radius: 0;
+}
 
 /* HERO SECTION */
 .hero { margin:12px; border-radius:12px; overflow:hidden; position:relative; height:200px; display:flex; flex-direction:column; justify-content:flex-end; padding:12px; color:white; background-size:cover; background-position:center; transition: background-image 0.8s ease-in-out; }
