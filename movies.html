@@ -56,15 +56,15 @@
 
 </div>
 
-<!-- POPUP -->
+<!-- Popup for watching movie/trailer -->
 <div class="popup" id="popup">
-    <div class="popup-content">
-        <span class="close" onclick="closePopup()">×</span>
-        <img id="popupImage" src="" alt="Movie Poster">
-        <h2 id="popupTitle">Movie Title</h2>
-        <p id="popupDesc">Movie description goes here...</p>
-        <div class="download-btn">Download</div>
-    </div>
+  <div class="popup-content">
+    <span class="close" onclick="closePopup()">×</span>
+    <video id="popupVideo" controls></video>
+    <h2 id="popupTitle">Movie Title</h2>
+    <p id="popupDesc">Movie description...</p>
+    <button class="download-btn" onclick="addToWatchList()">+ Watch List</button>
+  </div>
 </div>
 
 <!-- NAV PLACEHOLDER -->
