@@ -99,7 +99,7 @@ function updateHero(movie){
 }
 // ================= RENDER MOVIES =================
 function renderMovies(category, movies){
-  showLoading();
+ //showLoading();//
   setTimeout(()=>{
     moviesSections.innerHTML="";
     const section = document.createElement("div");
@@ -109,7 +109,7 @@ function renderMovies(category, movies){
     movies.forEach(m=>container.appendChild(createMovieCard(m)));
     section.appendChild(container);
     moviesSections.appendChild(section);
-    hideLoading();
+   //hideLoading();//
   },300);
 }
 
