@@ -1,113 +1,237 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Movies App</title>
-<link rel="stylesheet" href="movies.css">
-<link rel="stylesheet" href="nav.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<link rel="stylesheet" href="video.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crunk Movies - Stream Latest Movies & Series</title>
+    
+    <!-- Preconnect to TMDB API for faster loading -->
+    <link rel="preconnect" href="https://api.themoviedb.org">
+    <link rel="preconnect" href="https://image.tmdb.org">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="movies.css">
+    <link rel="stylesheet" href="nav.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="video.css">
+    
+    <!-- Meta tags for better SEO and mobile experience -->
+    <meta name="description" content="Watch the latest movies and series online in HD quality. Free streaming platform with thousands of titles.">
+    <meta name="keywords" content="movies, streaming, watch online, HD movies, series">
+    <meta name="author" content="Crunk Movies">
+    
+    <!-- Open Graph tags for social sharing -->
+    <meta property="og:title" content="Crunk Movies">
+    <meta property="og:description" content="Watch the latest movies and series online">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="https://via.placeholder.com/1200x630">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
 
 <div class="app">
-    <h1 class="page-heading">Crunk movies</h1>
+    <!-- HEADER SECTION -->
+    <header class="header">
+        <h1 class="page-heading">
+            <i class="fas fa-film" aria-hidden="true"></i>
+            Crunk Movies
+        </h1>
+        
+        <!-- USER MENU (optional) -->
+        <div class="user-menu">
+            <button class="user-menu-btn" aria-label="User menu">
+                <i class="fas fa-user-circle"></i>
+            </button>
+        </div>
+    </header>
 
-    <!-- LOADING DOTS -->
-    <div id="loading">
-        <div class="loading-dots">
+    <!-- LOADING DOTS - Improved accessibility -->
+    <div id="loading" class="loading-overlay" role="status" aria-label="Loading content">
+        <div class="loading-dots" aria-hidden="true">
             <span></span>
             <span></span>
             <span></span>
         </div>
+        <span class="sr-only">Loading...</span>
     </div>
 
-    <!-- SEARCH BAR -->
-    <div class="search">
-        <i class="fa fa-search"></i>
-        <input type="text" id="searchInput" placeholder="Explore movies, series...">
+    <!-- SEARCH SECTION -->
+    <div class="search-container">
+        <div class="search">
+            <i class="fa fa-search" aria-hidden="true"></i>
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Explore movies, series..." 
+                aria-label="Search movies and series"
+                autocomplete="off"
+            >
+            <button class="search-clear" id="searchClear" aria-label="Clear search">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div id="searchResults" class="search-results" role="listbox" aria-label="Search results"></div>
     </div>
-<div id="searchResults" class="search-results"></div>
-    <!-- CATEGORY BUTTONS -->
-    <nav class="nav-tabs hide-scrollbar" id="categoriesNav">
-        <div class="nav-item active" data-category="for-you">For You</div>
-        <div class="nav-item" data-category="movie">Movies</div>
-        <div class="nav-item" data-category="series">Series</div>
-        <div class="nav-item" data-category="action">Action</div>
-        <div class="nav-item" data-category="horror">Horror</div>
-        <div class="nav-item" data-category="adventure">Adventure</div>
-        <div class="nav-item" data-category="drama">Drama</div>
-        <div class="nav-item" data-category="comedy">Comedy</div>
-        <div class="nav-item" data-category="top-rating">Top Rating</div>
+
+    <!-- CATEGORY NAVIGATION -->
+    <nav class="nav-tabs hide-scrollbar" id="categoriesNav" aria-label="Movie categories">
+        <div class="nav-item active" data-category="for-you" role="button" tabindex="0">For You</div>
+        <div class="nav-item" data-category="trending" role="button" tabindex="0">Trending</div>
+        <div class="nav-item" data-category="action" role="button" tabindex="0">Action</div>
+        <div class="nav-item" data-category="horror" role="button" tabindex="0">Horror</div>
+        <div class="nav-item" data-category="adventure" role="button" tabindex="0">Adventure</div>
+        <div class="nav-item" data-category="comedy" role="button" tabindex="0">Comedy</div>
+        <div class="nav-item" data-category="drama" role="button" tabindex="0">Drama</div>
+        <div class="nav-item" data-category="top-rating" role="button" tabindex="0">Top Rated</div>
     </nav>
 
-    <!-- HERO SECTION -->
-    <div class="hero" id="heroSection">
-        <div class="hero-badge" id="heroBadge">Free</div>
-        <div class="hero-title" id="heroTitle">THE LAST STAND</div>
-        <div class="hero-meta" id="heroMeta">
-            <span class="star">★</span> 9.8 &nbsp;|&nbsp; 2024 &nbsp;|&nbsp; 18+ &nbsp;|&nbsp; Action
+    <!-- HERO SECTION - Featured Movie -->
+    <section class="hero-section">
+        <div class="hero" id="heroSection" role="banner" aria-label="Featured movie">
+            <div class="hero-content">
+                <div class="hero-badge" id="heroBadge">HD</div>
+                <h2 class="hero-title" id="heroTitle">THE LAST STAND</h2>
+                <div class="hero-meta" id="heroMeta">
+                    <span class="star" aria-hidden="true">★</span> 
+                    <span class="rating">9.8</span> 
+                    <span class="separator">|</span> 
+                    <span class="year">2024</span> 
+                    <span class="separator">|</span> 
+                    <span class="age-rating">18+</span> 
+                    <span class="separator">|</span> 
+                    <span class="type">Action</span>
+                </div>
+                <div class="hero-actions">
+                    <button class="hero-play-btn" onclick="goToVideo(heroData[heroIndex]?.id)" aria-label="Play movie">
+                        <i class="fas fa-play" aria-hidden="true"></i> Play Now
+                    </button>
+                    <button class="hero-info-btn" onclick="showMovieInfo(heroData[heroIndex])" aria-label="More info">
+                        <i class="fas fa-info-circle" aria-hidden="true"></i> More Info
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
+        
+        <!-- Hero indicators/dots -->
+        <div class="hero-indicators" id="heroIndicators">
+            <!-- JS will populate these -->
+        </div>
+    </section>
 
-    <!-- MOVIES SECTIONS -->
-    <div id="moviesSections">
+    <!-- MOVIES SECTIONS - Dynamic content -->
+    <main id="moviesSections" class="movies-container">
         <!-- JS will inject carousels here -->
+    </main>
+
+    <!-- ERROR MESSAGE (hidden by default) -->
+    <div id="errorMessage" class="error-message" style="display: none;">
+        <i class="fas fa-exclamation-circle"></i>
+        <span></span>
+        <button class="retry-btn">Retry</button>
     </div>
 
-    <!-- WATCH POPUP -->
-    <div class="popup" id="watchPopup">
-      <div class="popup-content">
-        <span class="close" onclick="closeWatchPopup()">×</span>
+    <!-- BACK TO TOP BUTTON -->
+    <button id="backToTop" class="back-to-top" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 
-        <!-- IMAGE -->
-        <img id="watchPopupImage" src="" alt="Movie Poster">
+    <!-- WATCH POPUP / MODAL -->
+    <div class="popup" id="watchPopup" role="dialog" aria-modal="true" aria-labelledby="watchPopupTitle">
+        <div class="popup-content">
+            <button class="close" onclick="closeWatchPopup()" aria-label="Close popup">×</button>
 
-        <!-- VIDEO -->
-        <iframe id="watchPopupVideo" allowfullscreen></iframe>
+            <div class="popup-grid">
+                <!-- IMAGE SECTION -->
+                <div class="popup-image">
+                    <img id="watchPopupImage" src="https://via.placeholder.com/300x450" alt="Movie Poster">
+                </div>
 
-        <!-- INFO -->
-        <h2 id="watchPopupTitle">Movie Title</h2>
-        <p id="watchPopupDesc">Movie description...</p>
+                <!-- VIDEO SECTION -->
+                <div class="popup-video-container">
+                    <iframe id="watchPopupVideo" allowfullscreen title="Movie video player"></iframe>
+                </div>
 
-        <!-- QUALITY -->
-        <select id="qualitySelect">
-          <option value="480">480p</option>
-          <option value="720">720p</option>
-          <option value="1080">1080p</option>
-        </select>
+                <!-- INFO SECTION -->
+                <div class="popup-info">
+                    <h2 id="watchPopupTitle">Movie Title</h2>
+                    <p id="watchPopupDesc" class="popup-description">Movie description...</p>
+                    
+                    <div class="popup-meta">
+                        <span class="popup-rating">⭐ <span id="popupRating">0.0</span></span>
+                        <span class="popup-year" id="popupYear">2024</span>
+                        <span class="popup-runtime" id="popupRuntime">120 min</span>
+                    </div>
+                </div>
 
-        <!-- ACTION BUTTONS -->
-        <button id="playBtn">▶ Play Movie</button>
-        <button id="trailerBtn">🎬 Watch Trailer</button>
-        <button id="downloadToggle">⬇ Download</button>
-        <button id="watchListBtn" onclick="addToWatchListPopup()">+ Watch List</button>
+                <!-- ACTIONS SECTION -->
+                <div class="popup-actions">
+                    <!-- QUALITY SELECTOR -->
+                    <div class="quality-selector">
+                        <label for="qualitySelect">Quality:</label>
+                        <select id="qualitySelect">
+                            <option value="480">480p</option>
+                            <option value="720" selected>720p</option>
+                            <option value="1080">1080p</option>
+                            <option value="4K">4K</option>
+                        </select>
+                    </div>
 
-        <!-- DOWNLOAD OPTIONS -->
-        <div id="downloadOptions" style="display:none;">
-          <p>Select Quality:</p>
-          <button onclick="downloadMovie('480')">480p (300MB)</button>
-          <button onclick="downloadMovie('720')">720p (700MB)</button>
-          <button onclick="downloadMovie('1080')">1080p (1.5GB)</button>
+                    <!-- BUTTONS -->
+                    <div class="action-buttons">
+                        <button id="playBtn" class="btn-primary">
+                            <i class="fas fa-play" aria-hidden="true"></i> Play Movie
+                        </button>
+                        <button id="trailerBtn" class="btn-secondary">
+                            <i class="fab fa-youtube" aria-hidden="true"></i> Trailer
+                        </button>
+                        <button id="watchListBtn" class="btn-outline" onclick="addToWatchListPopup()">
+                            <i class="fas fa-plus" aria-hidden="true"></i> Watch List
+                        </button>
+                        <button id="downloadToggle" class="btn-outline">
+                            <i class="fas fa-download" aria-hidden="true"></i> Download
+                        </button>
+                    </div>
+
+                    <!-- DOWNLOAD OPTIONS (hidden by default) -->
+                    <div id="downloadOptions" class="download-options" style="display:none;">
+                        <p>Select Quality:</p>
+                        <div class="download-buttons">
+                            <button onclick="downloadMovie('480')">480p (300MB)</button>
+                            <button onclick="downloadMovie('720')">720p (700MB)</button>
+                            <button onclick="downloadMovie('1080')">1080p (1.5GB)</button>
+                        </div>
+                    </div>
+
+                    <!-- SERIES SECTION (hidden by default) -->
+                    <div id="seriesSection" class="series-section" style="display:none;">
+                        <label for="episodeSelect">Episodes:</label>
+                        <select id="episodeSelect"></select>
+                    </div>
+                </div>
+            </div>
         </div>
-
-        <!-- SERIES (hidden by default) -->
-        <div id="seriesSection" style="display:none;">
-          <p>Episodes:</p>
-          <select id="episodeSelect"></select>
-        </div>
-      </div>
     </div>
+
+    <!-- FOOTER (optional) -->
+    <footer class="footer">
+        <p>&copy; 2024 Crunk Movies. All rights reserved.</p>
+        <nav class="footer-nav">
+            <a href="#">Terms</a>
+            <a href="#">Privacy</a>
+            <a href="#">Contact</a>
+        </nav>
+    </footer>
 </div>
 
-<!-- NAV PLACEHOLDER -->
+<!-- NAVIGATION PLACEHOLDER -->
 <div id="nav-placeholder"></div>
 <div id="videoContainer"></div>
 
+<!-- SCRIPTS - Load in optimal order -->
 <script src="movies.js"></script>
 <script src="video.js"></script>
 <script src="nav.js"></script>
-
 </body>
 </html>
