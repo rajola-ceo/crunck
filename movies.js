@@ -13,11 +13,11 @@ const backToTopBtn = document.getElementById("backToTop");
 
 // ================= PROFILE ELEMENTS =================
 const profileAvatar = document.getElementById("profileAvatar");
-const profileDropdown = document.getElementById("profileDropdown");
 const profileMenu = document.getElementById("profileMenu");
 const profileName = document.getElementById("profileName");
 const profileEmail = document.getElementById("profileEmail");
 const logoutBtn = document.getElementById("logoutBtn");
+const loginBtn = document.getElementById("loginBtn");
 
 // ================= TMDB CONFIG =================
 const TMDB_KEY = "2a48fa3779af50f428b6d5f73d4d8ba7"; 
@@ -27,12 +27,9 @@ const IMG_BASE_LARGE = "https://image.tmdb.org/t/p/w1280";
 
 // Cache for movie data
 const movieCache = new Map();
-const genreCache = new Map();
 
 // State management
-let currentPage = 1;
-let isLoading = false;
-let currentCategory = "trending";
+let currentCategory = "for-you";
 let currentGenreId = "";
 let heroData = [];
 let heroIndex = 0;
@@ -46,9 +43,13 @@ function initializeProfile() {
     if (user) {
         // User is logged in - show profile
         updateProfileUI(user);
+        if (logoutBtn) logoutBtn.style.display = "flex";
+        if (loginBtn) loginBtn.style.display = "none";
     } else {
         // No user - show login option
         showLoginOption();
+        if (logoutBtn) logoutBtn.style.display = "none";
+        if (loginBtn) loginBtn.style.display = "flex";
     }
     
     // Setup profile dropdown
@@ -61,7 +62,9 @@ function initializeProfile() {
     
     // Close dropdown when clicking outside
     document.addEventListener("click", (e) => {
-        if (profileMenu && !profileAvatar.contains(e.target) && !profileMenu.contains(e.target)) {
+        if (profileMenu && profileAvatar && 
+            !profileAvatar.contains(e.target) && 
+            !profileMenu.contains(e.target)) {
             profileMenu.classList.remove("active");
         }
     });
@@ -70,6 +73,14 @@ function initializeProfile() {
     if (logoutBtn) {
         logoutBtn.addEventListener("click", () => {
             localStorage.removeItem("crunkUser");
+            window.location.href = "index.html";
+        });
+    }
+    
+    // Setup login
+    if (loginBtn) {
+        loginBtn.addEventListener("click", (e) => {
+            e.preventDefault();
             window.location.href = "index.html";
         });
     }
@@ -99,9 +110,6 @@ function updateProfileUI(user) {
 function showLoginOption() {
     if (profileAvatar) {
         profileAvatar.innerHTML = `<i class="fas fa-user-circle"></i>`;
-        profileAvatar.onclick = () => {
-            window.location.href = "index.html";
-        };
     }
 }
 
@@ -114,7 +122,7 @@ function hideLoading() {
     if (loading) loading.classList.remove("active"); 
 }
 
-// Exponential backoff retry logic
+// Fetch with retry logic
 async function fetchWithRetry(url, retries = 3) {
     for (let i = 0; i < retries; i++) {
         try {
@@ -154,6 +162,8 @@ function updateUrlParams(category, genreId) {
 
 // ================= GENRE MAPPING =================
 const genreMap = {
+    "for-you": { id: "", name: "For You" },
+    "trending": { id: "", name: "Trending" },
     "action": { id: 28, name: "Action" },
     "horror": { id: 27, name: "Horror" },
     "adventure": { id: 12, name: "Adventure" },
@@ -161,16 +171,6 @@ const genreMap = {
     "drama": { id: 18, name: "Drama" },
     "top-rating": { id: "", name: "Top Rated" }
 };
-
-// Update button text with genre names
-function updateCategoryButtons() {
-    categoryBtns.forEach(btn => {
-        const category = btn.dataset.category;
-        if (genreMap[category]?.name) {
-            btn.textContent = genreMap[category].name;
-        }
-    });
-}
 
 // ================= FETCH TRENDING =================
 async function fetchTrending() {
@@ -185,10 +185,37 @@ async function fetchTrending() {
         heroData = data.results.slice(0, 3);
         startHeroSlider();
         renderMovies("for-you", data.results);
+        
+        // Also fetch other categories
+        fetchCategoryMovies("action", 28);
+        fetchCategoryMovies("horror", 27);
+        fetchCategoryMovies("comedy", 35);
+        fetchCategoryMovies("top-rating", "");
+        
     } catch(err) {
         console.error(err);
         hideLoading();
         moviesSections.innerHTML = "<p style='margin:20px;color:#888;'>Error fetching movies. Please try again later.</p>";
+    }
+}
+
+// ================= FETCH CATEGORY MOVIES =================
+async function fetchCategoryMovies(category, genreId) {
+    try {
+        let url;
+        if (genreId) {
+            url = `${TMDB_BASE}/discover/movie?api_key=${TMDB_KEY}&with_genres=${genreId}&sort_by=popularity.desc`;
+        } else if (category === "top-rating") {
+            url = `${TMDB_BASE}/movie/top_rated?api_key=${TMDB_KEY}`;
+        } else {
+            return;
+        }
+        
+        const cacheKey = `${category}`;
+        const data = await fetchWithCache(url, cacheKey);
+        renderMovies(category, data.results.slice(0, 10));
+    } catch(err) {
+        console.error(`Error fetching ${category}:`, err);
     }
 }
 
@@ -200,10 +227,38 @@ function startHeroSlider() {
     if (heroInterval) clearInterval(heroInterval);
     
     updateHero(heroData[heroIndex]);
+    
+    // Create hero indicators
+    const heroIndicators = document.getElementById("heroIndicators");
+    if (heroIndicators) {
+        heroIndicators.innerHTML = "";
+        heroData.forEach((_, i) => {
+            const dot = document.createElement("span");
+            dot.className = `hero-dot ${i === heroIndex ? 'active' : ''}`;
+            dot.onclick = () => {
+                heroIndex = i;
+                updateHero(heroData[heroIndex]);
+                updateHeroIndicators();
+            };
+            heroIndicators.appendChild(dot);
+        });
+    }
+    
     heroInterval = setInterval(() => {
         heroIndex = (heroIndex + 1) % heroData.length;
         updateHero(heroData[heroIndex]);
+        updateHeroIndicators();
     }, 5000);
+}
+
+function updateHeroIndicators() {
+    const heroIndicators = document.getElementById("heroIndicators");
+    if (heroIndicators) {
+        const dots = heroIndicators.querySelectorAll(".hero-dot");
+        dots.forEach((dot, i) => {
+            dot.classList.toggle("active", i === heroIndex);
+        });
+    }
 }
 
 // ================= BADGE GENERATOR =================
@@ -218,7 +273,7 @@ function getMovieBadge(movie) {
     return badge;
 }
 
-// ================= CREATE CARD WITH BADGES =================
+// ================= CREATE CARD =================
 function createMovieCard(movie) {
     const card = document.createElement("div");
     card.classList.add("movie-card");
@@ -229,22 +284,14 @@ function createMovieCard(movie) {
     const year = movie.release_date ? movie.release_date.slice(0, 4) : 'N/A';
 
     card.innerHTML = `
-        <div class="movie-card-inner">
-            <img src="${posterUrl}" 
-                 alt="${movie.title}"
-                 loading="lazy"
-                 onerror="this.src='https://via.placeholder.com/300x450?text=🎬'">
-            <div class="movie-overlay">
-                <span class="movie-badge ${badge.toLowerCase()}">${badge}</span>
-                <span class="movie-rating"><i class="fas fa-star"></i> ${rating}</span>
-            </div>
-            <div class="movie-info">
-                <h3 class="movie-title">${movie.title}</h3>
-                <div class="movie-meta">
-                    <span class="movie-year">${year}</span>
-                    <span class="movie-type">Movie</span>
-                </div>
-            </div>
+        <img src="${posterUrl}" 
+             alt="${movie.title}"
+             loading="lazy"
+             onerror="this.src='https://via.placeholder.com/300x450?text=🎬'">
+        <div class="overlay">${badge}</div>
+        <div class="movie-info">
+            <div class="movie-title">${movie.title}</div>
+            <div class="movie-sub">${year} • ⭐ ${rating}</div>
         </div>
     `;
 
@@ -262,8 +309,6 @@ function updateHero(movie) {
         : IMG_BASE_LARGE + movie.poster_path;
     
     hero.style.backgroundImage = `url(${backdropUrl})`;
-    hero.style.backgroundSize = 'cover';
-    hero.style.backgroundPosition = 'center';
 
     const badge = getMovieBadge(movie);
     const year = movie.release_date?.slice(0, 4) || "N/A";
@@ -275,92 +320,41 @@ function updateHero(movie) {
     heroMeta.innerHTML = `<i class="fas fa-star"></i> ${rating} | ${year} | ${adult} | Movie`;
 }
 
-// ================= RENDER MOVIES =================
-function renderMovies(category, movies, append = false) {
-    showLoading();
-
-    setTimeout(() => {
-        if (!append) {
-            moviesSections.innerHTML = "";
-        }
-
-        let section = document.querySelector(`.carousel[data-category="${category}"]`);
-        
-        if (!section) {
-            section = document.createElement("div");
-            section.classList.add("carousel");
-            section.dataset.category = category;
-            
-            const title = document.createElement("h2");
-            title.classList.add("carousel-title");
-            title.textContent = category.split('-').map(word => 
-                word.charAt(0).toUpperCase() + word.slice(1)
-            ).join(' ');
-            
-            section.appendChild(title);
-            
-            const container = document.createElement("div");
-            container.classList.add("movies-grid");
-            section.appendChild(container);
-            
-            if (!append) {
-                moviesSections.appendChild(section);
-            }
-        }
-
-        const container = section.querySelector(".movies-grid");
-        
-        movies.forEach(movie => {
-            const card = createMovieCard(movie);
-            container.appendChild(card);
-        });
-
-        hideLoading();
-    }, 300);
-}
-
-// ================= APPEND MOVIES FOR INFINITE SCROLL =================
-function appendMovies(movies) {
-    const container = document.querySelector(`.carousel[data-category="${currentCategory}"] .movies-grid`);
-    if (container) {
-        movies.forEach(movie => {
-            const card = createMovieCard(movie);
-            container.appendChild(card);
-        });
-    } else {
-        renderMovies(currentCategory, movies, true);
-    }
-}
-
-// ================= LOAD MORE MOVIES (INFINITE SCROLL) =================
-async function loadMoreMovies() {
-    if (isLoading) return;
+// ================= RENDER MOVIES (HORIZONTAL CAROUSEL) =================
+function renderMovies(category, movies) {
+    // Check if section already exists
+    let section = document.querySelector(`.carousel[data-category="${category}"]`);
     
-    const scrollPosition = window.innerHeight + window.scrollY;
-    const threshold = document.documentElement.scrollHeight - 1000;
-    
-    if (scrollPosition >= threshold) {
-        isLoading = true;
-        currentPage++;
+    if (!section) {
+        // Create new section
+        section = document.createElement("div");
+        section.classList.add("carousel");
+        section.dataset.category = category;
+
+        // Add title
+        const title = document.createElement("h2");
+        title.classList.add("carousel-title");
+        title.textContent = genreMap[category]?.name || category.split('-').map(word => 
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+        section.appendChild(title);
+
+        // Create horizontal scroll container
+        const container = document.createElement("div");
+        container.classList.add("carousel-container");
+        section.appendChild(container);
         
-        try {
-            let url;
-            if (currentGenreId) {
-                url = `${TMDB_BASE}/discover/movie?api_key=${TMDB_KEY}&with_genres=${currentGenreId}&page=${currentPage}`;
-            } else {
-                url = `${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}&page=${currentPage}`;
-            }
-            
-            const data = await fetchWithRetry(url);
-            if (data.results && data.results.length > 0) {
-                appendMovies(data.results);
-            }
-        } catch(err) {
-            console.error("Error loading more movies:", err);
-        } finally {
-            isLoading = false;
-        }
+        moviesSections.appendChild(section);
     }
+
+    const container = section.querySelector(".carousel-container");
+    container.innerHTML = ""; // Clear existing
+    
+    // Add movies
+    movies.forEach(movie => {
+        const card = createMovieCard(movie);
+        container.appendChild(card);
+    });
 }
 
 // ================= CATEGORY BUTTONS =================
@@ -371,8 +365,7 @@ function initializeCategoryButtons() {
             categoryBtns.forEach(b => b.classList.remove("active"));
             btn.classList.add("active");
             
-            // Reset pagination
-            currentPage = 1;
+            // Update category
             currentCategory = btn.dataset.category;
             currentGenreId = genreMap[currentCategory]?.id || "";
             
@@ -387,16 +380,24 @@ function initializeCategoryButtons() {
                     url = `${TMDB_BASE}/discover/movie?api_key=${TMDB_KEY}&with_genres=${currentGenreId}&sort_by=popularity.desc`;
                 } else if (currentCategory === "top-rating") {
                     url = `${TMDB_BASE}/movie/top_rated?api_key=${TMDB_KEY}`;
+                } else if (currentCategory === "trending") {
+                    url = `${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`;
                 } else {
                     url = `${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`;
                 }
                 
-                const cacheKey = `${currentCategory}-page1`;
+                const cacheKey = `${currentCategory}`;
                 const data = await fetchWithCache(url, cacheKey);
+                
+                // Scroll to top smoothly
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+                // Clear and render only this category
+                moviesSections.innerHTML = "";
                 renderMovies(currentCategory, data.results);
+                
             } catch(err) {
                 console.error(err);
-                moviesSections.innerHTML = "<p style='margin:20px;color:#888;'>Error fetching movies</p>";
             } finally {
                 hideLoading();
             }
@@ -449,7 +450,6 @@ function initializeSearch() {
                         
                         item.innerHTML = `
                             <img src="${posterUrl}" 
-                                 style="width:40px;height:60px;border-radius:6px;object-fit:cover;" 
                                  alt="${movie.title}"
                                  loading="lazy"
                                  onerror="this.src='https://via.placeholder.com/50?text=🎬'">
@@ -461,6 +461,9 @@ function initializeSearch() {
                         
                         item.onclick = () => {
                             window.location.href = `video.html?id=${movie.id}`;
+                            searchResults.classList.remove("active");
+                            searchInput.value = "";
+                            if (searchClear) searchClear.style.display = "none";
                         };
                         
                         searchResults.appendChild(item);
@@ -508,7 +511,6 @@ function initializeClickOutsideHandler() {
 function handleDeepLinking() {
     const urlParams = new URLSearchParams(window.location.search);
     const category = urlParams.get('category');
-    const genre = urlParams.get('genre');
     
     if (category) {
         const btn = document.querySelector(`[data-category="${category}"]`);
@@ -555,13 +557,29 @@ function initializeKeyboardNav() {
     });
 }
 
+// ================= TOAST NOTIFICATION =================
+function showToast(message) {
+    const toastContainer = document.getElementById('toastContainer');
+    if (!toastContainer) return;
+    
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }, 100);
+}
+
 // ================= INITIALIZE =================
 function initializeApp() {
     // Initialize profile
     initializeProfile();
-    
-    // Update button names
-    updateCategoryButtons();
     
     // Initialize features
     initializeCategoryButtons();
@@ -573,14 +591,16 @@ function initializeApp() {
     // Fetch initial data
     fetchTrending();
     
-    // Setup infinite scroll
-    window.addEventListener('scroll', loadMoreMovies);
-    
     // Handle deep linking
     handleDeepLinking();
     
     // Handle back/forward buttons
     window.addEventListener('popstate', handleDeepLinking);
+    
+    // Show welcome toast
+    setTimeout(() => {
+        showToast("Welcome to Crunk Movies! 🎬");
+    }, 2000);
 }
 
 // Start the app when DOM is ready
@@ -590,3 +610,7 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 window.addEventListener('beforeunload', () => {
     if (heroInterval) clearInterval(heroInterval);
 });
+
+// ================= EXPOSE GLOBALLY =================
+window.goToVideo = goToVideo;
+window.showToast = showToast;
