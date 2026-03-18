@@ -4,116 +4,317 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Crunk Movies - Stream Latest Movies</title>
+    
+    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="movies.css">
     <link rel="stylesheet" href="nav.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+    
+    <!-- Meta tags -->
+    <meta name="description" content="Stream the latest movies on Crunk Movies - Your ultimate entertainment destination">
+    <meta name="keywords" content="movies, streaming, watch online, HD movies">
 </head>
 <body>
-    <!-- Top Bar with Profile -->
-    <div class="top-bar">
-        <div class="logo">
-            <i class="fas fa-film"></i>
-            <span>Crunk Movies</span>
-        </div>
-        
-        <div class="top-bar-right">
-            <!-- Search Bar (compact) -->
-            <div class="top-search">
-                <i class="fas fa-search"></i>
-                <input type="text" id="searchInput" placeholder="Search movies...">
-                <button class="search-clear" id="searchClear"><i class="fas fa-times"></i></button>
+    <div class="app">
+        <!-- Top Bar with Profile -->
+        <div class="top-bar">
+            <div class="logo">
+                <i class="fas fa-film"></i>
+                <span>Crunk Movies</span>
             </div>
             
-            <!-- Profile Avatar -->
-            <div class="profile-container">
-                <div class="profile-avatar" id="profileAvatar">
-                    <!-- Will be populated by JS -->
+            <div class="top-bar-right">
+                <!-- Search Bar (compact) -->
+                <div class="top-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search movies..." autocomplete="off">
+                    <button class="search-clear" id="searchClear"><i class="fas fa-times"></i></button>
                 </div>
                 
-                <!-- Profile Dropdown Menu -->
-                <div class="profile-menu" id="profileMenu">
-                    <div class="profile-header">
-                        <div class="profile-info">
-                            <span class="profile-name" id="profileName">User</span>
-                            <span class="profile-email" id="profileEmail">user@example.com</span>
+                <!-- Profile Avatar -->
+                <div class="profile-container">
+                    <div class="profile-avatar" id="profileAvatar">
+                        <!-- Will be populated by JS -->
+                    </div>
+                    
+                    <!-- Profile Dropdown Menu -->
+                    <div class="profile-menu" id="profileMenu">
+                        <div class="profile-header">
+                            <div class="profile-info">
+                                <span class="profile-name" id="profileName">Guest User</span>
+                                <span class="profile-email" id="profileEmail">guest@example.com</span>
+                            </div>
+                        </div>
+                        <div class="profile-divider"></div>
+                        <a href="profile.html" class="profile-menu-item">
+                            <i class="fas fa-user"></i> My Profile
+                        </a>
+                        <a href="watchlist.html" class="profile-menu-item">
+                            <i class="fas fa-list"></i> Watchlist
+                        </a>
+                        <a href="downloads.html" class="profile-menu-item">
+                            <i class="fas fa-download"></i> Downloads
+                        </a>
+                        <a href="settings.html" class="profile-menu-item">
+                            <i class="fas fa-cog"></i> Settings
+                        </a>
+                        <div class="profile-divider"></div>
+                        <a href="#" class="profile-menu-item" onclick="toggleTheme()">
+                            <i class="fas fa-moon"></i> Dark/Light Mode
+                        </a>
+                        <div class="profile-divider"></div>
+                        <button class="profile-menu-item logout" id="logoutBtn">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </button>
+                        <a href="login.html" class="profile-menu-item login" id="loginBtn" style="display: none;">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search Results Dropdown -->
+        <div id="searchResults" class="search-results"></div>
+
+        <!-- Category Navigation -->
+        <nav class="category-nav" id="categoriesNav">
+            <div class="nav-item active" data-category="for-you" tabindex="0">For You</div>
+            <div class="nav-item" data-category="trending" tabindex="0">Trending</div>
+            <div class="nav-item" data-category="action" tabindex="0">Action</div>
+            <div class="nav-item" data-category="horror" tabindex="0">Horror</div>
+            <div class="nav-item" data-category="adventure" tabindex="0">Adventure</div>
+            <div class="nav-item" data-category="comedy" tabindex="0">Comedy</div>
+            <div class="nav-item" data-category="drama" tabindex="0">Drama</div>
+            <div class="nav-item" data-category="top-rating" tabindex="0">Top Rated</div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero" id="heroSection">
+                <div class="hero-content">
+                    <div class="hero-badge" id="heroBadge">HD</div>
+                    <h1 class="hero-title" id="heroTitle">Loading...</h1>
+                    <div class="hero-meta" id="heroMeta">
+                        <i class="fas fa-star"></i> <span id="heroRating">0.0</span> | 
+                        <span id="heroYear">2024</span> | 
+                        <span id="heroAge">All</span> | 
+                        <span id="heroType">Movie</span>
+                    </div>
+                    <div class="hero-actions">
+                        <button class="hero-play-btn" id="heroPlayBtn">
+                            <i class="fas fa-play"></i> Play Now
+                        </button>
+                        <button class="hero-info-btn" id="heroInfoBtn">
+                            <i class="fas fa-info-circle"></i> More Info
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="hero-indicators" id="heroIndicators"></div>
+        </section>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="loading-overlay">
+            <div class="loading-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="sr-only">Loading...</span>
+        </div>
+
+        <!-- Movies Sections (Carousels) -->
+        <main id="moviesSections" class="movies-container">
+            <!-- JS will populate carousels here -->
+        </main>
+
+        <!-- Error Message (hidden by default) -->
+        <div id="errorMessage" class="error-message" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            <span id="errorText"></span>
+            <button class="retry-btn" id="retryBtn">Retry</button>
+        </div>
+
+        <!-- Back to Top Button -->
+        <button id="backToTop" class="back-to-top" aria-label="Back to top">
+            <i class="fas fa-arrow-up"></i>
+        </button>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <p>&copyright; 2026 venocyber. All rights reserved.</p>
+                <div class="footer-nav">
+                    <a href="terms.html">Terms</a>
+                    <a href="privacy.html">Privacy</a>
+                    <a href="contact.html">Contact</a>
+                    <a href="about.html">About</a>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Navigation Placeholder -->
+    <div id="nav-placeholder"></div>
+
+    <!-- Movie Watch Popup Modal -->
+    <div class="popup" id="watchPopup">
+        <div class="popup-content">
+            <span class="close" onclick="closeWatchPopup()">×</span>
+            
+            <div class="popup-grid">
+                <!-- Image Section -->
+                <div class="popup-image">
+                    <img id="watchPopupImage" src="https://via.placeholder.com/300x450?text=🎬" alt="Movie Poster">
+                </div>
+
+                <!-- Video Section -->
+                <div class="popup-video-container">
+                    <iframe id="watchPopupVideo" allowfullscreen title="Movie video player"></iframe>
+                </div>
+
+                <!-- Info Section -->
+                <div class="popup-info">
+                    <h2 id="watchPopupTitle">Movie Title</h2>
+                    <p id="watchPopupDesc" class="popup-description">Movie description...</p>
+                    
+                    <div class="popup-meta">
+                        <span class="popup-rating"><i class="fas fa-star"></i> <span id="popupRating">0.0</span></span>
+                        <span class="popup-year"><i class="fas fa-calendar"></i> <span id="popupYear">2024</span></span>
+                        <span class="popup-runtime"><i class="fas fa-clock"></i> <span id="popupRuntime">120</span> min</span>
+                    </div>
+                </div>
+
+                <!-- Actions Section -->
+                <div class="popup-actions">
+                    <!-- Quality Selector -->
+                    <div class="quality-selector">
+                        <label for="qualitySelect">Quality:</label>
+                        <select id="qualitySelect">
+                            <option value="480">480p</option>
+                            <option value="720" selected>720p</option>
+                            <option value="1080">1080p</option>
+                            <option value="4K">4K</option>
+                        </select>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button class="btn-primary" id="playBtn">
+                            <i class="fas fa-play"></i> Play Movie
+                        </button>
+                        <button class="btn-secondary" id="trailerBtn" disabled>
+                            <i class="fab fa-youtube"></i> Trailer
+                        </button>
+                        <button class="btn-outline" id="watchListBtn">
+                            <i class="fas fa-plus"></i> Watch List
+                        </button>
+                        <button class="btn-outline" id="downloadBtn">
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </div>
+
+                    <!-- Download Options (hidden by default) -->
+                    <div id="downloadOptions" class="download-options" style="display:none;">
+                        <p>Select Quality:</p>
+                        <div class="download-buttons">
+                            <button id="download480">480p (300MB)</button>
+                            <button id="download720">720p (700MB)</button>
+                            <button id="download1080">1080p (1.5GB)</button>
                         </div>
                     </div>
-                    <div class="profile-divider"></div>
-                    <a href="profile.html" class="profile-menu-item">
-                        <i class="fas fa-user"></i> My Profile
-                    </a>
-                    <a href="watchlist.html" class="profile-menu-item">
-                        <i class="fas fa-list"></i> Watchlist
-                    </a>
-                    <a href="downloads.html" class="profile-menu-item">
-                        <i class="fas fa-download"></i> Downloads
-                    </a>
-                    <a href="settings.html" class="profile-menu-item">
-                        <i class="fas fa-cog"></i> Settings
-                    </a>
-                    <div class="profile-divider"></div>
-                    <button class="profile-menu-item logout" id="logoutBtn">
-                        <i class="fas fa-sign-out-alt"></i> Logout
-                    </button>
+
+                    <!-- Series Section (hidden by default) -->
+                    <div id="seriesSection" class="series-section" style="display:none;">
+                        <label for="episodeSelect">Episodes:</label>
+                        <select id="episodeSelect"></select>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Search Results Dropdown -->
-    <div id="searchResults" class="search-results"></div>
-
-    <!-- Category Navigation -->
-    <nav class="category-nav">
-        <div class="nav-item active" data-category="for-you" tabindex="0">For You</div>
-        <div class="nav-item" data-category="action" tabindex="0">Action</div>
-        <div class="nav-item" data-category="horror" tabindex="0">Horror</div>
-        <div class="nav-item" data-category="adventure" tabindex="0">Adventure</div>
-        <div class="nav-item" data-category="comedy" tabindex="0">Comedy</div>
-        <div class="nav-item" data-category="drama" tabindex="0">Drama</div>
-        <div class="nav-item" data-category="top-rating" tabindex="0">Top Rated</div>
-    </nav>
-
-    <!-- Hero Section -->
-    <section class="hero-section" id="heroSection">
-        <div class="hero-content">
-            <div class="hero-badge" id="heroBadge">HD</div>
-            <h1 class="hero-title" id="heroTitle">Loading...</h1>
-            <div class="hero-meta" id="heroMeta">
-                <i class="fas fa-star"></i> 0.0 | 2024 | All | Movie
-            </div>
-            <div class="hero-actions">
-                <button class="hero-play-btn" onclick="handleHeroPlay()">
-                    <i class="fas fa-play"></i> Play Now
-                </button>
-                <button class="hero-info-btn" onclick="handleHeroInfo()">
-                    <i class="fas fa-info-circle"></i> More Info
-                </button>
-            </div>
-        </div>
-    </section>
-
-    <!-- Loading Indicator -->
-    <div id="loading" class="loading">
-        <div class="loading-dots">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-    </div>
-
-    <!-- Movies Grid Sections -->
-    <main id="moviesSections" class="movies-sections">
-        <!-- JS will populate here -->
-    </main>
-
-    <!-- Back to Top Button -->
-    <button id="backToTop" class="back-to-top">
-        <i class="fas fa-arrow-up"></i>
-    </button>
+    <!-- Toast Container for Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
     <script src="movies.js"></script>
     <script src="nav.js"></script>
+    
+    <!-- Initialize theme and user -->
+    <script>
+        // Check for saved theme
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-theme');
+        }
+        
+        // Toggle theme function
+        window.toggleTheme = function() {
+            document.body.classList.toggle('light-theme');
+            const isLight = document.body.classList.contains('light-theme');
+            localStorage.setItem('theme', isLight ? 'light' : 'dark');
+            
+            // Update icon in profile menu if needed
+            const themeIcon = document.querySelector('.profile-menu-item i.fa-moon, .profile-menu-item i.fa-sun');
+            if (themeIcon) {
+                themeIcon.className = isLight ? 'fas fa-sun' : 'fas fa-moon';
+            }
+        };
+        
+        // Check for logged in user
+        const user = JSON.parse(localStorage.getItem('crunkUser'));
+        if (!user) {
+            // Show login button, hide logout
+            document.getElementById('logoutBtn').style.display = 'none';
+            document.getElementById('loginBtn').style.display = 'flex';
+        } else {
+            // Update profile with user data
+            document.getElementById('profileName').textContent = user.username || user.name || 'User';
+            document.getElementById('profileEmail').textContent = user.email || '';
+            
+            // Set profile avatar
+            const profileAvatar = document.getElementById('profileAvatar');
+            if (user.picture) {
+                profileAvatar.innerHTML = `<img src="${user.picture}" alt="Profile" class="profile-img">`;
+            } else {
+                const initials = (user.username || user.name || 'U').charAt(0).toUpperCase();
+                profileAvatar.innerHTML = `<div class="profile-initials">${initials}</div>`;
+            }
+        }
+        
+        // Logout function
+        document.getElementById('logoutBtn')?.addEventListener('click', function() {
+            localStorage.removeItem('crunkUser');
+            window.location.href = 'index.html';
+        });
+        
+        // Hero play button
+        document.getElementById('heroPlayBtn')?.addEventListener('click', function() {
+            const heroTitle = document.getElementById('heroTitle').textContent;
+            if (heroTitle && heroTitle !== 'Loading...') {
+                // Try to get movie ID from hero data (if available)
+                if (window.heroData && window.heroData[window.heroIndex]) {
+                    window.location.href = `video.html?id=${window.heroData[window.heroIndex].id}`;
+                } else {
+                    alert('Movie not available');
+                }
+            }
+        });
+        
+        // Hero info button
+        document.getElementById('heroInfoBtn')?.addEventListener('click', function() {
+            if (window.heroData && window.heroData[window.heroIndex]) {
+                const movie = window.heroData[window.heroIndex];
+                alert(`${movie.title}\n\nRating: ⭐ ${movie.vote_average}\nRelease: ${movie.release_date}\n\n${movie.overview || 'No description available'}`);
+            }
+        });
+    </script>
 </body>
 </html>
