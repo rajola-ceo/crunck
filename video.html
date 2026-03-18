@@ -1,58 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Movie Player</title>
-<link rel="stylesheet" href="video.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crunk Movies - Video Player</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="video.css">
 </head>
 <body>
-
-<div class="video-page">
-
-    <!-- BACK ARROW -->
-    <div class="back-arrow" onclick="goBack()">
-        <i class="fa fa-arrow-left"></i> Back
-    </div>
-
-    <!-- VIDEO PLAYER -->
-    <div class="video-player">
-        <video id="videoPlayer" controls poster=""></video>
-    </div>
-
-    <!-- MOVIE INFO -->
-    <div class="movie-info">
-        <h1 id="videoTitle">Movie Title</h1>
-        <p id="videoDesc">Movie description...</p>
-
-        <!-- QUALITY SELECT -->
-        <select id="qualitySelect">
-            <option value="480">480p</option>
-            <option value="720">720p</option>
-            <option value="1080">1080p</option>
-        </select>
-
-        <!-- ACTION BUTTONS -->
-        <div class="buttons">
-            <button id="playBtn">▶ Play Movie</button>
-            <button id="trailerBtn">🎬 Watch Trailer</button>
-            <button id="downloadToggle">⬇ Download</button>
-            <button id="watchListBtn">+ Watch List</button>
+    <div class="video-container">
+        <!-- Top Bar with Back Button and Downloads Menu -->
+        <div class="video-top-bar">
+            <button class="back-btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i>
+                <span>Back to Movies</span>
+            </button>
+            
+            <div class="top-right-menu">
+                <!-- Downloads Menu Button -->
+                <div class="downloads-dropdown">
+                    <button class="downloads-btn" id="downloadBtn">
+                        <i class="fas fa-download"></i>
+                        <span>Downloads</span>
+                        <span class="downloads-badge" id="downloadCount">0</span>
+                    </button>
+                    
+                    <!-- Downloads Dropdown Menu -->
+                    <div class="downloads-menu" id="downloadsMenu">
+                        <div class="downloads-header">
+                            <h3>My Downloads</h3>
+                            <button class="clear-downloads" onclick="clearAllDownloads()">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                        <div class="downloads-list" id="downloadsList">
+                            <div class="downloads-empty">No downloads yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <!-- DOWNLOAD OPTIONS -->
-        <div id="downloadOptions" style="display:none;">
-            <p>Select Quality:</p>
-            <button id="download480">480p</button>
-            <button id="download720">720p</button>
-            <button id="download1080">1080p</button>
-        </div>
+        <!-- Main Content -->
+        <div class="video-main">
+            <!-- Video Player Section -->
+            <div class="video-player-section">
+                <video id="videoPlayer" controls poster="https://via.placeholder.com/1280x720">
+                    <source src="" type="video/mp4">
+                </video>
+            </div>
 
+            <!-- Movie Info Section -->
+            <div class="movie-info-section">
+                <div class="movie-poster">
+                    <img id="watchPopupImage" src="https://via.placeholder.com/300x450" alt="Movie Poster">
+                </div>
+                
+                <div class="movie-details">
+                    <h1 id="videoTitle">Loading...</h1>
+                    
+                    <div class="movie-meta">
+                        <span id="movieRating"><i class="fas fa-star"></i> N/A</span>
+                        <span id="movieYear"><i class="fas fa-calendar"></i> N/A</span>
+                        <span id="movieRuntime"><i class="fas fa-clock"></i> N/A</span>
+                        <span id="movieGenre"><i class="fas fa-tag"></i> N/A</span>
+                    </div>
+                    
+                    <p id="videoDesc" class="movie-description">Loading description...</p>
+                    
+                    <!-- Quality Selector -->
+                    <div class="quality-selector">
+                        <label for="qualitySelect">Quality:</label>
+                        <select id="qualitySelect">
+                            <option value="480">480p</option>
+                            <option value="720" selected>720p</option>
+                            <option value="1080">1080p</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button class="btn btn-primary" id="playBtn">
+                            <i class="fas fa-play"></i> Play
+                        </button>
+                        <button class="btn btn-secondary" id="trailerBtn" disabled>
+                            <i class="fab fa-youtube"></i> Trailer
+                        </button>
+                        <button class="btn btn-outline" id="watchListBtn">
+                            <i class="fas fa-plus"></i> Watch List
+                        </button>
+                        <button class="btn btn-outline" onclick="shareMovie()">
+                            <i class="fas fa-share"></i> Share
+                        </button>
+                    </div>
+                    
+                    <!-- Download Options -->
+                    <div class="download-options">
+                        <h3>Download Options</h3>
+                        <div class="download-buttons">
+                            <button class="download-btn" id="download480">
+                                <i class="fas fa-download"></i>
+                                <span>480p</span>
+                                <small>300MB</small>
+                            </button>
+                            <button class="download-btn" id="download720">
+                                <i class="fas fa-download"></i>
+                                <span>720p</span>
+                                <small>700MB</small>
+                            </button>
+                            <button class="download-btn" id="download1080">
+                                <i class="fas fa-download"></i>
+                                <span>1080p</span>
+                                <small>1.5GB</small>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
-</div>
-
-<script src="video.js"></script>
+    <script src="video.js"></script>
 </body>
 </html>
