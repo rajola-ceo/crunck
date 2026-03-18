@@ -213,34 +213,57 @@ function updateMovieUI(movie) {
         "1080": `https://sample-videos.com/video123/mp4/1080/big_buck_bunny_1080p_1mb.mp4`
     };
 }
-
 async function fetchAdditionalMovieData(id) {
     try {
-        // Fetch trailer
+        // Fetch trailer from TMDB
         const trailerRes = await fetch(`${TMDB_BASE}/movie/${id}/videos?api_key=${TMDB_KEY}`);
         const trailerData = await trailerRes.json();
         
-        const trailer = trailerData.results?.find(v => v.type === "Trailer" && v.site === "YouTube");
+        // Find official YouTube trailer
+        const trailer = trailerData.results?.find(v => 
+            v.type === "Trailer" && 
+            v.site === "YouTube" && 
+            v.official === true
+        ) || trailerData.results?.find(v => 
+            v.type === "Trailer" && 
+            v.site === "YouTube"
+        );
+        
         if (trailer) {
-            trailerBtn.onclick = () => playTrailer(`https://www.youtube.com/embed/${trailer.key}`);
+            // Enable trailer button
             trailerBtn.disabled = false;
             trailerBtn.classList.add("active");
+            trailerBtn.innerHTML = '<i class="fab fa-youtube"></i> Watch Trailer';
+            
+            // Set click handler with proper YouTube embed URL
+            trailerBtn.onclick = (e) => {
+                e.preventDefault();
+                playTrailer(`https://www.youtube.com/embed/${trailer.key}?autoplay=1&rel=0&modestbranding=1`);
+            };
+            
+            console.log("✅ Trailer found:", trailer.key);
         } else {
+            // No trailer available
             trailerBtn.disabled = true;
             trailerBtn.classList.remove("active");
+            trailerBtn.innerHTML = '<i class="fab fa-youtube"></i> No Trailer';
+            console.log("❌ No trailer found for movie ID:", id);
         }
         
-        // Fetch ratings and other metadata
+        // Fetch additional movie details
         const detailsRes = await fetch(`${TMDB_BASE}/movie/${id}?api_key=${TMDB_KEY}`);
         const details = await detailsRes.json();
         
-        // Update metadata in UI if elements exist
+        // Update metadata
         updateMovieMetadata(details);
         
     } catch (err) {
         console.error("Error fetching additional data:", err);
+        trailerBtn.disabled = true;
+        trailerBtn.innerHTML = '<i class="fab fa-youtube"></i> Trailer Error';
     }
 }
+
 
 function updateMovieMetadata(details) {
     const ratingEl = document.getElementById("movieRating");
@@ -327,33 +350,63 @@ if (download1080Btn) {
 }
 
 // ================= PLAY TRAILER =================
+// ================= PLAY TRAILER (FIXED) =================
 function playTrailer(trailerUrl) {
+    // Create modal container
     const trailerModal = document.createElement("div");
     trailerModal.classList.add("trailer-modal");
-    trailerModal.innerHTML = `
-        <div class="trailer-content">
-            <button class="trailer-close"><i class="fas fa-times"></i></button>
-            <iframe src="${trailerUrl}" frameborder="0" allowfullscreen></iframe>
-        </div>
-    `;
-
-    trailerModal.querySelector(".trailer-close").onclick = () => document.body.removeChild(trailerModal);
-    trailerModal.onclick = (e) => {
-        if (e.target === trailerModal) document.body.removeChild(trailerModal);
-    };
     
+    // Create modal content
+    const modalContent = document.createElement("div");
+    modalContent.classList.add("trailer-modal-content");
+    
+    // Create close button
+    const closeBtn = document.createElement("button");
+    closeBtn.classList.add("trailer-close");
+    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    
+    // Create iframe
+    const iframe = document.createElement("iframe");
+    iframe.src = trailerUrl;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    iframe.frameBorder = "0";
+    
+    // Assemble modal
+    modalContent.appendChild(closeBtn);
+    modalContent.appendChild(iframe);
+    trailerModal.appendChild(modalContent);
+    
+    // Add to body
     document.body.appendChild(trailerModal);
     document.body.style.overflow = "hidden";
     
-    // Clean up on close
-    const cleanup = () => {
-        document.body.style.overflow = "";
-    };
+    // Close functions
+    function closeTrailerModal() {
+        if (document.body.contains(trailerModal)) {
+            document.body.removeChild(trailerModal);
+            document.body.style.overflow = "";
+        }
+    }
     
-    trailerModal.querySelector(".trailer-close").addEventListener("click", cleanup);
+    // Close on close button click
+    closeBtn.addEventListener("click", closeTrailerModal);
+    
+    // Close on backdrop click
     trailerModal.addEventListener("click", (e) => {
-        if (e.target === trailerModal) cleanup();
+        if (e.target === trailerModal) {
+            closeTrailerModal();
+        }
     });
+    
+    // Close on Escape key
+    const escapeHandler = (e) => {
+        if (e.key === "Escape") {
+            closeTrailerModal();
+            document.removeEventListener("keydown", escapeHandler);
+        }
+    };
+    document.addEventListener("keydown", escapeHandler);
 }
 
 // ================= QUALITY SELECTOR =================
@@ -449,3 +502,22 @@ function rateMovie(rating) {
 }
 
 console.log("Video.js loaded with downloads menu");
+// ================= FALLBACK TRAILER SEARCH =================
+async function searchYouTubeTrailer(movieTitle) {
+    try {
+        // You can use a YouTube API key here if you have one
+        // This is a fallback using a public API (for demo purposes)
+        const searchQuery = encodeURIComponent(`${movieTitle} official trailer`);
+        const response = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${searchQuery}&key=YOUR_YOUTUBE_API_KEY&maxResults=1&type=video`);
+        
+        if (!response.ok) return null;
+        
+        const data = await response.json();
+        if (data.items && data.items.length > 0) {
+            return data.items[0].id.videoId;
+        }
+    } catch (err) {
+        console.error("YouTube search error:", err);
+    }
+    return null;
+}
