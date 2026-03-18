@@ -7,9 +7,10 @@ const heroBadge = document.getElementById("heroBadge");
 const heroTitle = document.getElementById("heroTitle");
 const heroMeta = document.getElementById("heroMeta");
 const searchInput = document.getElementById("searchInput");
+const searchResults = document.getElementById("searchResults");
 
 // ================= TMDB CONFIG =================
-const TMDB_KEY = "2a48fa3779af50f428b6d5f73d4d8ba7"; // replace with your key
+const TMDB_KEY = "2a48fa3779af50f428b6d5f73d4d8ba7"; 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const IMG_BASE = "https://image.tmdb.org/t/p/w500";
 
@@ -27,7 +28,7 @@ function hideLoading(){ loading.classList.remove("active"); }
 async function fetchTrending(){
   try{
     showLoading();
-    const res = await fetch('http://localhost:3000/movies/trending');
+    const res = await fetch(`${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`);
     const data = await res.json();
     hideLoading();
     heroData = data.results.slice(0,3); // first 3 for hero
@@ -146,35 +147,21 @@ categoryBtns.forEach(btn=>{
 });
 
 // ================= SEARCH =================
-searchInput.addEventListener("input", async e=>{
-  const query = e.target.value;
-  if(query.length<1) return;
-  //showLoading(); //
-  try{
-    const res = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${query}`);
-    const data = await res.json();
-    renderMovies("search", data.results);
-  }catch(err){
-    console.error(err);
-  }finally{
-  //  hideLoading();  //
-  }
-});
-
-// ================= INITIAL LOAD =================
-const searchInput = document.getElementById("searchInput");
-const searchResults = document.getElementById("searchResults");
-
 searchInput.addEventListener("input", async () => {
   const query = searchInput.value.trim();
 
   if(query.length < 2){
-    searchResults.style.display = "none";
+    searchResults.classList.remove("active");
     return;
   }
+    document.addEventListener("click", (e) => {
+  if(!searchInput.contains(e.target) && !searchResults.contains(e.target)){
+    searchResults.classList.remove("active");
+  }
+});
 
   try {
-    const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=YOUR_TMDB_KEY&query=${query}`);
+    const res = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${query}`);
     const data = await res.json();
 
     searchResults.innerHTML = "";
@@ -182,7 +169,12 @@ searchInput.addEventListener("input", async () => {
     data.results.slice(0,6).forEach(movie => {
       const item = document.createElement("div");
       item.classList.add("search-item");
-      item.innerText = movie.title;
+
+      item.innerHTML = `
+        <img src="${movie.poster_path ? IMG_BASE+movie.poster_path : 'https://via.placeholder.com/50'}"
+             style="width:40px;border-radius:6px;">
+        <span>${movie.title}</span>
+      `;
 
       item.onclick = () => {
         window.location.href = `video.html?id=${movie.id}`;
@@ -191,10 +183,9 @@ searchInput.addEventListener("input", async () => {
       searchResults.appendChild(item);
     });
 
-    searchResults.style.display = "block";
+    searchResults.classList.add("active");
 
   } catch(err){
     console.error(err);
   }
 });
-<div id="searchResults" class="search-results"></div>
