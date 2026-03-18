@@ -443,3 +443,48 @@ document.addEventListener('DOMContentLoaded', initializeApp);
 window.addEventListener('beforeunload', () => {
     if (heroInterval) clearInterval(heroInterval);
 });
+    // Immediate functionality that doesn't depend on API
+    document.addEventListener('DOMContentLoaded', function() {
+        // Back to top button functionality
+        const backToTopBtn = document.getElementById('backToTop');
+        if (backToTopBtn) {
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 500) {
+                    backToTopBtn.classList.add('visible');
+                } else {
+                    backToTopBtn.classList.remove('visible');
+                }
+            });
+            
+            backToTopBtn.addEventListener('click', function() {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+        
+        // Clear search button
+        const searchInput = document.getElementById('searchInput');
+        const searchClear = document.getElementById('searchClear');
+        
+        if (searchInput && searchClear) {
+            searchInput.addEventListener('input', function() {
+                searchClear.style.display = this.value.length > 0 ? 'flex' : 'none';
+            });
+            
+            searchClear.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.focus();
+                searchClear.style.display = 'none';
+                document.getElementById('searchResults').classList.remove('active');
+            });
+        }
+        
+        // Keyboard navigation for category items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    this.click();
+                }
+            });
+        });
+    });
