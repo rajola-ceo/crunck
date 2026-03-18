@@ -11,8 +11,9 @@ body { margin:0; padding:0; font-family: system-ui,Segoe UI,Roboto,-apple-system
 .nav-tabs {
     display: flex;
     overflow-x: auto;
-    gap: 12px;
-    padding: 8px 12px;
+    gap: 20px;
+    padding: 10px;
+    white-space: nowrap;
 }
 
 .nav-item {
@@ -88,4 +89,35 @@ body { margin:0; padding:0; font-family: system-ui,Segoe UI,Roboto,-apple-system
     border-color: #34d399; /* border inachangia highlight */
     box-shadow: 0 8px 20px rgba(52,211,153,0.4); /* shadow visible */
     z-index: 10; /* inasukuma juu ya wengine */
+}
+/* HIDE SCROLLBAR BUT KEEP SCROLL */
+.hide-scrollbar {
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none; /* Chrome, Safari */
+}
+.search-results {
+  position: absolute;
+  top: 120px;
+  left: 20px;
+  right: 20px;
+  background: #0b1220;
+  border-radius: 12px;
+  max-height: 300px;
+  overflow-y: auto;
+  display: none;
+  z-index: 999;
+}
+
+.search-item {
+  padding: 10px;
+  border-bottom: 1px solid #222;
+  cursor: pointer;
+}
+
+.search-item:hover {
+  background: #111827;
 }
