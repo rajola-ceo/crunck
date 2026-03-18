@@ -207,3 +207,4 @@ searchInput.addEventListener("input", async () => {
     console.error(err);
   }
 });
+<div id="searchResults" class="search-results"></div>
