@@ -10,182 +10,436 @@ const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
 
 // ================= TMDB CONFIG =================
+// In production, move this to a backend proxy or environment variable
 const TMDB_KEY = "2a48fa3779af50f428b6d5f73d4d8ba7"; 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const IMG_BASE = "https://image.tmdb.org/t/p/w500";
+const IMG_BASE_LARGE = "https://image.tmdb.org/t/p/w1280";
 
-// Hero trending movies
+// Cache for movie data
+const movieCache = new Map();
+const genreCache = new Map();
+
+// State management
+let currentPage = 1;
+let isLoading = false;
+let currentCategory = "trending";
+let currentGenreId = "";
 let heroData = [];
 let heroIndex = 0;
-function goToVideo(id){
+let heroInterval;
+
+// ================= UTILITY FUNCTIONS =================
+function showLoading() { 
+    loading.classList.add("active"); 
+}
+
+function hideLoading() { 
+    loading.classList.remove("active"); 
+}
+
+// Exponential backoff retry logic
+async function fetchWithRetry(url, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+            return await res.json();
+        } catch(err) {
+            if (i === retries - 1) throw err;
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, i)));
+        }
+    }
+}
+
+// Cache wrapper
+async function fetchWithCache(url, cacheKey) {
+    if (movieCache.has(cacheKey)) {
+        return movieCache.get(cacheKey);
+    }
+    
+    const data = await fetchWithRetry(url);
+    movieCache.set(cacheKey, data);
+    return data;
+}
+
+// ================= NAVIGATION =================
+function goToVideo(id) {
     window.location.href = `video.html?id=${id}`;
 }
-// ================= LOADING =================
-function showLoading(){ loading.classList.add("active"); }
-function hideLoading(){ loading.classList.remove("active"); }
+
+// Update URL params for deep linking
+function updateUrlParams(category, genreId) {
+    const url = new URL(window.location);
+    if (category) url.searchParams.set('category', category);
+    if (genreId) url.searchParams.set('genre', genreId);
+    window.history.pushState({}, '', url);
+}
+
+// ================= GENRE MAPPING =================
+const genreMap = {
+    "action": { id: 28, name: "Action" },
+    "horror": { id: 27, name: "Horror" },
+    "adventure": { id: 12, name: "Adventure" },
+    "comedy": { id: 35, name: "Comedy" },
+    "drama": { id: 18, name: "Drama" },
+    "top-rating": { id: "", name: "Top Rated" }
+};
+
+// Update button text with genre names
+function updateCategoryButtons() {
+    categoryBtns.forEach(btn => {
+        const category = btn.dataset.category;
+        if (genreMap[category]?.name) {
+            btn.textContent = genreMap[category].name;
+        }
+    });
+}
 
 // ================= FETCH TRENDING =================
-async function fetchTrending(){
-  try{
-    showLoading();
-    const res = await fetch(`${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`);
-    const data = await res.json();
-    hideLoading();
-    heroData = data.results.slice(0,3); // first 3 for hero
-    startHeroSlider();
-    renderMovies("for-you", data.results); // initial carousel
-  }catch(err){
-    console.error(err);
-    hideLoading();
-    moviesSections.innerHTML="<p style='margin:20px;color:#888;'>Error fetching movies</p>";
-  }
+async function fetchTrending() {
+    try {
+        showLoading();
+        const cacheKey = 'trending-week';
+        const data = await fetchWithCache(
+            `${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`,
+            cacheKey
+        );
+        hideLoading();
+        heroData = data.results.slice(0, 3);
+        startHeroSlider();
+        renderMovies("for-you", data.results);
+    } catch(err) {
+        console.error(err);
+        hideLoading();
+        moviesSections.innerHTML = "<p style='margin:20px;color:#888;'>Error fetching movies. Please try again later.</p>";
+    }
 }
 
 // ================= HERO SLIDER =================
-function startHeroSlider(){
-  if(heroData.length===0) return;
-  updateHero(heroData[heroIndex]);
-  setInterval(()=>{
-    heroIndex = (heroIndex+1)%heroData.length;
+function startHeroSlider() {
+    if (heroData.length === 0) return;
+    
+    // Clear existing interval
+    if (heroInterval) clearInterval(heroInterval);
+    
     updateHero(heroData[heroIndex]);
-  },3000);
+    heroInterval = setInterval(() => {
+        heroIndex = (heroIndex + 1) % heroData.length;
+        updateHero(heroData[heroIndex]);
+    }, 5000); // Increased to 5 seconds for better UX
+}
+
+// ================= BADGE GENERATOR =================
+function getMovieBadge(movie) {
+    let badge = "HD";
+    const year = movie.release_date ? parseInt(movie.release_date.slice(0, 4)) : 0;
+    const currentYear = new Date().getFullYear();
+
+    if (movie.vote_average >= 8.5) badge = "Top";
+    else if (year === currentYear) badge = "New";
+    
+    return badge;
 }
 
 // ================= CREATE CARD WITH BADGES =================
-// ================= CREATE CARD WITH BADGES =================
-function createMovieCard(movie){
-  const card = document.createElement("div");
-  card.classList.add("movie-card");
+function createMovieCard(movie) {
+    const card = document.createElement("div");
+    card.classList.add("movie-card");
 
-  let badge = "HD";
-  const year = movie.release_date ? parseInt(movie.release_date.slice(0,4)) : 0;
-  const currentYear = new Date().getFullYear();
+    const badge = getMovieBadge(movie);
+    const posterUrl = movie.poster_path ? IMG_BASE + movie.poster_path : 'https://via.placeholder.com/140x200';
 
-  if(movie.vote_average >= 8.5) badge = "Top";
-  else if(year === currentYear) badge = "New";
+    // Create image with lazy loading
+    const img = new Image();
+    img.dataset.src = posterUrl;
+    img.classList.add('lazy-load');
+    img.alt = movie.title;
+    
+    // Intersection Observer for lazy loading
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                img.src = img.dataset.src;
+                img.classList.add('loaded');
+                observer.unobserve(img);
+            }
+        });
+    });
 
-  card.innerHTML = `
-    <img src="${movie.poster_path ? IMG_BASE+movie.poster_path : 'https://via.placeholder.com/140x200'}" alt="${movie.title}">
-    <div class="overlay">${badge}</div>
-    <div class="movie-info">
-      <div class="movie-title">${movie.title}</div>
-      <div class="movie-sub">${movie.release_date || "N/A"}</div>
-    </div>
-  `;
+    card.innerHTML = `
+        <img src="https://via.placeholder.com/140x200?text=Loading..." 
+             data-src="${posterUrl}" 
+             alt="${movie.title}"
+             class="lazy-load">
+        <div class="overlay">${badge}</div>
+        <div class="movie-info">
+            <div class="movie-title">${movie.title}</div>
+            <div class="movie-sub">${movie.release_date || "N/A"}</div>
+        </div>
+    `;
 
-  card.addEventListener("click", ()=>goToVideo(movie.id));
+    // Setup lazy loading
+    const cardImg = card.querySelector('img');
+    observer.observe(cardImg);
 
-  return card;
+    card.addEventListener("click", () => goToVideo(movie.id));
+    return card;
 }
 
+// ================= UPDATE HERO =================
+function updateHero(movie) {
+    // Use backdrop for better hero display
+    const backdropUrl = movie.backdrop_path 
+        ? IMG_BASE_LARGE + movie.backdrop_path 
+        : IMG_BASE_LARGE + movie.poster_path;
+    
+    hero.style.backgroundImage = `url(${backdropUrl})`;
+    hero.style.backgroundSize = 'cover';
+    hero.style.backgroundPosition = 'center';
 
-// ================= UPDATE HERO WITH BADGE =================
-function updateHero(movie){
-  hero.style.backgroundImage = `url(${IMG_BASE+movie.poster_path})`;
+    const badge = getMovieBadge(movie);
+    const year = movie.release_date?.slice(0, 4) || "N/A";
+    const rating = movie.vote_average.toFixed(1);
+    const adult = movie.adult ? "18+" : "All";
 
-  // Hero badge logic
-  let badge = "HD";
-  const year = movie.release_date ? parseInt(movie.release_date.slice(0,4)) : 0;
-  const currentYear = new Date().getFullYear();
-  if(movie.vote_average >= 8.5) badge = "Top";
-  else if(year === currentYear) badge = "New";
-
-  heroBadge.innerText = badge;
-  heroTitle.innerText = movie.title;
-  heroMeta.innerText = `★ ${movie.vote_average} | ${movie.release_date?.slice(0,4)||"N/A"} | ${movie.adult ? "18+" : "All"} | Movie`;
+    heroBadge.innerText = badge;
+    heroTitle.innerText = movie.title;
+    heroMeta.innerText = `★ ${rating} | ${year} | ${adult} | Movie`;
 }
+
 // ================= RENDER MOVIES =================
-function renderMovies(category, movies){
+function renderMovies(category, movies, append = false) {
     showLoading();
 
-    // Use setTimeout to simulate loading (optional)
     setTimeout(() => {
-        // clear previous movies
-        moviesSections.innerHTML = "";
+        if (!append) {
+            moviesSections.innerHTML = "";
+        }
 
-        // create carousel section
-        const section = document.createElement("div");
-        section.classList.add("carousel");
+        let section = document.querySelector(`.carousel[data-category="${category}"]`);
+        
+        if (!section) {
+            section = document.createElement("div");
+            section.classList.add("carousel");
+            section.dataset.category = category;
+            
+            const title = document.createElement("h2");
+            title.classList.add("carousel-title");
+            title.textContent = category.split('-').map(word => 
+                word.charAt(0).toUpperCase() + word.slice(1)
+            ).join(' ');
+            
+            section.appendChild(title);
+            
+            const container = document.createElement("div");
+            container.classList.add("carousel-container");
+            section.appendChild(container);
+            
+            if (!append) {
+                moviesSections.appendChild(section);
+            }
+        }
 
-        const container = document.createElement("div");
-        container.classList.add("carousel-container");
-
-        // append each movie card
-movies.forEach(movie => {
-    const card = createMovieCard(movie);
-    container.appendChild(card);
-});
-        section.appendChild(container);
-        moviesSections.appendChild(section);
+        const container = section.querySelector(".carousel-container");
+        
+        movies.forEach(movie => {
+            const card = createMovieCard(movie);
+            container.appendChild(card);
+        });
 
         hideLoading();
     }, 300);
 }
-// ================= CATEGORY BUTTONS =================
-categoryBtns.forEach(btn=>{
-  btn.addEventListener("click", async ()=>{
-    categoryBtns.forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    let genreMap = {
-      "action":28,"horror":27,"adventure":12,"comedy":35,"drama":18,"top-rating":"" // example
-    };
-    const genreId = genreMap[btn.dataset.category]||"";
-    //showLoading();//
-    try{
-      const url = genreId ? `${TMDB_BASE}/discover/movie?api_key=${TMDB_KEY}&with_genres=${genreId}` :
-                            `${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      renderMovies(btn.dataset.category, data.results);
-    }catch(err){
-      console.error(err);
-      moviesSections.innerHTML="<p style='margin:20px;color:#888;'>Error fetching movies</p>";
-    }finally{
-      //hideLoading();//
+
+// ================= APPEND MOVIES FOR INFINITE SCROLL =================
+function appendMovies(movies) {
+    renderMovies(currentCategory, movies, true);
+}
+
+// ================= LOAD MORE MOVIES (INFINITE SCROLL) =================
+async function loadMoreMovies() {
+    if (isLoading) return;
+    
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const threshold = document.body.offsetHeight - 1000;
+    
+    if (scrollPosition >= threshold) {
+        isLoading = true;
+        currentPage++;
+        
+        try {
+            let url;
+            if (currentGenreId) {
+                url = `${TMDB_BASE}/discover/movie?api_key=${TMDB_KEY}&with_genres=${currentGenreId}&page=${currentPage}`;
+            } else {
+                url = `${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}&page=${currentPage}`;
+            }
+            
+            const data = await fetchWithRetry(url);
+            appendMovies(data.results);
+        } catch(err) {
+            console.error("Error loading more movies:", err);
+        } finally {
+            isLoading = false;
+        }
     }
-  });
-});
+}
+
+// ================= CATEGORY BUTTONS =================
+function initializeCategoryButtons() {
+    categoryBtns.forEach(btn => {
+        btn.addEventListener("click", async () => {
+            // Update active state
+            categoryBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            
+            // Reset pagination
+            currentPage = 1;
+            currentCategory = btn.dataset.category;
+            currentGenreId = genreMap[currentCategory]?.id || "";
+            
+            // Update URL for deep linking
+            updateUrlParams(currentCategory, currentGenreId);
+            
+            try {
+                showLoading();
+                
+                let url;
+                if (currentGenreId) {
+                    url = `${TMDB_BASE}/discover/movie?api_key=${TMDB_KEY}&with_genres=${currentGenreId}&sort_by=popularity.desc`;
+                } else if (currentCategory === "top-rating") {
+                    url = `${TMDB_BASE}/movie/top_rated?api_key=${TMDB_KEY}`;
+                } else {
+                    url = `${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}`;
+                }
+                
+                const cacheKey = `${currentCategory}-page1`;
+                const data = await fetchWithCache(url, cacheKey);
+                renderMovies(currentCategory, data.results);
+            } catch(err) {
+                console.error(err);
+                moviesSections.innerHTML = "<p style='margin:20px;color:#888;'>Error fetching movies</p>";
+            } finally {
+                hideLoading();
+            }
+        });
+    });
+}
 
 // ================= SEARCH =================
-searchInput.addEventListener("input", async () => {
-  const query = searchInput.value.trim();
+let searchTimeout;
 
-  if(query.length < 2){
-    searchResults.classList.remove("active");
-    return;
-  }
-    document.addEventListener("click", (e) => {
-  if(!searchInput.contains(e.target) && !searchResults.contains(e.target)){
-    searchResults.classList.remove("active");
-  }
-});
-
-  try {
-    const res = await fetch(`${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${query}`);
-    const data = await res.json();
-
-    searchResults.innerHTML = "";
-
-    data.results.slice(0,6).forEach(movie => {
-      const item = document.createElement("div");
-      item.classList.add("search-item");
-
-      item.innerHTML = `
-        <img src="${movie.poster_path ? IMG_BASE+movie.poster_path : 'https://via.placeholder.com/50'}"
-             style="width:40px;border-radius:6px;">
-        <span>${movie.title}</span>
-      `;
-
-      item.onclick = () => {
-        window.location.href = `video.html?id=${movie.id}`;
-      };
-
-      searchResults.appendChild(item);
+function initializeSearch() {
+    searchInput.addEventListener("input", () => {
+        clearTimeout(searchTimeout);
+        
+        const query = searchInput.value.trim();
+        
+        if (query.length < 2) {
+            searchResults.classList.remove("active");
+            return;
+        }
+        
+        searchTimeout = setTimeout(async () => {
+            try {
+                const data = await fetchWithRetry(
+                    `${TMDB_BASE}/search/movie?api_key=${TMDB_KEY}&query=${encodeURIComponent(query)}`
+                );
+                
+                searchResults.innerHTML = "";
+                
+                if (data.results.length === 0) {
+                    const noResults = document.createElement("div");
+                    noResults.classList.add("search-item");
+                    noResults.innerHTML = "<span>No movies found</span>";
+                    searchResults.appendChild(noResults);
+                } else {
+                    data.results.slice(0, 6).forEach(movie => {
+                        const item = document.createElement("div");
+                        item.classList.add("search-item");
+                        
+                        const posterUrl = movie.poster_path 
+                            ? IMG_BASE + movie.poster_path 
+                            : 'https://via.placeholder.com/50';
+                        
+                        item.innerHTML = `
+                            <img src="${posterUrl}" 
+                                 style="width:40px;border-radius:6px;" 
+                                 alt="${movie.title}"
+                                 loading="lazy">
+                            <span>${movie.title} (${movie.release_date?.slice(0, 4) || 'N/A'})</span>
+                        `;
+                        
+                        item.onclick = () => {
+                            window.location.href = `video.html?id=${movie.id}`;
+                        };
+                        
+                        searchResults.appendChild(item);
+                    });
+                }
+                
+                searchResults.classList.add("active");
+                
+            } catch(err) {
+                console.error("Search error:", err);
+            }
+        }, 300); // Debounce delay
     });
+}
 
-    searchResults.classList.add("active");
+// ================= CLICK OUTSIDE HANDLER =================
+function initializeClickOutsideHandler() {
+    document.addEventListener("click", (e) => {
+        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+            searchResults.classList.remove("active");
+        }
+    });
+}
 
-  } catch(err){
-    console.error(err);
-  }
+// ================= DEEP LINKING =================
+function handleDeepLinking() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const category = urlParams.get('category');
+    const genre = urlParams.get('genre');
+    
+    if (category) {
+        const btn = document.querySelector(`[data-category="${category}"]`);
+        if (btn) {
+            setTimeout(() => btn.click(), 100); // Delay to ensure DOM is ready
+        }
+    }
+}
+
+// ================= INITIALIZE =================
+function initializeApp() {
+    // Update button names
+    updateCategoryButtons();
+    
+    // Initialize features
+    initializeCategoryButtons();
+    initializeSearch();
+    initializeClickOutsideHandler();
+    
+    // Fetch initial data
+    fetchTrending();
+    
+    // Setup infinite scroll
+    window.addEventListener('scroll', loadMoreMovies);
+    
+    // Handle deep linking
+    handleDeepLinking();
+    
+    // Handle back/forward buttons
+    window.addEventListener('popstate', handleDeepLinking);
+}
+
+// Start the app when DOM is ready
+document.addEventListener('DOMContentLoaded', initializeApp);
+
+// ================= CLEANUP =================
+// Clean up intervals on page unload
+window.addEventListener('beforeunload', () => {
+    if (heroInterval) clearInterval(heroInterval);
 });
