@@ -521,3 +521,77 @@ async function searchYouTubeTrailer(movieTitle) {
     }
     return null;
 }
+// ================= CLOSE DOWNLOADS MENU (Add this near line 100) =================
+function closeDownloadsMenu() {
+    if (downloadsMenu) {
+        downloadsMenu.classList.remove("active");
+    }
+}
+
+// ================= PLAY TRAILER (FIXED) =================
+function playTrailer(trailerUrl) {
+    // Check if modal already exists
+    if (document.querySelector('.trailer-modal')) {
+        return;
+    }
+    
+    // Create modal container
+    const trailerModal = document.createElement("div");
+    trailerModal.classList.add("trailer-modal");
+    
+    // Create modal content
+    const modalContent = document.createElement("div");
+    modalContent.classList.add("trailer-modal-content");
+    
+    // Create close button
+    const closeBtn = document.createElement("button");
+    closeBtn.classList.add("trailer-close");
+    closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+    
+    // Create iframe
+    const iframe = document.createElement("iframe");
+    iframe.src = trailerUrl;
+    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+    iframe.allowFullscreen = true;
+    iframe.frameBorder = "0";
+    
+    // Assemble modal
+    modalContent.appendChild(closeBtn);
+    modalContent.appendChild(iframe);
+    trailerModal.appendChild(modalContent);
+    
+    // Add to body
+    document.body.appendChild(trailerModal);
+    document.body.style.overflow = "hidden";
+    
+    // Close functions
+    function closeTrailerModal() {
+        if (document.body.contains(trailerModal)) {
+            document.body.removeChild(trailerModal);
+            document.body.style.overflow = "";
+            // Pause main video if it's playing
+            if (videoPlayer && !videoPlayer.paused) {
+                videoPlayer.pause();
+            }
+        }
+    }
+    
+    // Close on close button click
+    closeBtn.addEventListener("click", closeTrailerModal);
+    
+    // Close on backdrop click
+    trailerModal.addEventListener("click", (e) => {
+        if (e.target === trailerModal) {
+            closeTrailerModal();
+        }
+    });
+    
+    // Close on Escape key
+    const escapeHandler = (e) => {
+        if (e.key === "Escape") {
+            closeTrailerModal();
+            document.removeEventListener("keydown", escapeHandler);
+        }
+    };
+    document.addEventListener("keydown", escapeHandler);
+}
