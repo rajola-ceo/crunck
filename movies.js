@@ -8,9 +8,18 @@ const heroTitle = document.getElementById("heroTitle");
 const heroMeta = document.getElementById("heroMeta");
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
+const searchClear = document.getElementById("searchClear");
+const backToTopBtn = document.getElementById("backToTop");
+
+// ================= PROFILE ELEMENTS =================
+const profileAvatar = document.getElementById("profileAvatar");
+const profileDropdown = document.getElementById("profileDropdown");
+const profileMenu = document.getElementById("profileMenu");
+const profileName = document.getElementById("profileName");
+const profileEmail = document.getElementById("profileEmail");
+const logoutBtn = document.getElementById("logoutBtn");
 
 // ================= TMDB CONFIG =================
-// In production, move this to a backend proxy or environment variable
 const TMDB_KEY = "2a48fa3779af50f428b6d5f73d4d8ba7"; 
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const IMG_BASE = "https://image.tmdb.org/t/p/w500";
@@ -29,13 +38,80 @@ let heroData = [];
 let heroIndex = 0;
 let heroInterval;
 
+// ================= PROFILE MANAGEMENT =================
+function initializeProfile() {
+    // Get user from localStorage
+    const user = JSON.parse(localStorage.getItem("crunkUser"));
+    
+    if (user) {
+        // User is logged in - show profile
+        updateProfileUI(user);
+    } else {
+        // No user - show login option
+        showLoginOption();
+    }
+    
+    // Setup profile dropdown
+    if (profileAvatar) {
+        profileAvatar.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (profileMenu) profileMenu.classList.toggle("active");
+        });
+    }
+    
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+        if (profileMenu && !profileAvatar.contains(e.target) && !profileMenu.contains(e.target)) {
+            profileMenu.classList.remove("active");
+        }
+    });
+    
+    // Setup logout
+    if (logoutBtn) {
+        logoutBtn.addEventListener("click", () => {
+            localStorage.removeItem("crunkUser");
+            window.location.href = "index.html";
+        });
+    }
+}
+
+function updateProfileUI(user) {
+    if (profileAvatar) {
+        // Set profile picture
+        if (user.picture) {
+            profileAvatar.innerHTML = `<img src="${user.picture}" alt="Profile" class="profile-img">`;
+        } else {
+            // Generate avatar from initials
+            const initials = (user.username || user.name || 'U').charAt(0).toUpperCase();
+            profileAvatar.innerHTML = `<div class="profile-initials">${initials}</div>`;
+        }
+    }
+    
+    if (profileName) {
+        profileName.textContent = user.username || user.name || 'User';
+    }
+    
+    if (profileEmail) {
+        profileEmail.textContent = user.email || '';
+    }
+}
+
+function showLoginOption() {
+    if (profileAvatar) {
+        profileAvatar.innerHTML = `<i class="fas fa-user-circle"></i>`;
+        profileAvatar.onclick = () => {
+            window.location.href = "index.html";
+        };
+    }
+}
+
 // ================= UTILITY FUNCTIONS =================
 function showLoading() { 
-    loading.classList.add("active"); 
+    if (loading) loading.classList.add("active"); 
 }
 
 function hideLoading() { 
-    loading.classList.remove("active"); 
+    if (loading) loading.classList.remove("active"); 
 }
 
 // Exponential backoff retry logic
@@ -127,7 +203,7 @@ function startHeroSlider() {
     heroInterval = setInterval(() => {
         heroIndex = (heroIndex + 1) % heroData.length;
         updateHero(heroData[heroIndex]);
-    }, 5000); // Increased to 5 seconds for better UX
+    }, 5000);
 }
 
 // ================= BADGE GENERATOR =================
@@ -148,41 +224,29 @@ function createMovieCard(movie) {
     card.classList.add("movie-card");
 
     const badge = getMovieBadge(movie);
-    const posterUrl = movie.poster_path ? IMG_BASE + movie.poster_path : 'https://via.placeholder.com/140x200';
-
-    // Create image with lazy loading
-    const img = new Image();
-    img.dataset.src = posterUrl;
-    img.classList.add('lazy-load');
-    img.alt = movie.title;
-    
-    // Intersection Observer for lazy loading
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                img.src = img.dataset.src;
-                img.classList.add('loaded');
-                observer.unobserve(img);
-            }
-        });
-    });
+    const posterUrl = movie.poster_path ? IMG_BASE + movie.poster_path : 'https://via.placeholder.com/300x450?text=🎬';
+    const rating = movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A';
+    const year = movie.release_date ? movie.release_date.slice(0, 4) : 'N/A';
 
     card.innerHTML = `
-        <img src="https://via.placeholder.com/140x200?text=Loading..." 
-             data-src="${posterUrl}" 
-             alt="${movie.title}"
-             class="lazy-load">
-        <div class="overlay">${badge}</div>
-        <div class="movie-info">
-            <div class="movie-title">${movie.title}</div>
-            <div class="movie-sub">${movie.release_date || "N/A"}</div>
+        <div class="movie-card-inner">
+            <img src="${posterUrl}" 
+                 alt="${movie.title}"
+                 loading="lazy"
+                 onerror="this.src='https://via.placeholder.com/300x450?text=🎬'">
+            <div class="movie-overlay">
+                <span class="movie-badge ${badge.toLowerCase()}">${badge}</span>
+                <span class="movie-rating"><i class="fas fa-star"></i> ${rating}</span>
+            </div>
+            <div class="movie-info">
+                <h3 class="movie-title">${movie.title}</h3>
+                <div class="movie-meta">
+                    <span class="movie-year">${year}</span>
+                    <span class="movie-type">Movie</span>
+                </div>
+            </div>
         </div>
     `;
-
-    // Setup lazy loading
-    const cardImg = card.querySelector('img');
-    observer.observe(cardImg);
 
     card.addEventListener("click", () => goToVideo(movie.id));
     return card;
@@ -190,6 +254,8 @@ function createMovieCard(movie) {
 
 // ================= UPDATE HERO =================
 function updateHero(movie) {
+    if (!movie) return;
+    
     // Use backdrop for better hero display
     const backdropUrl = movie.backdrop_path 
         ? IMG_BASE_LARGE + movie.backdrop_path 
@@ -201,12 +267,12 @@ function updateHero(movie) {
 
     const badge = getMovieBadge(movie);
     const year = movie.release_date?.slice(0, 4) || "N/A";
-    const rating = movie.vote_average.toFixed(1);
+    const rating = movie.vote_average ? movie.vote_average.toFixed(1) : "N/A";
     const adult = movie.adult ? "18+" : "All";
 
     heroBadge.innerText = badge;
     heroTitle.innerText = movie.title;
-    heroMeta.innerText = `★ ${rating} | ${year} | ${adult} | Movie`;
+    heroMeta.innerHTML = `<i class="fas fa-star"></i> ${rating} | ${year} | ${adult} | Movie`;
 }
 
 // ================= RENDER MOVIES =================
@@ -234,7 +300,7 @@ function renderMovies(category, movies, append = false) {
             section.appendChild(title);
             
             const container = document.createElement("div");
-            container.classList.add("carousel-container");
+            container.classList.add("movies-grid");
             section.appendChild(container);
             
             if (!append) {
@@ -242,7 +308,7 @@ function renderMovies(category, movies, append = false) {
             }
         }
 
-        const container = section.querySelector(".carousel-container");
+        const container = section.querySelector(".movies-grid");
         
         movies.forEach(movie => {
             const card = createMovieCard(movie);
@@ -255,7 +321,15 @@ function renderMovies(category, movies, append = false) {
 
 // ================= APPEND MOVIES FOR INFINITE SCROLL =================
 function appendMovies(movies) {
-    renderMovies(currentCategory, movies, true);
+    const container = document.querySelector(`.carousel[data-category="${currentCategory}"] .movies-grid`);
+    if (container) {
+        movies.forEach(movie => {
+            const card = createMovieCard(movie);
+            container.appendChild(card);
+        });
+    } else {
+        renderMovies(currentCategory, movies, true);
+    }
 }
 
 // ================= LOAD MORE MOVIES (INFINITE SCROLL) =================
@@ -263,7 +337,7 @@ async function loadMoreMovies() {
     if (isLoading) return;
     
     const scrollPosition = window.innerHeight + window.scrollY;
-    const threshold = document.body.offsetHeight - 1000;
+    const threshold = document.documentElement.scrollHeight - 1000;
     
     if (scrollPosition >= threshold) {
         isLoading = true;
@@ -278,7 +352,9 @@ async function loadMoreMovies() {
             }
             
             const data = await fetchWithRetry(url);
-            appendMovies(data.results);
+            if (data.results && data.results.length > 0) {
+                appendMovies(data.results);
+            }
         } catch(err) {
             console.error("Error loading more movies:", err);
         } finally {
@@ -332,10 +408,17 @@ function initializeCategoryButtons() {
 let searchTimeout;
 
 function initializeSearch() {
+    if (!searchInput) return;
+    
     searchInput.addEventListener("input", () => {
         clearTimeout(searchTimeout);
         
         const query = searchInput.value.trim();
+        
+        // Show/hide clear button
+        if (searchClear) {
+            searchClear.style.display = query.length > 0 ? "flex" : "none";
+        }
         
         if (query.length < 2) {
             searchResults.classList.remove("active");
@@ -362,14 +445,18 @@ function initializeSearch() {
                         
                         const posterUrl = movie.poster_path 
                             ? IMG_BASE + movie.poster_path 
-                            : 'https://via.placeholder.com/50';
+                            : 'https://via.placeholder.com/50?text=🎬';
                         
                         item.innerHTML = `
                             <img src="${posterUrl}" 
-                                 style="width:40px;border-radius:6px;" 
+                                 style="width:40px;height:60px;border-radius:6px;object-fit:cover;" 
                                  alt="${movie.title}"
-                                 loading="lazy">
-                            <span>${movie.title} (${movie.release_date?.slice(0, 4) || 'N/A'})</span>
+                                 loading="lazy"
+                                 onerror="this.src='https://via.placeholder.com/50?text=🎬'">
+                            <div class="search-item-info">
+                                <div class="search-item-title">${movie.title}</div>
+                                <div class="search-item-meta">${movie.release_date?.slice(0, 4) || 'N/A'} • ⭐ ${movie.vote_average?.toFixed(1) || 'N/A'}</div>
+                            </div>
                         `;
                         
                         item.onclick = () => {
@@ -385,15 +472,34 @@ function initializeSearch() {
             } catch(err) {
                 console.error("Search error:", err);
             }
-        }, 300); // Debounce delay
+        }, 300);
     });
+    
+    // Clear search button
+    if (searchClear) {
+        searchClear.addEventListener("click", () => {
+            searchInput.value = "";
+            searchClear.style.display = "none";
+            searchResults.classList.remove("active");
+            searchInput.focus();
+        });
+    }
 }
 
 // ================= CLICK OUTSIDE HANDLER =================
 function initializeClickOutsideHandler() {
     document.addEventListener("click", (e) => {
-        if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+        if (searchInput && searchResults && 
+            !searchInput.contains(e.target) && 
+            !searchResults.contains(e.target)) {
             searchResults.classList.remove("active");
+        }
+        
+        // Close profile menu when clicking outside
+        if (profileMenu && profileAvatar && 
+            !profileAvatar.contains(e.target) && 
+            !profileMenu.contains(e.target)) {
+            profileMenu.classList.remove("active");
         }
     });
 }
@@ -407,13 +513,53 @@ function handleDeepLinking() {
     if (category) {
         const btn = document.querySelector(`[data-category="${category}"]`);
         if (btn) {
-            setTimeout(() => btn.click(), 100); // Delay to ensure DOM is ready
+            setTimeout(() => btn.click(), 100);
         }
     }
 }
 
+// ================= BACK TO TOP BUTTON =================
+function initializeBackToTop() {
+    if (!backToTopBtn) return;
+    
+    window.addEventListener('scroll', function() {
+        if (window.scrollY > 500) {
+            backToTopBtn.classList.add('visible');
+        } else {
+            backToTopBtn.classList.remove('visible');
+        }
+    });
+    
+    backToTopBtn.addEventListener('click', function() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+
+// ================= KEYBOARD NAVIGATION =================
+function initializeKeyboardNav() {
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.click();
+            }
+        });
+    });
+    
+    // Keyboard shortcut: Ctrl/Cmd + K to focus search
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'k' && searchInput) {
+            e.preventDefault();
+            searchInput.focus();
+        }
+    });
+}
+
 // ================= INITIALIZE =================
 function initializeApp() {
+    // Initialize profile
+    initializeProfile();
+    
     // Update button names
     updateCategoryButtons();
     
@@ -421,6 +567,8 @@ function initializeApp() {
     initializeCategoryButtons();
     initializeSearch();
     initializeClickOutsideHandler();
+    initializeBackToTop();
+    initializeKeyboardNav();
     
     // Fetch initial data
     fetchTrending();
@@ -439,52 +587,6 @@ function initializeApp() {
 document.addEventListener('DOMContentLoaded', initializeApp);
 
 // ================= CLEANUP =================
-// Clean up intervals on page unload
 window.addEventListener('beforeunload', () => {
     if (heroInterval) clearInterval(heroInterval);
 });
-    // Immediate functionality that doesn't depend on API
-    document.addEventListener('DOMContentLoaded', function() {
-        // Back to top button functionality
-        const backToTopBtn = document.getElementById('backToTop');
-        if (backToTopBtn) {
-            window.addEventListener('scroll', function() {
-                if (window.scrollY > 500) {
-                    backToTopBtn.classList.add('visible');
-                } else {
-                    backToTopBtn.classList.remove('visible');
-                }
-            });
-            
-            backToTopBtn.addEventListener('click', function() {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            });
-        }
-        
-        // Clear search button
-        const searchInput = document.getElementById('searchInput');
-        const searchClear = document.getElementById('searchClear');
-        
-        if (searchInput && searchClear) {
-            searchInput.addEventListener('input', function() {
-                searchClear.style.display = this.value.length > 0 ? 'flex' : 'none';
-            });
-            
-            searchClear.addEventListener('click', function() {
-                searchInput.value = '';
-                searchInput.focus();
-                searchClear.style.display = 'none';
-                document.getElementById('searchResults').classList.remove('active');
-            });
-        }
-        
-        // Keyboard navigation for category items
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    this.click();
-                }
-            });
-        });
-    });
