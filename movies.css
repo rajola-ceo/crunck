@@ -160,7 +160,7 @@ body {
     transform: scale(1.1);
 }
 
-/* ================= SEARCH RESULTS (FIXED - NO WHITE LINE) ================= */
+/* ================= SEARCH RESULTS ================= */
 .search-results {
     position: absolute;
     top: 60px;
@@ -381,12 +381,12 @@ body {
     font-weight: 600;
 }
 
-/* ================= CATEGORY NAVIGATION (HORIZONTAL SCROLL) ================= */
+/* ================= CATEGORY NAVIGATION ================= */
 .category-nav {
     display: flex;
     overflow-x: auto;
-    gap: 15px;
-    padding: 12px 15px;
+    gap: 10px;
+    padding: 10px 12px;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
     scrollbar-width: none;
@@ -400,7 +400,7 @@ body {
 .nav-item {
     padding: 6px 12px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--text-secondary);
     background: transparent;
     white-space: nowrap;
@@ -426,30 +426,30 @@ body {
 .nav-item.active::after {
     content: '';
     position: absolute;
-    bottom: -12px;
+    bottom: -10px;
     left: 50%;
     transform: translateX(-50%);
-    width: 30px;
-    height: 3px;
+    width: 25px;
+    height: 2px;
     background: var(--primary);
-    border-radius: 3px;
+    border-radius: 2px;
 }
 
 /* ================= HERO SECTION ================= */
 .hero-section {
     position: relative;
-    margin: 15px;
+    margin: 12px;
 }
 
 .hero {
     border-radius: 16px;
     overflow: hidden;
     position: relative;
-    height: 280px;
+    height: 220px;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding: 30px;
+    padding: 20px;
     color: white;
     background-size: cover;
     background-position: center;
@@ -475,53 +475,55 @@ body {
 .hero-badge {
     background: var(--primary);
     color: black;
-    padding: 4px 12px;
-    border-radius: 20px;
+    padding: 3px 8px;
+    border-radius: 16px;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 10px;
     width: max-content;
     animation: fadeIn 0.5s ease;
 }
 
 .hero-title {
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 700;
-    margin-top: 12px;
-    margin-bottom: 8px;
+    margin-top: 6px;
+    margin-bottom: 4px;
     animation: fadeIn 0.5s ease 0.1s both;
 }
 
 .hero-meta {
-    font-size: 14px;
+    font-size: 11px;
     opacity: 0.9;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     animation: fadeIn 0.5s ease 0.2s both;
+    flex-wrap: wrap;
 }
 
 .hero-meta i {
     color: #fbbf24;
+    font-size: 10px;
 }
 
 .hero-actions {
-    margin-top: 20px;
+    margin-top: 12px;
     display: flex;
-    gap: 12px;
+    gap: 8px;
     animation: fadeIn 0.5s ease 0.3s both;
 }
 
 .hero-play-btn,
 .hero-info-btn {
-    padding: 10px 24px;
+    padding: 6px 14px;
     border-radius: 30px;
     border: none;
-    font-size: 14px;
+    font-size: 11px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 4px;
     transition: var(--transition);
 }
 
@@ -551,13 +553,13 @@ body {
 .hero-indicators {
     display: flex;
     justify-content: center;
-    gap: 8px;
-    margin-top: 15px;
+    gap: 6px;
+    margin-top: 10px;
 }
 
 .hero-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: var(--border-color);
     cursor: pointer;
@@ -566,8 +568,8 @@ body {
 
 .hero-dot.active {
     background: var(--primary);
-    width: 24px;
-    border-radius: 4px;
+    width: 18px;
+    border-radius: 3px;
 }
 
 /* ================= MOVIES CONTAINER ================= */
@@ -578,14 +580,14 @@ body {
 
 /* ================= CAROUSELS ================= */
 .carousel {
-    padding: 15px 15px;
+    padding: 12px 12px;
     animation: fadeIn 0.5s ease;
 }
 
 .carousel-title {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 600;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     color: var(--text-primary);
     padding-left: 5px;
     position: relative;
@@ -595,9 +597,9 @@ body {
 .carousel-title::after {
     content: '';
     position: absolute;
-    bottom: -4px;
+    bottom: -3px;
     left: 5px;
-    width: 40px;
+    width: 35px;
     height: 2px;
     background: var(--primary);
     border-radius: 2px;
@@ -605,10 +607,10 @@ body {
 
 .carousel-container {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     overflow-x: auto;
     scroll-behavior: smooth;
-    padding: 5px 0 15px 0;
+    padding: 5px 0 10px 0;
     scrollbar-width: none;
     -webkit-overflow-scrolling: touch;
 }
@@ -620,9 +622,9 @@ body {
 /* ================= MOVIE CARDS ================= */
 .movie-card {
     flex: 0 0 auto;
-    width: 140px;
+    width: 110px;
     background: var(--bg-secondary);
-    border-radius: 12px;
+    border-radius: 10px;
     overflow: hidden;
     cursor: pointer;
     border: 1px solid var(--border-color);
@@ -631,7 +633,7 @@ body {
 }
 
 .movie-card:hover {
-    transform: translateY(-6px) scale(1.03);
+    transform: translateY(-4px) scale(1.02);
     border-color: var(--primary);
     box-shadow: var(--shadow-primary);
     z-index: 10;
@@ -639,7 +641,7 @@ body {
 
 .movie-card img {
     width: 100%;
-    height: 200px;
+    height: 150px;
     object-fit: cover;
     transition: transform 0.3s ease;
 }
@@ -650,24 +652,24 @@ body {
 
 .movie-card .overlay {
     position: absolute;
-    top: 8px;
-    left: 8px;
+    top: 5px;
+    left: 5px;
     background: var(--primary);
     color: black;
-    font-size: 10px;
+    font-size: 9px;
     font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 6px;
+    padding: 2px 5px;
+    border-radius: 4px;
     z-index: 2;
     box-shadow: var(--shadow-sm);
 }
 
 .movie-info {
-    padding: 8px 6px;
+    padding: 6px 5px;
 }
 
 .movie-title {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 600;
     line-height: 1.2;
     white-space: nowrap;
@@ -676,15 +678,15 @@ body {
 }
 
 .movie-sub {
-    font-size: 11px;
+    font-size: 9px;
     color: var(--text-secondary);
-    margin-top: 4px;
+    margin-top: 3px;
 }
 
 /* ================= FOOTER (CENTERED) ================= */
 .footer {
     margin-top: auto;
-    padding: 20px;
+    padding: 20px 15px;
     text-align: center;
     color: var(--text-muted);
     background: transparent;
@@ -697,25 +699,25 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
 }
 
 .footer p {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--text-muted);
 }
 
 .footer-nav {
     display: flex;
     justify-content: center;
-    gap: 25px;
+    gap: 20px;
     flex-wrap: wrap;
 }
 
 .footer-nav a {
     color: var(--text-secondary);
     text-decoration: none;
-    font-size: 12px;
+    font-size: 11px;
     transition: var(--transition);
     position: relative;
 }
@@ -764,8 +766,8 @@ body {
 }
 
 .loading-dots span {
-    width: 12px;
-    height: 12px;
+    width: 10px;
+    height: 10px;
     background: var(--primary);
     border-radius: 50%;
     animation: bounce 1s infinite;
@@ -793,12 +795,12 @@ body {
 /* ================= BACK TO TOP BUTTON ================= */
 .back-to-top {
     position: fixed;
-    bottom: 90px;
-    right: 20px;
+    bottom: 80px;
+    right: 15px;
     background: var(--primary);
     color: black;
-    width: 45px;
-    height: 45px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     border: none;
     cursor: pointer;
@@ -823,31 +825,39 @@ body {
     box-shadow: var(--shadow-primary);
 }
 
+.back-to-top i {
+    font-size: 18px;
+}
+
 /* ================= TOAST CONTAINER ================= */
 .toast-container {
     position: fixed;
-    bottom: 30px;
+    bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
     z-index: 10000;
     pointer-events: none;
+    width: 90%;
+    max-width: 300px;
 }
 
 .toast {
     background: var(--primary);
     color: black;
-    padding: 12px 24px;
-    border-radius: 50px;
+    padding: 10px 16px;
+    border-radius: 40px;
     font-weight: 600;
-    margin-top: 10px;
+    margin-top: 8px;
     opacity: 0;
     transform: translateY(20px);
     transition: all 0.3s ease;
     box-shadow: var(--shadow-lg);
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 6px;
     pointer-events: auto;
+    font-size: 12px;
 }
 
 .toast.show {
@@ -855,33 +865,40 @@ body {
     transform: translateY(0);
 }
 
+.toast i {
+    font-size: 14px;
+}
+
 /* ================= ERROR MESSAGE ================= */
 .error-message {
     background: rgba(239,68,68,0.1);
     border: 1px solid var(--error);
     border-radius: 8px;
-    padding: 20px;
-    margin: 20px;
+    padding: 15px;
+    margin: 15px;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 15px;
+    gap: 12px;
     color: var(--error);
+    font-size: 13px;
+    flex-wrap: wrap;
 }
 
 .error-message i {
-    font-size: 24px;
+    font-size: 20px;
 }
 
 .retry-btn {
     background: var(--error);
     color: white;
     border: none;
-    padding: 8px 16px;
+    padding: 6px 12px;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
     transition: var(--transition);
+    font-size: 12px;
 }
 
 .retry-btn:hover {
@@ -912,28 +929,145 @@ body {
     animation: pulse 2s infinite;
 }
 
-/* ================= RESPONSIVE ================= */
-@media (max-width: 768px) {
-    .top-search input {
-        width: 160px;
-    }
-    
-    .top-search input:focus {
-        width: 200px;
-    }
-    
-    .search-results {
-        width: 300px;
-        right: 15px;
-    }
-    
+/* ================= DESKTOP OPTIMIZATIONS ================= */
+@media (min-width: 1024px) {
     .hero {
-        height: 240px;
-        padding: 20px;
+        height: 400px;
+        padding: 40px;
     }
     
     .hero-title {
-        font-size: 24px;
+        font-size: 36px;
+    }
+    
+    .hero-meta {
+        font-size: 16px;
+    }
+    
+    .hero-play-btn,
+    .hero-info-btn {
+        padding: 12px 28px;
+        font-size: 14px;
+    }
+    
+    .movie-card {
+        width: 160px;
+    }
+    
+    .movie-card img {
+        height: 220px;
+    }
+    
+    .carousel-title {
+        font-size: 20px;
+    }
+    
+    .top-search input {
+        width: 300px;
+    }
+    
+    .top-search input:focus {
+        width: 350px;
+    }
+}
+
+/* ================= MOBILE OPTIMIZATIONS ================= */
+@media (max-width: 768px) {
+    .top-search {
+        display: block;
+    }
+    
+    .top-search input {
+        width: 160px;
+        padding: 6px 30px 6px 30px;
+        font-size: 12px;
+    }
+    
+    .top-search input:focus {
+        width: 180px;
+    }
+    
+    .top-search i {
+        font-size: 12px;
+        left: 10px;
+    }
+    
+    .search-clear {
+        right: 6px;
+        font-size: 12px;
+    }
+    
+    .search-results {
+        width: 280px;
+        right: 10px;
+        top: 50px;
+    }
+    
+    .profile-avatar {
+        width: 35px;
+        height: 35px;
+    }
+    
+    .hero {
+        height: 200px;
+        padding: 16px;
+    }
+    
+    .hero-title {
+        font-size: 18px;
+    }
+    
+    .hero-actions {
+        gap: 6px;
+    }
+    
+    .hero-play-btn,
+    .hero-info-btn {
+        padding: 5px 12px;
+        font-size: 10px;
+    }
+    
+    .hero-play-btn i,
+    .hero-info-btn i {
+        font-size: 10px;
+    }
+    
+    .movie-card {
+        width: 100px;
+    }
+    
+    .movie-card img {
+        height: 130px;
+    }
+    
+    .movie-title {
+        font-size: 10px;
+    }
+    
+    .movie-sub {
+        font-size: 8px;
+    }
+    
+    .category-nav {
+        padding: 8px 10px;
+        gap: 8px;
+    }
+    
+    .nav-item {
+        padding: 4px 10px;
+        font-size: 12px;
+    }
+    
+    .footer-nav {
+        gap: 15px;
+    }
+    
+    .footer-nav a {
+        font-size: 10px;
+    }
+    
+    .footer p {
+        font-size: 11px;
     }
 }
 
@@ -942,66 +1076,162 @@ body {
         display: none;
     }
     
-    .profile-avatar {
+    /* Show search icon that opens modal on mobile (you'll need to add this to HTML) */
+    .mobile-search-icon {
+        display: flex;
         width: 35px;
         height: 35px;
+        background: var(--bg-tertiary);
+        border-radius: 50%;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary);
+        font-size: 16px;
+        cursor: pointer;
+    }
+    
+    .profile-avatar {
+        width: 32px;
+        height: 32px;
+    }
+    
+    .profile-avatar i {
+        font-size: 18px;
+    }
+    
+    .profile-initials {
+        font-size: 14px;
     }
     
     .profile-menu {
-        width: 220px;
-        right: -10px;
+        width: 200px;
+        right: -5px;
+    }
+    
+    .profile-menu-item {
+        padding: 10px 12px;
+        font-size: 12px;
     }
     
     .hero {
-        height: 200px;
-        padding: 15px;
+        height: 180px;
+        padding: 14px;
     }
     
     .hero-title {
-        font-size: 20px;
+        font-size: 16px;
+    }
+    
+    .hero-meta {
+        font-size: 10px;
+        gap: 3px;
     }
     
     .hero-actions {
-        flex-direction: column;
-        gap: 8px;
+        margin-top: 8px;
     }
     
     .hero-play-btn,
     .hero-info-btn {
-        padding: 8px 16px;
-        font-size: 12px;
-        justify-content: center;
+        padding: 4px 10px;
+        font-size: 9px;
     }
     
     .movie-card {
-        width: 120px;
+        width: 90px;
     }
     
     .movie-card img {
-        height: 160px;
+        height: 120px;
+    }
+    
+    .movie-info {
+        padding: 4px 4px;
+    }
+    
+    .movie-title {
+        font-size: 9px;
+    }
+    
+    .movie-sub {
+        font-size: 7px;
+    }
+    
+    .carousel {
+        padding: 8px 8px;
+    }
+    
+    .carousel-title {
+        font-size: 14px;
+        margin-bottom: 6px;
+    }
+    
+    .carousel-container {
+        gap: 6px;
+    }
+    
+    .category-nav {
+        padding: 6px 8px;
+    }
+    
+    .nav-item {
+        padding: 3px 8px;
+        font-size: 11px;
+    }
+    
+    .nav-item.active::after {
+        bottom: -7px;
+        width: 20px;
+        height: 2px;
+    }
+    
+    .footer {
+        padding: 15px 10px;
     }
     
     .footer-nav {
-        gap: 15px;
+        gap: 12px;
     }
 }
 
 @media (max-width: 360px) {
+    .hero {
+        height: 160px;
+        padding: 12px;
+    }
+    
+    .hero-title {
+        font-size: 14px;
+    }
+    
+    .hero-badge {
+        font-size: 8px;
+        padding: 2px 6px;
+    }
+    
     .movie-card {
-        width: 100px;
+        width: 80px;
     }
     
     .movie-card img {
-        height: 140px;
+        height: 110px;
     }
     
     .category-nav {
-        gap: 10px;
+        gap: 5px;
     }
     
     .nav-item {
-        font-size: 12px;
-        padding: 4px 8px;
+        font-size: 10px;
+        padding: 3px 6px;
+    }
+    
+    .footer-nav {
+        gap: 10px;
+    }
+    
+    .footer-nav a {
+        font-size: 9px;
     }
 }
 
