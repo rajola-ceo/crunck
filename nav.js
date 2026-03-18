@@ -18,14 +18,14 @@ function initializeNav() {
         .then(data => {
             placeholder.innerHTML = data;
 
-            // Highlight active tab
+            // Highlight active tab based on current page
             highlightActiveTab();
             
             // Setup chat link with session persistence
             setupChatLink(user);
             
-            // Setup other navigation items
-            setupNavItems();
+            // Setup navigation click handlers
+            setupNavClickHandlers();
             
             // Initialize any additional features
             initializeNavFeatures();
@@ -33,7 +33,7 @@ function initializeNav() {
         .catch(err => {
             console.error("Nav load error:", err);
             // Fallback navigation if nav.html fails to load
-            createFallbackNav(placeholder);
+            createFallbackNav(placeholder, user);
         });
 }
 
@@ -43,43 +43,49 @@ function highlightActiveTab() {
     
     navItems.forEach(item => {
         const tab = item.dataset.tab;
+        // Remove active class from all
+        item.classList.remove("active");
+        
+        // Add active class to matching tab
         if (tab === currentPage || (currentPage === "" && tab === "home")) {
             item.classList.add("active");
-        } else {
-            item.classList.remove("active");
         }
     });
 }
 
 function setupChatLink(user) {
-    const chatLink = document.querySelector('[data-tab="chat"]');
+    const chatLink = document.querySelector('[data-tab="chats"]');
     if (!chatLink) return;
 
     if (user) {
         // User is logged in - pass user data to chat app
-        const chatUrl = `https://qonvo-chat.netlify.app/?user=${encodeURIComponent(JSON.stringify({
+        const userData = {
             username: user.username || user.name || 'User',
             email: user.email || '',
             picture: user.picture || user.photoURL || '',
             userId: user.userId || user.uid || Date.now().toString(),
             loggedIn: true,
             timestamp: Date.now()
-        }))}`;
+        };
         
-        chatLink.href = chatUrl;
-        chatLink.target = "_blank"; // Open in new tab
+        // Store user data in sessionStorage for the chat page
+        sessionStorage.setItem("chatUser", JSON.stringify(userData));
+        
+        // Update the href to go to our local chats page first
+        chatLink.href = "chats.html";
+        
+        // Add special class and tooltip
         chatLink.classList.add("chat-active");
+        chatLink.setAttribute("title", "Open Chats (Auto-login)");
         
-        // Add tooltip
-        chatLink.setAttribute("title", "Open Chat (Auto-login)");
-        
-        // Add click tracking
+        // Add click handler to ensure user data is passed
         chatLink.addEventListener("click", (e) => {
-            console.log("Opening chat app for user:", user.username);
+            // Update session data on each click
+            sessionStorage.setItem("chatUser", JSON.stringify(userData));
             trackUserActivity('chat_click');
         });
     } else {
-        // No user logged in - redirect to login first
+        // No user logged in - redirect to login
         chatLink.href = "#";
         chatLink.classList.add("chat-required");
         chatLink.setAttribute("title", "Please login first");
@@ -91,52 +97,26 @@ function setupChatLink(user) {
     }
 }
 
-function setupNavItems() {
-    // Home navigation
-    const homeLink = document.querySelector('[data-tab="home"]');
-    if (homeLink) {
-        homeLink.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "home.html";
-        });
-    }
-
-    // Games navigation
-    const gamesLink = document.querySelector('[data-tab="games"]');
-    if (gamesLink) {
-        gamesLink.addEventListener("click", (e) => {
-            e.preventDefault();
-            window.location.href = "games.html";
-        });
-    }
-
-    // Profile navigation
-    const profileLink = document.querySelector('[data-tab="profile"]');
-    if (profileLink) {
-        profileLink.addEventListener("click", (e) => {
-            e.preventDefault();
-            const user = JSON.parse(localStorage.getItem("crunkUser"));
-            if (user) {
-                window.location.href = "profile.html";
-            } else {
-                window.location.href = "index.html";
+function setupNavClickHandlers() {
+    // Add click handlers for all nav items
+    const navItems = document.querySelectorAll(".nav-item");
+    
+    navItems.forEach(item => {
+        item.addEventListener("click", function(e) {
+            const href = this.getAttribute("href");
+            
+            // Don't prevent default if it's a valid link
+            if (href && href !== "#") {
+                // Add loading state
+                this.classList.add("loading");
+                
+                // Remove loading state after navigation (will be cleared on new page)
+                setTimeout(() => {
+                    this.classList.remove("loading");
+                }, 500);
             }
         });
-    }
-
-    // Settings navigation
-    const settingsLink = document.querySelector('[data-tab="settings"]');
-    if (settingsLink) {
-        settingsLink.addEventListener("click", (e) => {
-            e.preventDefault();
-            const user = JSON.parse(localStorage.getItem("crunkUser"));
-            if (user) {
-                window.location.href = "settings.html";
-            } else {
-                showLoginPrompt();
-            }
-        });
-    }
+    });
 }
 
 function showLoginPrompt() {
@@ -145,7 +125,7 @@ function showLoginPrompt() {
     toast.className = "nav-toast";
     toast.innerHTML = `
         <i class="fas fa-info-circle"></i>
-        <span>Please login first to access this feature</span>
+        <span>Please login first to access chats</span>
         <button onclick="redirectToLogin()">Login</button>
     `;
     
@@ -175,7 +155,7 @@ function trackUserActivity(action) {
 }
 
 function initializeNavFeatures() {
-    // Add active class on scroll
+    // Add scroll effect
     window.addEventListener("scroll", () => {
         const nav = document.querySelector(".bottom-nav");
         if (nav) {
@@ -191,72 +171,193 @@ function initializeNavFeatures() {
     window.addEventListener("popstate", () => {
         highlightActiveTab();
     });
+    
+    // Check for active chat session
+    checkChatSession();
 }
 
-function createFallbackNav(placeholder) {
-    // Fallback navigation if nav.html fails to load
+function checkChatSession() {
     const user = JSON.parse(localStorage.getItem("crunkUser"));
-    const chatUrl = user ? 
-        `https://qonvo-chat.netlify.app/?user=${encodeURIComponent(JSON.stringify({
-            username: user.username || 'User',
-            email: user.email || '',
-            picture: user.picture || ''
-        }))}` : 
-        '#';
+    const chatUser = sessionStorage.getItem("chatUser");
     
+    // If we're on chats.html and have user data, redirect to Qonvo
+    const currentPage = window.location.pathname.split("/").pop();
+    if (currentPage === "chats.html" && user) {
+        redirectToQonvoChat(user);
+    }
+}
+
+function redirectToQonvoChat(user) {
+    // Prepare user data for Qonvo
+    const userData = {
+        username: user.username || user.name || 'User',
+        email: user.email || '',
+        picture: user.picture || user.photoURL || '',
+        userId: user.userId || user.uid || Date.now().toString(),
+        loggedIn: true,
+        timestamp: Date.now()
+    };
+    
+    // Encode and redirect to Qonvo
+    const encodedData = encodeURIComponent(JSON.stringify(userData));
+    window.location.href = `https://qonvo-chat.netlify.app/?user=${encodedData}`;
+}
+
+function createFallbackNav(placeholder, user) {
+    // Fallback navigation if nav.html fails to load
     placeholder.innerHTML = `
         <nav class="bottom-nav">
             <a href="home.html" class="nav-item" data-tab="home">
-                <i class="fas fa-home"></i>
-                <span>Home</span>
+                <span class="icon">🏠</span>
+                <span class="label">Home</span>
             </a>
-            <a href="games.html" class="nav-item" data-tab="games">
-                <i class="fas fa-gamepad"></i>
-                <span>Games</span>
+            <a href="tournaments.html" class="nav-item" data-tab="tournaments">
+                <span class="icon">🏆</span>
+                <span class="label">Tournaments</span>
             </a>
-            <a href="${chatUrl}" class="nav-item ${!user ? 'chat-required' : ''}" data-tab="chat" ${user ? 'target="_blank"' : ''}>
-                <i class="fas fa-comment"></i>
-                <span>Chat</span>
+            <a href="${user ? 'chats.html' : '#'}" class="nav-item ${!user ? 'chat-required' : ''}" data-tab="chats">
+                <span class="icon">💬</span>
+                <span class="label">Chats ${!user ? '🔒' : ''}</span>
             </a>
-            <a href="profile.html" class="nav-item" data-tab="profile">
-                <i class="fas fa-user"></i>
-                <span>Profile</span>
+            <a href="movies.html" class="nav-item" data-tab="movies">
+                <span class="icon">🎬</span>
+                <span class="label">Movies</span>
+            </a>
+            <a href="lovecode.html" class="nav-item" data-tab="lovecode">
+                <span class="icon">❤️</span>
+                <span class="label">Love Code</span>
             </a>
         </nav>
     `;
     
+    // Setup chat link for fallback nav
     if (!user) {
-        const chatLink = placeholder.querySelector('[data-tab="chat"]');
-        chatLink.addEventListener("click", (e) => {
-            e.preventDefault();
-            showLoginPrompt();
-        });
+        const chatLink = placeholder.querySelector('[data-tab="chats"]');
+        if (chatLink) {
+            chatLink.addEventListener("click", (e) => {
+                e.preventDefault();
+                showLoginPrompt();
+            });
+        }
     }
     
     highlightActiveTab();
 }
 
-// Expose functions globally for onclick handlers
-window.redirectToLogin = redirectToLogin;
-window.showLoginPrompt = showLoginPrompt;
+// Create chats.html page that handles the redirect
+function createChatsPage() {
+    // This function creates the content for chats.html
+    const chatPageContent = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirecting to Chat...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #1B2A49, #224566);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+        .loader {
+            border: 4px solid rgba(255,255,255,0.1);
+            border-left-color: #4FC3F7;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .container {
+            max-width: 400px;
+            padding: 20px;
+        }
+        h2 {
+            color: #4FC3F7;
+            margin-bottom: 10px;
+        }
+        .redirect-btn {
+            background: #4FC3F7;
+            color: #1B2A49;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+        .redirect-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Redirecting to Qonvo Chat</h2>
+        <p>Please wait while we redirect you to the chat application...</p>
+        <div class="loader"></div>
+        <button class="redirect-btn" onclick="redirectNow()">Click here if not redirected</button>
+    </div>
 
-// Handle incoming user data from chat app
+    <script>
+        function redirectNow() {
+            const userData = sessionStorage.getItem('chatUser');
+            if (userData) {
+                const encodedData = encodeURIComponent(userData);
+                window.location.href = 'https://qonvo-chat.netlify.app/?user=' + encodedData;
+            } else {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // Auto redirect after 2 seconds
+        setTimeout(redirectNow, 2000);
+    </script>
+</body>
+</html>
+    `;
+    
+    // You would save this as chats.html
+    console.log("Create chats.html with this content");
+}
+
+// Expose functions globally
+window.redirectToLogin = redirectToLogin;
+window.redirectToQonvoChat = redirectToQonvoChat;
+
+// Handle messages from Qonvo
 window.addEventListener("message", (event) => {
     // Verify origin for security
     if (event.origin === "https://qonvo-chat.netlify.app") {
         if (event.data.type === 'USER_LOGGED_OUT') {
             // User logged out from chat, update local session
             localStorage.removeItem("crunkUser");
+            sessionStorage.removeItem("chatUser");
             window.location.href = "index.html";
         }
     }
 });
 
-// Auto-refresh session if user is logged in
+// Auto-refresh session
 function refreshSession() {
     const user = JSON.parse(localStorage.getItem("crunkUser"));
     if (user) {
-        // Update last active timestamp
         user.lastActive = Date.now();
         localStorage.setItem("crunkUser", JSON.stringify(user));
     }
@@ -265,4 +366,4 @@ function refreshSession() {
 // Refresh session every 5 minutes
 setInterval(refreshSession, 300000);
 
-console.log("Nav.js loaded - Chat app integration ready");
+console.log("Nav.js loaded - Chat integration ready");
