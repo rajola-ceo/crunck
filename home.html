@@ -1,105 +1,287 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Crunk Games</title>
-<link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-<link rel="stylesheet" href="home.css">
-<link rel="stylesheet" href="nav.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crunk Games - Play & Discover</title>
+    
+    <!-- Boxicons -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome for additional icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="nav.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    
+    <!-- Meta tags -->
+    <meta name="description" content="Discover and play thousands of games on Crunk Games">
+    <meta name="keywords" content="games, free games, online games, crunk games">
 </head>
 <body>
 
 <div class="app">
 
-  <!-- TOPBAR -->
-  <header class="topbar">
-    <div class="menu" id="menuBtn"><i class="bx bx-menu"></i></div>
-    <div class="brand"><h1>Crunk Games</h1></div>
-    <div class="icons">
-      <!-- PROFILE -->
-      <div class="profile-dropdown" id="profileDropdown">
-        <img id="googleProfilePic" class="profile-pic" src="placeholder.png" alt="Profile">
-        <div class="profile-popup" id="profilePopup">
-          <div class="account-info">
-            <img id="popupProfilePic" src="placeholder.png" alt="Profile">
-            <div>
-              <p id="accountName">User Name</p>
-              <p id="accountEmail">user@example.com</p>
-            </div>
-          </div>
-          <button id="logoutBtn">Logout</button>
+    <!-- TOPBAR -->
+    <header class="topbar">
+        <div class="menu" id="menuBtn">
+            <i class="bx bx-menu"></i>
         </div>
-      </div>
-      <i class="bx bx-bell" id="notificationBtn"></i>
+        
+        <div class="brand">
+            <h1>Crunk Games</h1>
+        </div>
+        
+        <div class="icons">
+            <!-- NOTIFICATION BELL -->
+            <div class="notification-container">
+                <div class="notification-bell" id="notificationBtn">
+                    <i class="bx bx-bell"></i>
+                    <span class="notification-count" id="notificationCount">3</span>
+                </div>
+                <div class="notification-popup" id="notificationPopup">
+                    <div class="notification-header">
+                        <h3>Notifications</h3>
+                        <button id="markAllRead">Mark all read</button>
+                    </div>
+                    <div class="notification-list" id="notificationList"></div>
+                </div>
+            </div>
+
+            <!-- PROFILE DROPDOWN -->
+            <div class="profile-dropdown" id="profileDropdown">
+                <img id="googleProfilePic" class="profile-pic" src="https://ui-avatars.com/api/?name=User&background=34d399&color=fff&size=128" alt="Profile">
+                <div class="profile-popup" id="profilePopup">
+                    <div class="account-info">
+                        <img id="popupProfilePic" src="https://ui-avatars.com/api/?name=User&background=34d399&color=fff&size=128" alt="Profile">
+                        <div>
+                            <p id="accountName">User Name</p>
+                            <p id="accountEmail">user@example.com</p>
+                        </div>
+                    </div>
+                    <div class="profile-menu">
+                        <a href="#" id="profileView"><i class="bx bx-user"></i> View Profile</a>
+                        <a href="#" id="profileLibrary"><i class="bx bx-library"></i> My Library</a>
+                        <a href="#" id="profileSettings"><i class="bx bx-cog"></i> Settings</a>
+                    </div>
+                    <button id="logoutBtn"><i class="bx bx-log-out"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Menu</h3>
+            <span class="close-sidebar" id="closeSidebar"><i class="bx bx-x"></i></span>
+        </div>
+        
+        <div class="sidebar-user">
+            <img id="sidebarProfilePic" src="https://ui-avatars.com/api/?name=User&background=34d399&color=fff&size=128" alt="Profile">
+            <div class="sidebar-user-info">
+                <p id="sidebarUserName">User Name</p>
+                <p id="sidebarUserEmail">user@example.com</p>
+            </div>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li id="menuHome"><i class="bx bx-home"></i> Home</li>
+            <li id="menuLibrary"><i class="bx bx-library"></i> Game Library</li>
+            <li id="menuFavorites"><i class="bx bx-heart"></i> Favorites</li>
+            <li id="menuSettings"><i class="bx bx-cog"></i> Settings</li>
+            <li id="menuPrivacy"><i class="bx bx-shield"></i> Privacy & Policy</li>
+            <li id="menuShare"><i class="bx bx-share"></i> Share App</li>
+            <li id="menuHelp"><i class="bx bx-support"></i> Help / Support</li>
+            <li id="menuRate"><i class="bx bx-star"></i> Rate App</li>
+            <li id="menuAbout"><i class="bx bx-info-circle"></i> About</li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <div class="sidebar-theme" id="menuTheme">
+                <span><i class="bx bx-palette"></i> Theme: <span id="themeLabel">Dark</span></span>
+                <div class="theme-toggle">
+                    <i class="bx bx-sun" style="display: none;"></i>
+                    <i class="bx bx-moon"></i>
+                </div>
+            </div>
+        </div>
     </div>
-  </header>
+    
+    <!-- SIDEBAR OVERLAY -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
-  <!-- SIDEBAR -->
-  <div class="sidebar" id="sidebar">
-    <span class="close-sidebar" id="closeSidebar">✖</span>
-    <ul class="sidebar-menu">
-      <li id="menuSettings">Settings</li>
-      <li id="menuPrivacy">Privacy & Policy</li>
-      <li id="menuShare">Share</li>
-      <li id="menuHelp">Help / Support</li>
-      <li id="menuRate">Rate App</li>
-      <li id="menuAbout">About</li>
-      <li id="menuTheme">Theme: <span id="themeLabel">Dark</span></li>
-    </ul>
-  </div>
-
-  <!-- SEARCH -->
-  <div class="search">
-    <i class="bx bx-search"></i>
-    <input type="text" id="searchInput" placeholder="Search for Games, Competition..." />
-  </div>
-
-  <!-- PROMO -->
-  <div class="promo">
-    <div class="promo-icon"><i class="bx bxs-gift"></i></div>
-    <div class="promo-text"><h2>Free venocoins</h2></div>
-    <button class="claim">Claim</button>
-  </div>
-
-  <!-- LOADER -->
-  <div id="loader">
-    <div class="loader-dots">
-      <span></span>
-      <span></span>
-      <span></span>
+    <!-- SEARCH SECTION -->
+    <div class="search-container">
+        <div class="search">
+            <i class="bx bx-search"></i>
+            <input type="text" id="searchInput" placeholder="Search for Games, Competitions..." autocomplete="off" />
+            <div class="search-clear" id="searchClear">
+                <i class="bx bx-x"></i>
+            </div>
+        </div>
+        <div class="search-results" id="searchResults"></div>
     </div>
-  </div>
 
-  <!-- SLIDER -->
-  <div class="slider">
-    <div class="slides"></div>
-    <div class="dots"></div>
-  </div>
-
-  <!-- GAMES GRID -->
-  <div class="games" id="gamesContainer"></div>
-
-  <!-- GAME POPUP -->
-  <div id="gamePopup" class="popup">
-    <div class="popup-content">
-      <span class="close">✖</span>
-      <img id="popupImg">
-      <h2 id="popupTitle"></h2>
-      <div id="popupDesc"></div>
-      <div id="popupScreens"></div>
-      <div id="popupTrailer"></div>
-      <a id="popupDownload"><button>Download</button></a>
+    <!-- PROMO BANNER -->
+    <div class="promo">
+        <div class="promo-icon">
+            <i class="bx bxs-gift"></i>
+        </div>
+        <div class="promo-text">
+            <h2>Free Venocoins</h2>
+            <p>Claim your daily bonus now!</p>
+        </div>
+        <button class="claim" id="claimBtn">Claim</button>
     </div>
-  </div>
 
-  <!-- FOOTER -->
-  <footer class="footer">
-    Venocyber2026 © 2026
-  </footer>
+    <!-- LOADER -->
+    <div id="loader">
+        <div class="loader-dots">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </div>
+
+    <!-- SLIDER / HERO SECTION -->
+    <div class="slider">
+        <div class="slides" id="slides"></div>
+        <div class="dots" id="dots"></div>
+    </div>
+
+    <!-- GAMES GRID SECTION -->
+    <section class="games-section">
+        <div class="section-header">
+            <h2>Popular Games</h2>
+            <a href="#" id="viewAllLink">View All <i class="bx bx-chevron-right"></i></a>
+        </div>
+        <div class="games" id="gamesContainer"></div>
+    </section>
+
+    <!-- GAME DETAIL POPUP -->
+    <div id="gamePopup" class="popup">
+        <div class="popup-content">
+            <span class="close" id="popupClose">✖</span>
+            
+            <div class="popup-grid">
+                <!-- Left Column - Image -->
+                <div class="popup-image">
+                    <img id="popupImg" src="placeholder.png" alt="Game Poster">
+                </div>
+                
+                <!-- Right Column - Info -->
+                <div class="popup-info">
+                    <h2 id="popupTitle">Game Title</h2>
+                    
+                    <div class="popup-meta">
+                        <span class="popup-rating" id="popupRating">⭐ 0.0</span>
+                        <span class="popup-release" id="popupRelease">2024</span>
+                        <span class="popup-platforms" id="popupPlatforms">PC</span>
+                    </div>
+                    
+                    <p id="popupDesc" class="popup-description">Game description will appear here...</p>
+                    
+                    <!-- Screenshots -->
+                    <div class="popup-screenshots">
+                        <h3>Screenshots</h3>
+                        <div id="popupScreens" class="screenshots-grid"></div>
+                    </div>
+                    
+                    <!-- Trailer -->
+                    <div class="popup-trailer">
+                        <h3>Trailer</h3>
+                        <div id="popupTrailer"></div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="popup-actions">
+                        <button class="popup-download" id="popupDownload">
+                            <i class="bx bx-download"></i> Download Game
+                        </button>
+                        <button class="popup-favorite" id="popupFavorite">
+                            <i class="bx bx-heart"></i> Add to Favorites
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="footer-content">
+            <p>Venocyber2026 © 2026 | Crunk Games</p>
+            <div class="footer-links">
+                <a href="#">Terms</a>
+                <a href="#">Privacy</a>
+                <a href="#">Contact</a>
+            </div>
+        </div>
+    </footer>
 </div>
-  <div id="nav-placeholder"></div>
+
+<!-- Navigation Placeholder -->
+<div id="nav-placeholder"></div>
+
+<!-- Scripts -->
 <script src="nav.js"></script>
 <script type="module" src="home.js"></script>
+
+<!-- Add this small script for immediate functionality -->
+<script>
+    // Immediate UI enhancements
+    document.addEventListener('DOMContentLoaded', function() {
+        // Claim button toast
+        const claimBtn = document.getElementById('claimBtn');
+        if (claimBtn) {
+            claimBtn.addEventListener('click', function() {
+                showToast('🎮 50 Venocoins claimed!');
+            });
+        }
+        
+        // View all link
+        const viewAllLink = document.getElementById('viewAllLink');
+        if (viewAllLink) {
+            viewAllLink.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelector('.games-section').scrollIntoView({ 
+                    behavior: 'smooth' 
+                });
+            });
+        }
+        
+        // Toast function
+        window.showToast = function(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = `<i class="bx bx-check-circle"></i> ${message}`;
+            document.getElementById('toastContainer').appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 2500);
+            }, 100);
+        }
+        
+        // Keyboard shortcut (Ctrl/Cmd + K) to focus search
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
+    });
+</script>
 </body>
 </html>
