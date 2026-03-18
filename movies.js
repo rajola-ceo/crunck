@@ -172,3 +172,38 @@ window.addEventListener("scroll", async ()=>{
     renderMovies("for-you", data.results);
   }
 });
+const searchInput = document.getElementById("searchInput");
+const searchResults = document.getElementById("searchResults");
+
+searchInput.addEventListener("input", async () => {
+  const query = searchInput.value.trim();
+
+  if(query.length < 2){
+    searchResults.style.display = "none";
+    return;
+  }
+
+  try {
+    const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=YOUR_TMDB_KEY&query=${query}`);
+    const data = await res.json();
+
+    searchResults.innerHTML = "";
+
+    data.results.slice(0,6).forEach(movie => {
+      const item = document.createElement("div");
+      item.classList.add("search-item");
+      item.innerText = movie.title;
+
+      item.onclick = () => {
+        window.location.href = `video.html?id=${movie.id}`;
+      };
+
+      searchResults.appendChild(item);
+    });
+
+    searchResults.style.display = "block";
+
+  } catch(err){
+    console.error(err);
+  }
+});
