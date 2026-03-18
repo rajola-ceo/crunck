@@ -162,16 +162,6 @@ searchInput.addEventListener("input", async e=>{
 });
 
 // ================= INITIAL LOAD =================
-fetchTrending();
-window.addEventListener("scroll", async ()=>{
-  if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 300){
-    // fetch next page from TMDB
-    page++;
-    const res = await fetch(`${TMDB_BASE}/trending/movie/week?api_key=${TMDB_KEY}&page=${page}`);
-    const data = await res.json();
-    renderMovies("for-you", data.results);
-  }
-});
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
 
