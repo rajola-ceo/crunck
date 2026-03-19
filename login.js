@@ -38,7 +38,7 @@ import {
     getDocs 
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-// ================= FIREBASE CONFIG =================
+// ================= FIREBASE CONFIG (Same as chat app) =================
 const firebaseConfig = {
     apiKey: "AIzaSyBW0Sz7TODfa8tQJTfNUaLhfK9qJhdA1yE",
     authDomain: "crunck-app.firebaseapp.com",
@@ -49,7 +49,7 @@ const firebaseConfig = {
     measurementId: "G-7ZQ20HK4SD"
 };
 
-// Initialize Firebase
+// Initialize Firebase (only once!)
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -296,9 +296,6 @@ async function populateCountryCodes() {
     countryCodeSelect.innerHTML = '<option value="" disabled selected>🌍 Select Country Code</option>';
     
     try {
-        // Show loading state
-        countryCodeSelect.disabled = true;
-        
         const countries = await fetchCountryCodes();
         
         countries.forEach(country => {
@@ -309,16 +306,6 @@ async function populateCountryCodes() {
         });
         
         console.log(`✅ Loaded ${countries.length} countries`);
-        
-        // Auto-select a default country (optional)
-        // For example, select United States if available
-        const usOption = Array.from(countryCodeSelect.options).find(
-            opt => opt.textContent.includes('United States') || opt.textContent.includes('+1')
-        );
-        if (usOption) {
-            usOption.selected = true;
-        }
-        
     } catch (error) {
         console.error('Error populating countries:', error);
         
@@ -330,19 +317,11 @@ async function populateCountryCodes() {
             option.textContent = `${country.country} (${country.code})`;
             countryCodeSelect.appendChild(option);
         });
-        
-        console.log(`✅ Loaded ${fallbackCountries.length} fallback countries`);
-    } finally {
-        countryCodeSelect.disabled = false;
     }
 }
 
-// Initialize country codes when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', populateCountryCodes);
-} else {
-    populateCountryCodes();
-}
+// Initialize country codes
+document.addEventListener('DOMContentLoaded', populateCountryCodes);
 
 // ================= FORM LOGIN =================
 const form = document.getElementById("loginForm");
@@ -352,11 +331,11 @@ if (form) {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const username = document.getElementById("username").value.trim();
-        const email = document.getElementById("email").value.trim();
+        const username = document.getElementById("username")?.value.trim();
+        const email = document.getElementById("email")?.value.trim();
         const countryCodeSelect = document.getElementById("countryCode");
         const countryCode = countryCodeSelect?.value || "+1";
-        const phoneNumber = document.getElementById("phone").value.trim();
+        const phoneNumber = document.getElementById("phone")?.value.trim();
         const fullPhoneNumber = countryCode + phoneNumber;
 
         if (!username || !email || !phoneNumber) {
@@ -418,7 +397,7 @@ if (form) {
                 return;
             }
 
-            // Create new user with Firebase UID format matching chat app
+            // Create new user
             const userId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 
             const newUser = {
@@ -463,7 +442,7 @@ if (form) {
 }
 
 // ================= GOOGLE LOGIN =================
-async function handleGoogleLogin() {
+window.handleGoogleLogin = async function() {
     try {
         showLoader(true);
         
@@ -528,21 +507,7 @@ async function handleGoogleLogin() {
     } finally {
         showLoader(false);
     }
-}
-
-// Handle redirect result
-async function handleRedirectResult() {
-    try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-            handleGoogleLogin();
-        }
-    } catch (error) {
-        console.error("Redirect error:", error);
-    }
-}
-
-handleRedirectResult();
+};
 
 // ================= HELPER FUNCTIONS =================
 function showMessage(text, type = "info") {
@@ -567,9 +532,6 @@ function showLoader(show) {
         loader.style.display = show ? "flex" : "none";
     }
 }
-
-// ================= EXPOSE FUNCTIONS GLOBALLY =================
-window.handleGoogleLogin = handleGoogleLogin;
 
 // ================= VALIDATION =================
 const usernameInput = document.getElementById("username");
