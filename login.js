@@ -441,14 +441,69 @@ if (form) {
     });
 }
 
-// ================= GOOGLE LOGIN =================
+// ================= GOOGLE LOGIN (COMPLETE FIXED VERSION) =================
 window.handleGoogleLogin = async function() {
     try {
         showLoader(true);
         
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
+        // Check if we're on GitHub Pages or other restricted domain
+        const hostname = window.location.hostname;
+        const isRestrictedDomain = hostname.includes('github.io') || 
+                                   hostname.includes('netlify.app') ||
+                                   hostname.includes('vercel.app');
         
+        let result;
+        
+        if (isRestrictedDomain) {
+            // On hosting platforms, use redirect instead of popup
+            console.log('Using redirect sign-in for:', hostname);
+            
+            // Set custom parameters for redirect
+            googleProvider.setCustomParameters({
+                prompt: 'select_account',
+                // This helps with some hosting platforms
+                login_hint: undefined
+            });
+            
+            await signInWithRedirect(auth, googleProvider);
+            // The page will redirect, so we don't need to handle result here
+            return;
+        } else {
+            // On localhost or custom domain, use popup
+            result = await signInWithPopup(auth, googleProvider);
+        }
+        
+        // Only process if we got a result (not for redirect)
+        if (result) {
+            await processGoogleUser(result.user);
+        }
+        
+    } catch (error) {
+        console.error("Google login error:", error);
+        
+        // Handle specific errors
+        if (error.code === 'auth/popup-closed-by-user') {
+            showMessage("Login cancelled. Please try again.", "info");
+        } else if (error.code === 'auth/popup-blocked') {
+            showMessage("Popup was blocked. Please allow popups.", "error");
+        } else if (error.code === 'auth/unauthorized-domain') {
+            const domain = window.location.hostname;
+            showMessage(`Please add "${domain}" to Firebase authorized domains.`, "error");
+            console.log(`❌ Add this domain to Firebase: ${domain}`);
+            
+            // Copy to clipboard for easy adding
+            navigator.clipboard?.writeText(domain);
+        } else {
+            showMessage("Error with Google login. Please try again.", "error");
+        }
+    } finally {
+        showLoader(false);
+    }
+};
+
+// ================= PROCESS GOOGLE USER =================
+async function processGoogleUser(user) {
+    try {
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
         
@@ -493,21 +548,30 @@ window.handleGoogleLogin = async function() {
         }, 1000);
         
     } catch (error) {
-        console.error("Google login error:", error);
-        
-        if (error.code === 'auth/popup-closed-by-user') {
-            showMessage("Login cancelled. Please try again.", "info");
-        } else if (error.code === 'auth/popup-blocked') {
-            showMessage("Popup was blocked. Please allow popups.", "error");
-        } else if (error.code === 'auth/account-exists-with-different-credential') {
-            showMessage("Account exists with different sign-in method.", "error");
-        } else {
-            showMessage("Error with Google login. Please try again.", "error");
-        }
-    } finally {
-        showLoader(false);
+        console.error("Error processing Google user:", error);
+        showMessage("Error saving user data.", "error");
     }
-};
+}
+
+// ================= HANDLE REDIRECT RESULT =================
+async function handleRedirectResult() {
+    try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+            await processGoogleUser(result.user);
+        }
+    } catch (error) {
+        console.error("Redirect result error:", error);
+        if (error.code === 'auth/unauthorized-domain') {
+            const domain = window.location.hostname;
+            showMessage(`Please add "${domain}" to Firebase authorized domains.`, "error");
+            console.log(`❌ Add this domain to Firebase: ${domain}`);
+        }
+    }
+}
+
+// Call this on page load
+handleRedirectResult();
 
 // ================= HELPER FUNCTIONS =================
 function showMessage(text, type = "info") {
