@@ -797,3 +797,31 @@ h1 {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
 }
+/* Add to your login.css */
+.google-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 12px;
+    background: white;
+    color: #444;
+    border: 1px solid #ddd;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 10px 0;
+}
+
+.google-btn:hover {
+    background: #f5f5f5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.google-btn i {
+    color: #4285f4;
+    font-size: 20px;
+}
