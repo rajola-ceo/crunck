@@ -29,12 +29,26 @@ function initializeNav() {
             
             // Initialize any additional features
             initializeNavFeatures();
+            
+            // Make nav always visible at bottom
+            ensureNavAtBottom();
         })
         .catch(err => {
             console.error("Nav load error:", err);
             // Fallback navigation if nav.html fails to load
             createFallbackNav(placeholder, user);
         });
+}
+
+function ensureNavAtBottom() {
+    const nav = document.querySelector('.bottom-nav');
+    if (nav) {
+        nav.style.position = 'fixed';
+        nav.style.bottom = '0';
+        nav.style.left = '0';
+        nav.style.width = '100%';
+        nav.style.zIndex = '1000';
+    }
 }
 
 function highlightActiveTab() {
@@ -60,7 +74,7 @@ function setupChatLink(user) {
     if (user) {
         // User is logged in - pass user data to chat app
         const userData = {
-            username: user.username || user.name || 'User',
+            username: user.username || user.name || user.displayName || 'User',
             email: user.email || '',
             picture: user.picture || user.photoURL || '',
             userId: user.userId || user.uid || Date.now().toString(),
@@ -174,6 +188,9 @@ function initializeNavFeatures() {
     
     // Check for active chat session
     checkChatSession();
+    
+    // Ensure nav stays at bottom on resize
+    window.addEventListener('resize', ensureNavAtBottom);
 }
 
 function checkChatSession() {
@@ -190,7 +207,7 @@ function checkChatSession() {
 function redirectToQonvoChat(user) {
     // Prepare user data for Qonvo
     const userData = {
-        username: user.username || user.name || 'User',
+        username: user.username || user.name || user.displayName || 'User',
         email: user.email || '',
         picture: user.picture || user.photoURL || '',
         userId: user.userId || user.uid || Date.now().toString(),
@@ -204,27 +221,27 @@ function redirectToQonvoChat(user) {
 }
 
 function createFallbackNav(placeholder, user) {
-    // Fallback navigation if nav.html fails to load
+    // Fallback navigation if nav.html fails to load - with Font Awesome icons
     placeholder.innerHTML = `
-        <nav class="bottom-nav">
+        <nav class="bottom-nav" style="position:fixed; bottom:0; left:0; width:100%; z-index:1000;">
             <a href="home.html" class="nav-item" data-tab="home">
-                <span class="icon">🏠</span>
+                <i class="fas fa-home"></i>
                 <span class="label">Home</span>
             </a>
             <a href="tournaments.html" class="nav-item" data-tab="tournaments">
-                <span class="icon">🏆</span>
+                <i class="fas fa-trophy"></i>
                 <span class="label">Tournaments</span>
             </a>
             <a href="${user ? 'chats.html' : '#'}" class="nav-item ${!user ? 'chat-required' : ''}" data-tab="chats">
-                <span class="icon">💬</span>
-                <span class="label">Chats ${!user ? '🔒' : ''}</span>
+                <i class="fas fa-comment-dots"></i>
+                <span class="label">Chats ${!user ? '<i class="fas fa-lock" style="font-size:10px; margin-left:2px;"></i>' : ''}</span>
             </a>
             <a href="movies.html" class="nav-item" data-tab="movies">
-                <span class="icon">🎬</span>
+                <i class="fas fa-film"></i>
                 <span class="label">Movies</span>
             </a>
             <a href="lovecode.html" class="nav-item" data-tab="lovecode">
-                <span class="icon">❤️</span>
+                <i class="fas fa-heart"></i>
                 <span class="label">Love Code</span>
             </a>
         </nav>
@@ -242,6 +259,7 @@ function createFallbackNav(placeholder, user) {
     }
     
     highlightActiveTab();
+    ensureNavAtBottom();
 }
 
 // Create chats.html page that handles the redirect
@@ -254,11 +272,12 @@ function createChatsPage() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Redirecting to Chat...</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         body {
             margin: 0;
             padding: 0;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #1B2A49, #224566);
             color: white;
             display: flex;
@@ -269,10 +288,10 @@ function createChatsPage() {
         }
         .loader {
             border: 4px solid rgba(255,255,255,0.1);
-            border-left-color: #4FC3F7;
+            border-left-color: #34d399;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
             margin: 20px auto;
         }
@@ -281,14 +300,17 @@ function createChatsPage() {
         }
         .container {
             max-width: 400px;
-            padding: 20px;
+            padding: 30px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
         }
         h2 {
-            color: #4FC3F7;
+            color: #34d399;
             margin-bottom: 10px;
         }
         .redirect-btn {
-            background: #4FC3F7;
+            background: #34d399;
             color: #1B2A49;
             border: none;
             padding: 12px 30px;
@@ -298,21 +320,36 @@ function createChatsPage() {
             cursor: pointer;
             margin-top: 20px;
             text-decoration: none;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
             transition: all 0.3s ease;
         }
         .redirect-btn:hover {
             transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(79, 195, 247, 0.4);
+            box-shadow: 0 4px 15px rgba(52, 211, 153, 0.4);
+        }
+        .user-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            text-align: left;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Redirecting to Qonvo Chat</h2>
+        <i class="fas fa-comment-dots" style="font-size: 60px; color: #34d399; margin-bottom: 20px;"></i>
+        <h2>Redirecting to Chat</h2>
         <p>Please wait while we redirect you to the chat application...</p>
         <div class="loader"></div>
-        <button class="redirect-btn" onclick="redirectNow()">Click here if not redirected</button>
+        <div id="userInfo" class="user-info">
+            <p><i class="fas fa-user"></i> <span id="username">Loading...</span></p>
+        </div>
+        <button class="redirect-btn" onclick="redirectNow()">
+            <i class="fas fa-external-link-alt"></i> Click here if not redirected
+        </button>
     </div>
 
     <script>
@@ -326,6 +363,15 @@ function createChatsPage() {
             }
         }
 
+        // Display user info
+        const userData = sessionStorage.getItem('chatUser');
+        if (userData) {
+            try {
+                const user = JSON.parse(userData);
+                document.getElementById('username').textContent = user.username || 'User';
+            } catch (e) {}
+        }
+
         // Auto redirect after 2 seconds
         setTimeout(redirectNow, 2000);
     </script>
@@ -333,8 +379,8 @@ function createChatsPage() {
 </html>
     `;
     
-    // You would save this as chats.html
-    console.log("Create chats.html with this content");
+    console.log("✅ Create chats.html with this content");
+    return chatPageContent;
 }
 
 // Expose functions globally
@@ -366,4 +412,7 @@ function refreshSession() {
 // Refresh session every 5 minutes
 setInterval(refreshSession, 300000);
 
-console.log("Nav.js loaded - Chat integration ready");
+// Ensure nav is at bottom on page load
+document.addEventListener('DOMContentLoaded', ensureNavAtBottom);
+
+console.log("✅ Nav.js loaded - Chat integration ready with fixed bottom nav");
