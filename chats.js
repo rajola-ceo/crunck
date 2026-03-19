@@ -24,14 +24,15 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
 // ================= FIREBASE CONFIG =================
-// REPLACE THESE WITH YOUR ACTUAL FIREBASE CREDENTIALS
+// ================= FIREBASE CONFIG =================
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyBW0Sz7TODfa8tQJTfNUaLhfK9qJhdA1yE",
+    authDomain: "crunck-app.firebaseapp.com",
+    projectId: "crunck-app",
+    storageBucket: "crunck-app.firebasestorage.app",
+    messagingSenderId: "475953302982",
+    appId: "1:475953302982:web:607e08379adb12f985f6c7",
+    measurementId: "G-7ZQ20HK4SD"
 };
 
 // Initialize Firebase
@@ -834,22 +835,23 @@ if (msgInput) {
             if (micBtn) micBtn.classList.remove('hidden');
             if (sendBtn) sendBtn.classList.add('hidden');
         }
-        
-        // Send typing indicator (simplified)
-        if (currentChatId) {
-            if (typingTimeout) clearTimeout(typingTimeout);
-            
-            typingTimeout = setTimeout(() => {
-                // Clear typing indicator logic here
-                if (typingIndicator) typingIndicator.style.display = 'none';
-            }, 1000);
-            
-            if (typingIndicator) {
-                typingIndicator.style.display = 'inline';
-                typingIndicator.textContent = 'typing...';
-            }
+        // Send typing indicator
+if (currentChatId) {
+    if (typingIndicator) {
+        typingIndicator.style.display = 'inline';
+        typingIndicator.textContent = 'typing...';
+    }
+    
+    if (typingTimeout) clearTimeout(typingTimeout);
+    
+    typingTimeout = setTimeout(() => {
+        if (typingIndicator) {
+            typingIndicator.style.display = 'none';
         }
-    });
+    }, 1500); // Hide after 1.5 seconds of no typing
+}
+        
+    
 }
 
 // Image upload
@@ -994,4 +996,15 @@ window.updateUserStatus = function(status) {
     // This will be handled by your Firebase presence system
     // You can dispatch a custom event that your chat.js listens to
     window.dispatchEvent(new CustomEvent('userStatusChanged', { detail: { status } }));
+};
+// ================= LOGOUT =================
+window.logout = async function() {
+    try {
+        await signOut(auth);
+        localStorage.removeItem('crunkUser');
+        window.location.href = 'index.html';
+    } catch (error) {
+        console.error('Logout error:', error);
+        showToast('Failed to logout', 'error');
+    }
 };
