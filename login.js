@@ -38,7 +38,7 @@ import {
     getDocs 
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
-// ================= FIREBASE CONFIG (Updated from chat app) =================
+// ================= FIREBASE CONFIG (SAME AS CHAT APP) =================
 const firebaseConfig = {
     apiKey: "AIzaSyBW0Sz7TODfa8tQJTfNUaLhfK9qJhdA1yE",
     authDomain: "crunck-app.firebaseapp.com",
@@ -49,6 +49,7 @@ const firebaseConfig = {
     measurementId: "G-7ZQ20HK4SD"
 };
 
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -59,232 +60,229 @@ googleProvider.setCustomParameters({
     prompt: 'select_account'
 });
 
-window.auth = auth; // make auth globally accessible if needed
+window.auth = auth;
+window.db = db;
 
-// ================= DYNAMIC COUNTRY CODES =================
+// ================= COUNTRY CODES API =================
 async function fetchCountryCodes() {
     try {
-        // Try to fetch from a free API first
-        const response = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,idd');
+        const response = await fetch('https://restcountries.com/v3.1/all?fields=name,cca2,idd,flags');
         const countries = await response.json();
         
-        // Format the data for our select dropdown
-        const formattedCountries = countries
-            .filter(country => country.idd?.root && country.idd?.suffixes)
+        return countries
+            .filter(country => country.idd?.root && country.idd?.suffixes?.[0])
             .map(country => {
-                // Combine root and first suffix to get full code
                 const root = country.idd.root;
-                const suffix = country.idd.suffixes[0] || '';
+                const suffix = country.idd.suffixes[0];
                 const code = root + suffix;
+                const flagUrl = country.flags?.png || country.flags?.svg;
                 
                 return {
                     code: code,
                     country: country.name.common,
-                    flag: `https://flagcdn.com/w20/${country.cca2.toLowerCase()}.png`
+                    flag: flagUrl,
+                    cca2: country.cca2.toLowerCase()
                 };
             })
             .sort((a, b) => a.country.localeCompare(b.country));
-        
-        return formattedCountries;
     } catch (error) {
         console.error('Error fetching countries:', error);
-        // Fallback to a comprehensive list if API fails
         return getFallbackCountryCodes();
     }
 }
 
-// ================= FALLBACK COUNTRY CODES (Comprehensive) =================
+// ================= FALLBACK COUNTRY CODES =================
 function getFallbackCountryCodes() {
     return [
-        { code: "+93", country: "Afghanistan" },
-        { code: "+355", country: "Albania" },
-        { code: "+213", country: "Algeria" },
-        { code: "+376", country: "Andorra" },
-        { code: "+244", country: "Angola" },
-        { code: "+54", country: "Argentina" },
-        { code: "+374", country: "Armenia" },
-        { code: "+61", country: "Australia" },
-        { code: "+43", country: "Austria" },
-        { code: "+994", country: "Azerbaijan" },
-        { code: "+973", country: "Bahrain" },
-        { code: "+880", country: "Bangladesh" },
-        { code: "+375", country: "Belarus" },
-        { code: "+32", country: "Belgium" },
-        { code: "+501", country: "Belize" },
-        { code: "+229", country: "Benin" },
-        { code: "+975", country: "Bhutan" },
-        { code: "+591", country: "Bolivia" },
-        { code: "+387", country: "Bosnia and Herzegovina" },
-        { code: "+267", country: "Botswana" },
-        { code: "+55", country: "Brazil" },
-        { code: "+673", country: "Brunei" },
-        { code: "+359", country: "Bulgaria" },
-        { code: "+226", country: "Burkina Faso" },
-        { code: "+257", country: "Burundi" },
-        { code: "+855", country: "Cambodia" },
-        { code: "+237", country: "Cameroon" },
-        { code: "+1", country: "Canada" },
-        { code: "+238", country: "Cape Verde" },
-        { code: "+236", country: "Central African Republic" },
-        { code: "+235", country: "Chad" },
-        { code: "+56", country: "Chile" },
-        { code: "+86", country: "China" },
-        { code: "+57", country: "Colombia" },
-        { code: "+269", country: "Comoros" },
-        { code: "+242", country: "Congo" },
-        { code: "+506", country: "Costa Rica" },
-        { code: "+385", country: "Croatia" },
-        { code: "+53", country: "Cuba" },
-        { code: "+357", country: "Cyprus" },
-        { code: "+420", country: "Czech Republic" },
-        { code: "+45", country: "Denmark" },
-        { code: "+253", country: "Djibouti" },
-        { code: "+593", country: "Ecuador" },
-        { code: "+20", country: "Egypt" },
-        { code: "+503", country: "El Salvador" },
-        { code: "+240", country: "Equatorial Guinea" },
-        { code: "+291", country: "Eritrea" },
-        { code: "+372", country: "Estonia" },
-        { code: "+251", country: "Ethiopia" },
-        { code: "+679", country: "Fiji" },
-        { code: "+358", country: "Finland" },
-        { code: "+33", country: "France" },
-        { code: "+241", country: "Gabon" },
-        { code: "+220", country: "Gambia" },
-        { code: "+995", country: "Georgia" },
-        { code: "+49", country: "Germany" },
-        { code: "+233", country: "Ghana" },
-        { code: "+30", country: "Greece" },
-        { code: "+299", country: "Greenland" },
-        { code: "+502", country: "Guatemala" },
-        { code: "+224", country: "Guinea" },
-        { code: "+245", country: "Guinea-Bissau" },
-        { code: "+592", country: "Guyana" },
-        { code: "+509", country: "Haiti" },
-        { code: "+504", country: "Honduras" },
-        { code: "+852", country: "Hong Kong" },
-        { code: "+36", country: "Hungary" },
-        { code: "+354", country: "Iceland" },
-        { code: "+91", country: "India" },
-        { code: "+62", country: "Indonesia" },
-        { code: "+98", country: "Iran" },
-        { code: "+964", country: "Iraq" },
-        { code: "+353", country: "Ireland" },
-        { code: "+972", country: "Israel" },
-        { code: "+39", country: "Italy" },
-        { code: "+225", country: "Ivory Coast" },
-        { code: "+81", country: "Japan" },
-        { code: "+962", country: "Jordan" },
-        { code: "+7", country: "Kazakhstan" },
-        { code: "+254", country: "Kenya" },
-        { code: "+686", country: "Kiribati" },
-        { code: "+965", country: "Kuwait" },
-        { code: "+996", country: "Kyrgyzstan" },
-        { code: "+856", country: "Laos" },
-        { code: "+371", country: "Latvia" },
-        { code: "+961", country: "Lebanon" },
-        { code: "+266", country: "Lesotho" },
-        { code: "+231", country: "Liberia" },
-        { code: "+218", country: "Libya" },
-        { code: "+423", country: "Liechtenstein" },
-        { code: "+370", country: "Lithuania" },
-        { code: "+352", country: "Luxembourg" },
-        { code: "+853", country: "Macau" },
-        { code: "+389", country: "North Macedonia" },
-        { code: "+261", country: "Madagascar" },
-        { code: "+265", country: "Malawi" },
-        { code: "+60", country: "Malaysia" },
-        { code: "+960", country: "Maldives" },
-        { code: "+223", country: "Mali" },
-        { code: "+356", country: "Malta" },
-        { code: "+692", country: "Marshall Islands" },
-        { code: "+222", country: "Mauritania" },
-        { code: "+230", country: "Mauritius" },
-        { code: "+52", country: "Mexico" },
-        { code: "+691", country: "Micronesia" },
-        { code: "+373", country: "Moldova" },
-        { code: "+377", country: "Monaco" },
-        { code: "+976", country: "Mongolia" },
-        { code: "+382", country: "Montenegro" },
-        { code: "+212", country: "Morocco" },
-        { code: "+258", country: "Mozambique" },
-        { code: "+95", country: "Myanmar" },
-        { code: "+264", country: "Namibia" },
-        { code: "+674", country: "Nauru" },
-        { code: "+977", country: "Nepal" },
-        { code: "+31", country: "Netherlands" },
-        { code: "+64", country: "New Zealand" },
-        { code: "+505", country: "Nicaragua" },
-        { code: "+227", country: "Niger" },
-        { code: "+234", country: "Nigeria" },
-        { code: "+850", country: "North Korea" },
-        { code: "+47", country: "Norway" },
-        { code: "+968", country: "Oman" },
-        { code: "+92", country: "Pakistan" },
-        { code: "+680", country: "Palau" },
-        { code: "+970", country: "Palestine" },
-        { code: "+507", country: "Panama" },
-        { code: "+675", country: "Papua New Guinea" },
-        { code: "+595", country: "Paraguay" },
-        { code: "+51", country: "Peru" },
-        { code: "+63", country: "Philippines" },
-        { code: "+48", country: "Poland" },
-        { code: "+351", country: "Portugal" },
-        { code: "+974", country: "Qatar" },
-        { code: "+40", country: "Romania" },
-        { code: "+7", country: "Russia" },
-        { code: "+250", country: "Rwanda" },
-        { code: "+685", country: "Samoa" },
-        { code: "+378", country: "San Marino" },
-        { code: "+239", country: "Sao Tome and Principe" },
-        { code: "+966", country: "Saudi Arabia" },
-        { code: "+221", country: "Senegal" },
-        { code: "+381", country: "Serbia" },
-        { code: "+248", country: "Seychelles" },
-        { code: "+232", country: "Sierra Leone" },
-        { code: "+65", country: "Singapore" },
-        { code: "+421", country: "Slovakia" },
-        { code: "+386", country: "Slovenia" },
-        { code: "+677", country: "Solomon Islands" },
-        { code: "+252", country: "Somalia" },
-        { code: "+27", country: "South Africa" },
-        { code: "+82", country: "South Korea" },
-        { code: "+211", country: "South Sudan" },
-        { code: "+34", country: "Spain" },
-        { code: "+94", country: "Sri Lanka" },
-        { code: "+249", country: "Sudan" },
-        { code: "+597", country: "Suriname" },
-        { code: "+268", country: "Eswatini" },
-        { code: "+46", country: "Sweden" },
-        { code: "+41", country: "Switzerland" },
-        { code: "+963", country: "Syria" },
-        { code: "+886", country: "Taiwan" },
-        { code: "+992", country: "Tajikistan" },
-        { code: "+255", country: "Tanzania" },
-        { code: "+66", country: "Thailand" },
-        { code: "+670", country: "Timor-Leste" },
-        { code: "+228", country: "Togo" },
-        { code: "+690", country: "Tokelau" },
-        { code: "+676", country: "Tonga" },
-        { code: "+216", country: "Tunisia" },
-        { code: "+90", country: "Turkey" },
-        { code: "+993", country: "Turkmenistan" },
-        { code: "+688", country: "Tuvalu" },
-        { code: "+256", country: "Uganda" },
-        { code: "+380", country: "Ukraine" },
-        { code: "+971", country: "United Arab Emirates" },
-        { code: "+44", country: "United Kingdom" },
-        { code: "+1", country: "United States" },
-        { code: "+598", country: "Uruguay" },
-        { code: "+998", country: "Uzbekistan" },
-        { code: "+678", country: "Vanuatu" },
-        { code: "+379", country: "Vatican City" },
-        { code: "+58", country: "Venezuela" },
-        { code: "+84", country: "Vietnam" },
-        { code: "+681", country: "Wallis and Futuna" },
-        { code: "+967", country: "Yemen" },
-        { code: "+260", country: "Zambia" },
-        { code: "+263", country: "Zimbabwe" }
+        { code: "+93", country: "Afghanistan", flag: "https://flagcdn.com/af.png" },
+        { code: "+355", country: "Albania", flag: "https://flagcdn.com/al.png" },
+        { code: "+213", country: "Algeria", flag: "https://flagcdn.com/dz.png" },
+        { code: "+376", country: "Andorra", flag: "https://flagcdn.com/ad.png" },
+        { code: "+244", country: "Angola", flag: "https://flagcdn.com/ao.png" },
+        { code: "+54", country: "Argentina", flag: "https://flagcdn.com/ar.png" },
+        { code: "+374", country: "Armenia", flag: "https://flagcdn.com/am.png" },
+        { code: "+61", country: "Australia", flag: "https://flagcdn.com/au.png" },
+        { code: "+43", country: "Austria", flag: "https://flagcdn.com/at.png" },
+        { code: "+994", country: "Azerbaijan", flag: "https://flagcdn.com/az.png" },
+        { code: "+973", country: "Bahrain", flag: "https://flagcdn.com/bh.png" },
+        { code: "+880", country: "Bangladesh", flag: "https://flagcdn.com/bd.png" },
+        { code: "+375", country: "Belarus", flag: "https://flagcdn.com/by.png" },
+        { code: "+32", country: "Belgium", flag: "https://flagcdn.com/be.png" },
+        { code: "+501", country: "Belize", flag: "https://flagcdn.com/bz.png" },
+        { code: "+229", country: "Benin", flag: "https://flagcdn.com/bj.png" },
+        { code: "+975", country: "Bhutan", flag: "https://flagcdn.com/bt.png" },
+        { code: "+591", country: "Bolivia", flag: "https://flagcdn.com/bo.png" },
+        { code: "+387", country: "Bosnia and Herzegovina", flag: "https://flagcdn.com/ba.png" },
+        { code: "+267", country: "Botswana", flag: "https://flagcdn.com/bw.png" },
+        { code: "+55", country: "Brazil", flag: "https://flagcdn.com/br.png" },
+        { code: "+673", country: "Brunei", flag: "https://flagcdn.com/bn.png" },
+        { code: "+359", country: "Bulgaria", flag: "https://flagcdn.com/bg.png" },
+        { code: "+226", country: "Burkina Faso", flag: "https://flagcdn.com/bf.png" },
+        { code: "+257", country: "Burundi", flag: "https://flagcdn.com/bi.png" },
+        { code: "+855", country: "Cambodia", flag: "https://flagcdn.com/kh.png" },
+        { code: "+237", country: "Cameroon", flag: "https://flagcdn.com/cm.png" },
+        { code: "+1", country: "Canada", flag: "https://flagcdn.com/ca.png" },
+        { code: "+238", country: "Cape Verde", flag: "https://flagcdn.com/cv.png" },
+        { code: "+236", country: "Central African Republic", flag: "https://flagcdn.com/cf.png" },
+        { code: "+235", country: "Chad", flag: "https://flagcdn.com/td.png" },
+        { code: "+56", country: "Chile", flag: "https://flagcdn.com/cl.png" },
+        { code: "+86", country: "China", flag: "https://flagcdn.com/cn.png" },
+        { code: "+57", country: "Colombia", flag: "https://flagcdn.com/co.png" },
+        { code: "+269", country: "Comoros", flag: "https://flagcdn.com/km.png" },
+        { code: "+242", country: "Congo", flag: "https://flagcdn.com/cg.png" },
+        { code: "+506", country: "Costa Rica", flag: "https://flagcdn.com/cr.png" },
+        { code: "+385", country: "Croatia", flag: "https://flagcdn.com/hr.png" },
+        { code: "+53", country: "Cuba", flag: "https://flagcdn.com/cu.png" },
+        { code: "+357", country: "Cyprus", flag: "https://flagcdn.com/cy.png" },
+        { code: "+420", country: "Czech Republic", flag: "https://flagcdn.com/cz.png" },
+        { code: "+45", country: "Denmark", flag: "https://flagcdn.com/dk.png" },
+        { code: "+253", country: "Djibouti", flag: "https://flagcdn.com/dj.png" },
+        { code: "+593", country: "Ecuador", flag: "https://flagcdn.com/ec.png" },
+        { code: "+20", country: "Egypt", flag: "https://flagcdn.com/eg.png" },
+        { code: "+503", country: "El Salvador", flag: "https://flagcdn.com/sv.png" },
+        { code: "+240", country: "Equatorial Guinea", flag: "https://flagcdn.com/gq.png" },
+        { code: "+291", country: "Eritrea", flag: "https://flagcdn.com/er.png" },
+        { code: "+372", country: "Estonia", flag: "https://flagcdn.com/ee.png" },
+        { code: "+251", country: "Ethiopia", flag: "https://flagcdn.com/et.png" },
+        { code: "+679", country: "Fiji", flag: "https://flagcdn.com/fj.png" },
+        { code: "+358", country: "Finland", flag: "https://flagcdn.com/fi.png" },
+        { code: "+33", country: "France", flag: "https://flagcdn.com/fr.png" },
+        { code: "+241", country: "Gabon", flag: "https://flagcdn.com/ga.png" },
+        { code: "+220", country: "Gambia", flag: "https://flagcdn.com/gm.png" },
+        { code: "+995", country: "Georgia", flag: "https://flagcdn.com/ge.png" },
+        { code: "+49", country: "Germany", flag: "https://flagcdn.com/de.png" },
+        { code: "+233", country: "Ghana", flag: "https://flagcdn.com/gh.png" },
+        { code: "+30", country: "Greece", flag: "https://flagcdn.com/gr.png" },
+        { code: "+299", country: "Greenland", flag: "https://flagcdn.com/gl.png" },
+        { code: "+502", country: "Guatemala", flag: "https://flagcdn.com/gt.png" },
+        { code: "+224", country: "Guinea", flag: "https://flagcdn.com/gn.png" },
+        { code: "+245", country: "Guinea-Bissau", flag: "https://flagcdn.com/gw.png" },
+        { code: "+592", country: "Guyana", flag: "https://flagcdn.com/gy.png" },
+        { code: "+509", country: "Haiti", flag: "https://flagcdn.com/ht.png" },
+        { code: "+504", country: "Honduras", flag: "https://flagcdn.com/hn.png" },
+        { code: "+852", country: "Hong Kong", flag: "https://flagcdn.com/hk.png" },
+        { code: "+36", country: "Hungary", flag: "https://flagcdn.com/hu.png" },
+        { code: "+354", country: "Iceland", flag: "https://flagcdn.com/is.png" },
+        { code: "+91", country: "India", flag: "https://flagcdn.com/in.png" },
+        { code: "+62", country: "Indonesia", flag: "https://flagcdn.com/id.png" },
+        { code: "+98", country: "Iran", flag: "https://flagcdn.com/ir.png" },
+        { code: "+964", country: "Iraq", flag: "https://flagcdn.com/iq.png" },
+        { code: "+353", country: "Ireland", flag: "https://flagcdn.com/ie.png" },
+        { code: "+972", country: "Israel", flag: "https://flagcdn.com/il.png" },
+        { code: "+39", country: "Italy", flag: "https://flagcdn.com/it.png" },
+        { code: "+225", country: "Ivory Coast", flag: "https://flagcdn.com/ci.png" },
+        { code: "+81", country: "Japan", flag: "https://flagcdn.com/jp.png" },
+        { code: "+962", country: "Jordan", flag: "https://flagcdn.com/jo.png" },
+        { code: "+7", country: "Kazakhstan", flag: "https://flagcdn.com/kz.png" },
+        { code: "+254", country: "Kenya", flag: "https://flagcdn.com/ke.png" },
+        { code: "+686", country: "Kiribati", flag: "https://flagcdn.com/ki.png" },
+        { code: "+965", country: "Kuwait", flag: "https://flagcdn.com/kw.png" },
+        { code: "+996", country: "Kyrgyzstan", flag: "https://flagcdn.com/kg.png" },
+        { code: "+856", country: "Laos", flag: "https://flagcdn.com/la.png" },
+        { code: "+371", country: "Latvia", flag: "https://flagcdn.com/lv.png" },
+        { code: "+961", country: "Lebanon", flag: "https://flagcdn.com/lb.png" },
+        { code: "+266", country: "Lesotho", flag: "https://flagcdn.com/ls.png" },
+        { code: "+231", country: "Liberia", flag: "https://flagcdn.com/lr.png" },
+        { code: "+218", country: "Libya", flag: "https://flagcdn.com/ly.png" },
+        { code: "+423", country: "Liechtenstein", flag: "https://flagcdn.com/li.png" },
+        { code: "+370", country: "Lithuania", flag: "https://flagcdn.com/lt.png" },
+        { code: "+352", country: "Luxembourg", flag: "https://flagcdn.com/lu.png" },
+        { code: "+853", country: "Macau", flag: "https://flagcdn.com/mo.png" },
+        { code: "+389", country: "North Macedonia", flag: "https://flagcdn.com/mk.png" },
+        { code: "+261", country: "Madagascar", flag: "https://flagcdn.com/mg.png" },
+        { code: "+265", country: "Malawi", flag: "https://flagcdn.com/mw.png" },
+        { code: "+60", country: "Malaysia", flag: "https://flagcdn.com/my.png" },
+        { code: "+960", country: "Maldives", flag: "https://flagcdn.com/mv.png" },
+        { code: "+223", country: "Mali", flag: "https://flagcdn.com/ml.png" },
+        { code: "+356", country: "Malta", flag: "https://flagcdn.com/mt.png" },
+        { code: "+692", country: "Marshall Islands", flag: "https://flagcdn.com/mh.png" },
+        { code: "+222", country: "Mauritania", flag: "https://flagcdn.com/mr.png" },
+        { code: "+230", country: "Mauritius", flag: "https://flagcdn.com/mu.png" },
+        { code: "+52", country: "Mexico", flag: "https://flagcdn.com/mx.png" },
+        { code: "+691", country: "Micronesia", flag: "https://flagcdn.com/fm.png" },
+        { code: "+373", country: "Moldova", flag: "https://flagcdn.com/md.png" },
+        { code: "+377", country: "Monaco", flag: "https://flagcdn.com/mc.png" },
+        { code: "+976", country: "Mongolia", flag: "https://flagcdn.com/mn.png" },
+        { code: "+382", country: "Montenegro", flag: "https://flagcdn.com/me.png" },
+        { code: "+212", country: "Morocco", flag: "https://flagcdn.com/ma.png" },
+        { code: "+258", country: "Mozambique", flag: "https://flagcdn.com/mz.png" },
+        { code: "+95", country: "Myanmar", flag: "https://flagcdn.com/mm.png" },
+        { code: "+264", country: "Namibia", flag: "https://flagcdn.com/na.png" },
+        { code: "+674", country: "Nauru", flag: "https://flagcdn.com/nr.png" },
+        { code: "+977", country: "Nepal", flag: "https://flagcdn.com/np.png" },
+        { code: "+31", country: "Netherlands", flag: "https://flagcdn.com/nl.png" },
+        { code: "+64", country: "New Zealand", flag: "https://flagcdn.com/nz.png" },
+        { code: "+505", country: "Nicaragua", flag: "https://flagcdn.com/ni.png" },
+        { code: "+227", country: "Niger", flag: "https://flagcdn.com/ne.png" },
+        { code: "+234", country: "Nigeria", flag: "https://flagcdn.com/ng.png" },
+        { code: "+850", country: "North Korea", flag: "https://flagcdn.com/kp.png" },
+        { code: "+47", country: "Norway", flag: "https://flagcdn.com/no.png" },
+        { code: "+968", country: "Oman", flag: "https://flagcdn.com/om.png" },
+        { code: "+92", country: "Pakistan", flag: "https://flagcdn.com/pk.png" },
+        { code: "+680", country: "Palau", flag: "https://flagcdn.com/pw.png" },
+        { code: "+970", country: "Palestine", flag: "https://flagcdn.com/ps.png" },
+        { code: "+507", country: "Panama", flag: "https://flagcdn.com/pa.png" },
+        { code: "+675", country: "Papua New Guinea", flag: "https://flagcdn.com/pg.png" },
+        { code: "+595", country: "Paraguay", flag: "https://flagcdn.com/py.png" },
+        { code: "+51", country: "Peru", flag: "https://flagcdn.com/pe.png" },
+        { code: "+63", country: "Philippines", flag: "https://flagcdn.com/ph.png" },
+        { code: "+48", country: "Poland", flag: "https://flagcdn.com/pl.png" },
+        { code: "+351", country: "Portugal", flag: "https://flagcdn.com/pt.png" },
+        { code: "+974", country: "Qatar", flag: "https://flagcdn.com/qa.png" },
+        { code: "+40", country: "Romania", flag: "https://flagcdn.com/ro.png" },
+        { code: "+7", country: "Russia", flag: "https://flagcdn.com/ru.png" },
+        { code: "+250", country: "Rwanda", flag: "https://flagcdn.com/rw.png" },
+        { code: "+685", country: "Samoa", flag: "https://flagcdn.com/ws.png" },
+        { code: "+378", country: "San Marino", flag: "https://flagcdn.com/sm.png" },
+        { code: "+239", country: "Sao Tome and Principe", flag: "https://flagcdn.com/st.png" },
+        { code: "+966", country: "Saudi Arabia", flag: "https://flagcdn.com/sa.png" },
+        { code: "+221", country: "Senegal", flag: "https://flagcdn.com/sn.png" },
+        { code: "+381", country: "Serbia", flag: "https://flagcdn.com/rs.png" },
+        { code: "+248", country: "Seychelles", flag: "https://flagcdn.com/sc.png" },
+        { code: "+232", country: "Sierra Leone", flag: "https://flagcdn.com/sl.png" },
+        { code: "+65", country: "Singapore", flag: "https://flagcdn.com/sg.png" },
+        { code: "+421", country: "Slovakia", flag: "https://flagcdn.com/sk.png" },
+        { code: "+386", country: "Slovenia", flag: "https://flagcdn.com/si.png" },
+        { code: "+677", country: "Solomon Islands", flag: "https://flagcdn.com/sb.png" },
+        { code: "+252", country: "Somalia", flag: "https://flagcdn.com/so.png" },
+        { code: "+27", country: "South Africa", flag: "https://flagcdn.com/za.png" },
+        { code: "+82", country: "South Korea", flag: "https://flagcdn.com/kr.png" },
+        { code: "+211", country: "South Sudan", flag: "https://flagcdn.com/ss.png" },
+        { code: "+34", country: "Spain", flag: "https://flagcdn.com/es.png" },
+        { code: "+94", country: "Sri Lanka", flag: "https://flagcdn.com/lk.png" },
+        { code: "+249", country: "Sudan", flag: "https://flagcdn.com/sd.png" },
+        { code: "+597", country: "Suriname", flag: "https://flagcdn.com/sr.png" },
+        { code: "+268", country: "Eswatini", flag: "https://flagcdn.com/sz.png" },
+        { code: "+46", country: "Sweden", flag: "https://flagcdn.com/se.png" },
+        { code: "+41", country: "Switzerland", flag: "https://flagcdn.com/ch.png" },
+        { code: "+963", country: "Syria", flag: "https://flagcdn.com/sy.png" },
+        { code: "+886", country: "Taiwan", flag: "https://flagcdn.com/tw.png" },
+        { code: "+992", country: "Tajikistan", flag: "https://flagcdn.com/tj.png" },
+        { code: "+255", country: "Tanzania", flag: "https://flagcdn.com/tz.png" },
+        { code: "+66", country: "Thailand", flag: "https://flagcdn.com/th.png" },
+        { code: "+670", country: "Timor-Leste", flag: "https://flagcdn.com/tl.png" },
+        { code: "+228", country: "Togo", flag: "https://flagcdn.com/tg.png" },
+        { code: "+690", country: "Tokelau", flag: "https://flagcdn.com/tk.png" },
+        { code: "+676", country: "Tonga", flag: "https://flagcdn.com/to.png" },
+        { code: "+216", country: "Tunisia", flag: "https://flagcdn.com/tn.png" },
+        { code: "+90", country: "Turkey", flag: "https://flagcdn.com/tr.png" },
+        { code: "+993", country: "Turkmenistan", flag: "https://flagcdn.com/tm.png" },
+        { code: "+688", country: "Tuvalu", flag: "https://flagcdn.com/tv.png" },
+        { code: "+256", country: "Uganda", flag: "https://flagcdn.com/ug.png" },
+        { code: "+380", country: "Ukraine", flag: "https://flagcdn.com/ua.png" },
+        { code: "+971", country: "United Arab Emirates", flag: "https://flagcdn.com/ae.png" },
+        { code: "+44", country: "United Kingdom", flag: "https://flagcdn.com/gb.png" },
+        { code: "+1", country: "United States", flag: "https://flagcdn.com/us.png" },
+        { code: "+598", country: "Uruguay", flag: "https://flagcdn.com/uy.png" },
+        { code: "+998", country: "Uzbekistan", flag: "https://flagcdn.com/uz.png" },
+        { code: "+678", country: "Vanuatu", flag: "https://flagcdn.com/vu.png" },
+        { code: "+379", country: "Vatican City", flag: "https://flagcdn.com/va.png" },
+        { code: "+58", country: "Venezuela", flag: "https://flagcdn.com/ve.png" },
+        { code: "+84", country: "Vietnam", flag: "https://flagcdn.com/vn.png" },
+        { code: "+681", country: "Wallis and Futuna", flag: "https://flagcdn.com/wf.png" },
+        { code: "+967", country: "Yemen", flag: "https://flagcdn.com/ye.png" },
+        { code: "+260", country: "Zambia", flag: "https://flagcdn.com/zm.png" },
+        { code: "+263", country: "Zimbabwe", flag: "https://flagcdn.com/zw.png" }
     ];
 }
 
@@ -297,23 +295,21 @@ async function populateCountryCodes() {
     countryCodeSelect.innerHTML = '<option value="" disabled selected>🌍 Select Country</option>';
     
     try {
-        // Try to fetch from API
+        showLoader(true);
         const countries = await fetchCountryCodes();
         
         countries.forEach(country => {
             const option = document.createElement("option");
             option.value = country.code;
             
-            // Add flag emoji or use flag icon
-            if (country.flag) {
-                option.innerHTML = `<img src="${country.flag}" style="width:16px; height:12px; margin-right:5px;"> ${country.country} ${country.code}`;
-                option.textContent = `${country.country} ${country.code}`;
-            } else {
-                option.textContent = `${country.country} ${country.code}`;
-            }
+            // Create option with flag image
+            const flagImg = country.flag ? `<img src="${country.flag}" style="width:20px; height:15px; margin-right:8px; vertical-align:middle;">` : '🌐';
+            option.innerHTML = `${flagImg} ${country.country} (${country.code})`;
             
             countryCodeSelect.appendChild(option);
         });
+        
+        showLoader(false);
     } catch (error) {
         console.error('Error populating countries:', error);
         // Use fallback
@@ -321,9 +317,10 @@ async function populateCountryCodes() {
         fallbackCountries.forEach(country => {
             const option = document.createElement("option");
             option.value = country.code;
-            option.textContent = `${country.country} ${country.code}`;
+            option.innerHTML = `<img src="${country.flag}" style="width:20px; height:15px; margin-right:8px; vertical-align:middle;"> ${country.country} (${country.code})`;
             countryCodeSelect.appendChild(option);
         });
+        showLoader(false);
     }
 }
 
@@ -339,12 +336,18 @@ form.addEventListener("submit", async (e) => {
 
     const username = document.getElementById("username").value.trim();
     const email = document.getElementById("email").value.trim();
-    const countryCode = document.getElementById("countryCode")?.value || "+1";
+    const countryCodeSelect = document.getElementById("countryCode");
+    const countryCode = countryCodeSelect?.value || "+1";
     const phoneNumber = document.getElementById("phone").value.trim();
     const fullPhoneNumber = countryCode + phoneNumber;
 
     if (!username || !email || !phoneNumber) {
         showMessage("Please fill all fields.", "error");
+        return;
+    }
+
+    if (!countryCodeSelect?.value) {
+        showMessage("Please select your country code.", "error");
         return;
     }
 
@@ -364,7 +367,7 @@ form.addEventListener("submit", async (e) => {
         return;
     }
 
-    // Phone validation (after country code)
+    // Phone validation
     if (!/^\d{7,15}$/.test(phoneNumber)) {
         showMessage("Enter a valid phone number (7-15 digits).", "error");
         return;
@@ -373,7 +376,7 @@ form.addEventListener("submit", async (e) => {
     try {
         showLoader(true);
         
-        // Check if user already exists with this email
+        // Check if user exists
         const usersRef = collection(db, "users");
         const q = query(usersRef, where("email", "==", email));
         const querySnapshot = await getDocs(q);
@@ -382,7 +385,8 @@ form.addEventListener("submit", async (e) => {
             // User exists - log them in
             const existingUser = querySnapshot.docs[0].data();
             localStorage.setItem("crunkUser", JSON.stringify({
-                username: existingUser.username,
+                username: existingUser.displayName || existingUser.username,
+                displayName: existingUser.displayName || existingUser.username,
                 email: existingUser.email,
                 phone: existingUser.phone,
                 photoURL: existingUser.photoURL || null,
@@ -396,11 +400,10 @@ form.addEventListener("submit", async (e) => {
             return;
         }
 
-        // Create new user
+        // Create new user with Firebase UID format matching chat app
         const userId = "user_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
 
-        // Save user to Firestore (matching chat app user structure)
-        await setDoc(doc(db, "users", userId), {
+        const newUser = {
             uid: userId,
             username: username,
             displayName: username,
@@ -414,9 +417,10 @@ form.addEventListener("submit", async (e) => {
             lastSeen: new Date().toISOString(),
             status: 'online',
             userId: userId
-        });
+        };
 
-        // Save session locally
+        await setDoc(doc(db, "users", userId), newUser);
+
         localStorage.setItem("crunkUser", JSON.stringify({ 
             username: username,
             displayName: username,
@@ -444,16 +448,13 @@ async function handleGoogleLogin() {
     try {
         showLoader(true);
         
-        // Sign in with Google popup
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
         
-        // Check if user exists in Firestore
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
         
         if (userDoc.exists()) {
-            // Existing user - log them in
             const userData = userDoc.data();
             localStorage.setItem("crunkUser", JSON.stringify({
                 username: userData.displayName || user.displayName,
@@ -463,7 +464,6 @@ async function handleGoogleLogin() {
                 userId: user.uid
             }));
         } else {
-            // New Google user - save to Firestore (matching chat app structure)
             const newUser = {
                 uid: user.uid,
                 username: user.displayName,
@@ -497,26 +497,21 @@ async function handleGoogleLogin() {
     } catch (error) {
         console.error("Google login error:", error);
         
-        // Handle specific errors
-        switch (error.code) {
-            case 'auth/popup-closed-by-user':
-                showMessage("Login cancelled. Please try again.", "info");
-                break;
-            case 'auth/popup-blocked':
-                showMessage("Popup was blocked by your browser. Please allow popups.", "error");
-                break;
-            case 'auth/account-exists-with-different-credential':
-                showMessage("An account already exists with the same email but different sign-in method.", "error");
-                break;
-            default:
-                showMessage("Error with Google login. Please try again.", "error");
+        if (error.code === 'auth/popup-closed-by-user') {
+            showMessage("Login cancelled. Please try again.", "info");
+        } else if (error.code === 'auth/popup-blocked') {
+            showMessage("Popup was blocked. Please allow popups.", "error");
+        } else if (error.code === 'auth/account-exists-with-different-credential') {
+            showMessage("Account exists with different sign-in method.", "error");
+        } else {
+            showMessage("Error with Google login. Please try again.", "error");
         }
     } finally {
         showLoader(false);
     }
 }
 
-// Handle redirect result (for mobile)
+// Handle redirect result
 async function handleRedirectResult() {
     try {
         const result = await getRedirectResult(auth);
@@ -528,7 +523,6 @@ async function handleRedirectResult() {
     }
 }
 
-// Call on page load
 handleRedirectResult();
 
 // ================= HELPER FUNCTIONS =================
@@ -538,7 +532,6 @@ function showMessage(text, type = "info") {
     message.innerText = text;
     message.className = `message ${type}`;
     
-    // Auto hide after 3 seconds for success messages
     if (type === "success") {
         setTimeout(() => {
             message.innerText = "";
@@ -554,45 +547,10 @@ function showLoader(show) {
     }
 }
 
-// ================= ALTERNATIVE LOGIN METHODS =================
-// Email link login (passwordless)
-async function sendEmailLink(email) {
-    const actionCodeSettings = {
-        url: window.location.origin + '/finish-signup',
-        handleCodeInApp: true
-    };
-    
-    try {
-        await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-        window.localStorage.setItem('emailForSignIn', email);
-        showMessage("Login link sent to your email!", "success");
-    } catch (error) {
-        console.error("Email link error:", error);
-        showMessage("Error sending login link.", "error");
-    }
-}
-
 // ================= EXPOSE FUNCTIONS GLOBALLY =================
 window.handleGoogleLogin = handleGoogleLogin;
-window.sendEmailLink = sendEmailLink;
 
-// ================= JWT PARSER (keeping for backward compatibility) =================
-function parseJwt(token) {
-    try {
-        let base64Url = token.split('.')[1];
-        let base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        let jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        return JSON.parse(jsonPayload);
-    } catch (e) {
-        console.error("Error parsing JWT:", e);
-        return {};
-    }
-}
-
-// ================= ADDITIONAL VALIDATION =================
-// Real-time validation for username
+// ================= VALIDATION =================
 const usernameInput = document.getElementById("username");
 if (usernameInput) {
     usernameInput.addEventListener("input", (e) => {
@@ -610,7 +568,6 @@ if (usernameInput) {
     });
 }
 
-// Real-time validation for email
 const emailInput = document.getElementById("email");
 if (emailInput) {
     emailInput.addEventListener("input", (e) => {
@@ -626,7 +583,6 @@ if (emailInput) {
     });
 }
 
-// Real-time validation for phone
 const phoneInput = document.getElementById("phone");
 if (phoneInput) {
     phoneInput.addEventListener("input", (e) => {
@@ -644,4 +600,4 @@ if (phoneInput) {
     });
 }
 
-console.log("Login system initialized with Google OAuth and dynamic country codes!");
+console.log("✅ Login system initialized with correct Firebase project");
