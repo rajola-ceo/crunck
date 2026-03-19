@@ -1,4 +1,3 @@
-
 <!-- Created by rajola - Updated with country codes and Google OAuth -->
 <!DOCTYPE html>
 <html lang="en">
@@ -17,29 +16,8 @@
     
     <title>Crunk Games - Login & Register</title>
     
-    <!-- Google Identity Services -->
+    <!-- Google Identity Services (using your Firebase Client ID) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
-    <!-- Firebase SDK -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-        
-        const firebaseConfig = {
-            apiKey: "AIzaSyBWW5kT1GqpIGou84aOfmo3y0osUd7rRQ",
-            authDomain: "zchat-7b59a.firebaseapp.com",
-            projectId: "zchat-7b59a",
-            storageBucket: "zchat-7b59a.firebasestorage.app",
-            messagingSenderId: "391204652656",
-            appId: "1:391204652656:web:7c88d2bfb7ca2261ecd6b5",
-            measurementId: "G-YB4MSXJ6QC"
-        };
-        
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        window.auth = auth; // make auth accessible globally
-        console.log("Firebase initialized successfully");
-    </script>
 </head>
 <body>
     <!-- Animated Background -->
@@ -80,8 +58,7 @@
             <div class="form-control">
                 <div class="phone-input-group">
                     <select id="countryCode" class="country-code" required>
-                        <option value="" disabled selected>🌍 Code</option>
-                        <!-- Will be populated by JavaScript -->
+                        <option value="" disabled selected>🌍 Select Code</option>
                     </select>
                     <div class="phone-input-wrapper">
                         <input type="tel" id="phone" required autocomplete="off">
@@ -107,21 +84,12 @@
             <span>Or continue with</span>
         </div>
         
-        <!-- Google Login Button -->
+        <!-- Google Login Button (Using Firebase OAuth, not GSI directly) -->
         <div class="google-login-wrapper">
-            <div id="g_id_onload"
-                 data-client_id="623364824323-8tmsb3fpetb6he5dqlemh6sehd0sonod.apps.googleusercontent.com"
-                 data-callback="handleCredentialResponse"
-                 data-auto_prompt="false">
-            </div>
-            <div class="g_id_signin" 
-                 data-type="standard"
-                 data-theme="outline"
-                 data-text="signin_with"
-                 data-shape="rectangular"
-                 data-logo_alignment="left"
-                 data-width="300">
-            </div>
+            <button onclick="window.handleGoogleLogin()" class="google-btn">
+                <i class="fab fa-google"></i>
+                <span>Continue with Google</span>
+            </button>
         </div>
         
         <!-- Alternative Login Options -->
@@ -182,7 +150,7 @@
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Scripts -->
+    <!-- Scripts - Only ONE Firebase initialization (in login.js) -->
     <script type="module" src="./login.js"></script>
     
     <!-- Additional script for modal functions -->
