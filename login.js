@@ -49,7 +49,7 @@ const firebaseConfig = {
     measurementId: "G-7ZQ20HK4SD"
 };
 
-// Initialize Firebase (only once!)
+// Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
@@ -416,7 +416,12 @@ if (form) {
                 userId: userId
             };
 
-            await setDoc(doc(db, "users", userId), newUser);
+            try {
+                await setDoc(doc(db, "users", userId), newUser);
+                console.log("User saved to Firestore");
+            } catch (firestoreError) {
+                console.log("Firestore unavailable, using localStorage only");
+            }
 
             localStorage.setItem("crunkUser", JSON.stringify({ 
                 username: username,
@@ -441,82 +446,37 @@ if (form) {
     });
 }
 
-// ================= GOOGLE LOGIN (COMPLETE FIXED VERSION) =================
+// ================= GOOGLE LOGIN (SINGLE WORKING VERSION) =================
 window.handleGoogleLogin = async function() {
+    console.log("🚀 Google login started");
     try {
         showLoader(true);
         
-        // Check if we're on GitHub Pages or other restricted domain
-        const hostname = window.location.hostname;
-        const isRestrictedDomain = hostname.includes('github.io') || 
-                                   hostname.includes('netlify.app') ||
-                                   hostname.includes('vercel.app');
+        // Use popup sign-in (simpler and more reliable)
+        console.log("📢 Opening popup...");
+        const result = await signInWithPopup(auth, googleProvider);
+        console.log("✅ Popup successful!", result.user.email);
         
-        let result;
+        const user = result.user;
         
-        if (isRestrictedDomain) {
-            // On hosting platforms, use redirect instead of popup
-            console.log('Using redirect sign-in for:', hostname);
-            
-            // Set custom parameters for redirect
-            googleProvider.setCustomParameters({
-                prompt: 'select_account',
-                // This helps with some hosting platforms
-                login_hint: undefined
-            });
-            
-            await signInWithRedirect(auth, googleProvider);
-            // The page will redirect, so we don't need to handle result here
-            return;
-        } else {
-            // On localhost or custom domain, use popup
-            result = await signInWithPopup(auth, googleProvider);
-        }
-        
-        // Only process if we got a result (not for redirect)
-        if (result) {
-            await processGoogleUser(result.user);
-        }
-        
-    } catch (error) {
-        console.error("Google login error:", error);
-        
-        // Handle specific errors
-        if (error.code === 'auth/popup-closed-by-user') {
-            showMessage("Login cancelled. Please try again.", "info");
-        } else if (error.code === 'auth/popup-blocked') {
-            showMessage("Popup was blocked. Please allow popups.", "error");
-        } else if (error.code === 'auth/unauthorized-domain') {
-            const domain = window.location.hostname;
-            showMessage(`Please add "${domain}" to Firebase authorized domains.`, "error");
-            console.log(`❌ Add this domain to Firebase: ${domain}`);
-            
-            // Copy to clipboard for easy adding
-            navigator.clipboard?.writeText(domain);
-        } else {
-            showMessage("Error with Google login. Please try again.", "error");
-        }
-    } finally {
-        showLoader(false);
-    }
-};
-
-// ================= PROCESS GOOGLE USER =================
-async function processGoogleUser(user) {
-    try {
+        // Save user to Firestore and localStorage
         const userDocRef = doc(db, "users", user.uid);
         const userDoc = await getDoc(userDocRef);
         
+        let userData;
+        
         if (userDoc.exists()) {
-            const userData = userDoc.data();
-            localStorage.setItem("crunkUser", JSON.stringify({
-                username: userData.displayName || user.displayName,
-                displayName: userData.displayName || user.displayName,
+            console.log("👤 Existing user");
+            const existingUser = userDoc.data();
+            userData = {
+                username: existingUser.displayName || user.displayName,
+                displayName: existingUser.displayName || user.displayName,
                 email: user.email,
                 photoURL: user.photoURL,
                 userId: user.uid
-            }));
+            };
         } else {
+            console.log("🆕 New user");
             const newUser = {
                 uid: user.uid,
                 username: user.displayName,
@@ -527,46 +487,93 @@ async function processGoogleUser(user) {
                 createdAt: new Date().toISOString(),
                 lastSeen: new Date().toISOString(),
                 status: 'online',
-                userId: user.uid,
-                emailVerified: user.emailVerified
+                userId: user.uid
             };
             
-            await setDoc(userDocRef, newUser);
+            // Try Firestore but don't fail if it doesn't work
+            try {
+                await setDoc(userDocRef, newUser);
+                console.log("✅ Saved to Firestore");
+            } catch (e) {
+                console.log("⚠️ Firestore error:", e.message);
+            }
             
-            localStorage.setItem("crunkUser", JSON.stringify({
+            userData = {
                 username: user.displayName,
                 displayName: user.displayName,
                 email: user.email,
                 photoURL: user.photoURL,
                 userId: user.uid
-            }));
+            };
         }
         
-        showMessage("Google login successful! Redirecting...", "success");
-        setTimeout(() => {
-            window.location.href = "home.html";
-        }, 1000);
+        // ALWAYS save to localStorage
+        localStorage.setItem("crunkUser", JSON.stringify(userData));
+        console.log("💾 Saved to localStorage:", userData);
+        
+        // Show success message
+        showMessage("Login successful! Redirecting...", "success");
+        
+        // 🔴 CRITICAL: Force redirect to home page
+        console.log("⏰ Redirecting to home.html NOW!");
+        window.location.href = "home.html"; // Immediate redirect
         
     } catch (error) {
-        console.error("Error processing Google user:", error);
-        showMessage("Error saving user data.", "error");
+        console.error("❌ Google login error:", error);
+        
+        if (error.code === 'auth/popup-closed-by-user') {
+            showMessage("Login cancelled. Please try again.", "info");
+        } else if (error.code === 'auth/popup-blocked') {
+            showMessage("Popup was blocked. Please allow popups.", "error");
+        } else if (error.code === 'auth/unauthorized-domain') {
+            const domain = window.location.hostname;
+            showMessage(`Please add "${domain}" to Firebase authorized domains.`, "error");
+            console.log(`❌ Add this domain to Firebase: ${domain}`);
+        } else {
+            showMessage("Login failed: " + error.message, "error");
+        }
+    } finally {
+        showLoader(false);
     }
-}
+};
 
 // ================= HANDLE REDIRECT RESULT =================
 async function handleRedirectResult() {
     try {
         const result = await getRedirectResult(auth);
         if (result) {
-            await processGoogleUser(result.user);
+            console.log("🔄 Redirect result found");
+            const user = result.user;
+            
+            const userDocRef = doc(db, "users", user.uid);
+            const userDoc = await getDoc(userDocRef);
+            
+            let userData;
+            
+            if (userDoc.exists()) {
+                const existingUser = userDoc.data();
+                userData = {
+                    username: existingUser.displayName || user.displayName,
+                    displayName: existingUser.displayName || user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    userId: user.uid
+                };
+            } else {
+                userData = {
+                    username: user.displayName,
+                    displayName: user.displayName,
+                    email: user.email,
+                    photoURL: user.photoURL,
+                    userId: user.uid
+                };
+            }
+            
+            localStorage.setItem("crunkUser", JSON.stringify(userData));
+            window.location.href = "home.html";
         }
     } catch (error) {
         console.error("Redirect result error:", error);
-        if (error.code === 'auth/unauthorized-domain') {
-            const domain = window.location.hostname;
-            showMessage(`Please add "${domain}" to Firebase authorized domains.`, "error");
-            console.log(`❌ Add this domain to Firebase: ${domain}`);
-        }
     }
 }
 
@@ -656,60 +663,3 @@ if (phoneInput) {
 }
 
 console.log("✅ Login system initialized with correct Firebase project");
-// ================= GOOGLE LOGIN (DEBUG VERSION) =================
-window.handleGoogleLogin = async function() {
-    console.log("1️⃣ Google login started");
-    try {
-        showLoader(true);
-        console.log("2️⃣ Loader shown");
-        
-        const hostname = window.location.hostname;
-        const isRestrictedDomain = hostname.includes('github.io') || 
-                                   hostname.includes('netlify.app') ||
-                                   hostname.includes('vercel.app');
-        
-        console.log("3️⃣ Domain check:", hostname, "isRestricted:", isRestrictedDomain);
-        
-        let result;
-        
-        if (isRestrictedDomain) {
-            console.log("4️⃣ Using redirect sign-in");
-            googleProvider.setCustomParameters({
-                prompt: 'select_account'
-            });
-            
-            await signInWithRedirect(auth, googleProvider);
-            console.log("5️⃣ Redirect initiated - page will redirect");
-            return;
-        } else {
-            console.log("4️⃣ Using popup sign-in");
-            result = await signInWithPopup(auth, googleProvider);
-            console.log("5️⃣ Popup result received:", result.user?.email);
-        }
-        
-        if (result) {
-            console.log("6️⃣ Processing user:", result.user.uid);
-            await processGoogleUser(result.user);
-        }
-        
-    } catch (error) {
-        console.error("❌ Google login error:", error);
-        console.error("Error code:", error.code);
-        console.error("Error message:", error.message);
-        
-        if (error.code === 'auth/popup-closed-by-user') {
-            showMessage("Login cancelled. Please try again.", "info");
-        } else if (error.code === 'auth/popup-blocked') {
-            showMessage("Popup was blocked. Please allow popups.", "error");
-        } else if (error.code === 'auth/unauthorized-domain') {
-            const domain = window.location.hostname;
-            showMessage(`Please add "${domain}" to Firebase authorized domains.`, "error");
-            console.log(`❌ Add this domain to Firebase: ${domain}`);
-        } else {
-            showMessage("Error with Google login. Please try again.", "error");
-        }
-    } finally {
-        console.log("7️⃣ Finally block - hiding loader");
-        showLoader(false);
-    }
-};
