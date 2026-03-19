@@ -20,23 +20,11 @@ import {
     updateDoc,
     setDoc,
     serverTimestamp,
-    limit,
-    startAfter,
-    getDocs,
-    arrayUnion,
-    arrayRemove,
-    deleteDoc,
-    writeBatch
+    getDocs
 } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-import { 
-    getStorage, 
-    ref, 
-    uploadBytes, 
-    getDownloadURL,
-    uploadBytesResumable
-} from "https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js";
 
 // ================= FIREBASE CONFIG =================
+// REPLACE THESE WITH YOUR ACTUAL FIREBASE CREDENTIALS
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_AUTH_DOMAIN",
@@ -50,8 +38,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const storage = getStorage(app);
 const provider = new GoogleAuthProvider();
+
+// ================= SUPABASE STORAGE SETUP =================
+const SUPABASE_URL = 'https://rsrrxgqxwzrtzdecynay.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_gzEk7xu97MGfvNz4720mnA_m_h_RP9H';
+
+// Initialize Supabase client (make sure to include the script in HTML)
+const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 // ================= DOM ELEMENTS =================
 // Home Screen
@@ -133,6 +127,136 @@ let replyingTo = null;
 let onlineUsers = new Set();
 let allUsers = [];
 
+// ================= HELPER FUNCTIONS =================
+function safeToDate(timestamp) {
+    if (!timestamp) return null;
+    if (timestamp.toDate) return timestamp.toDate();
+    if (timestamp instanceof Date) return timestamp;
+    if (typeof timestamp === 'string') return new Date(timestamp);
+    if (timestamp && typeof timestamp === 'object' && timestamp.seconds) {
+        return new Date(timestamp.seconds * 1000);
+    }
+    return new Date(timestamp);
+}
+
+function formatTime(date) {
+    if (!date) return '';
+    const now = new Date();
+    const diff = now - date;
+    
+    if (diff < 86400000) { // Less than 24 hours
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } else {
+        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+    }
+}
+
+function formatDate(date) {
+    if (!date) return '';
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    if (date.toDateString() === today.toDateString()) {
+        return 'Today';
+    } else if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+    } else {
+        return date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+    }
+}
+
+function scrollToBottom() {
+    if (messageBox) {
+        messageBox.scrollTop = messageBox.scrollHeight;
+    }
+}
+
+function showToast(message, type = 'info') {
+    if (!toastContainer) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = 'fa-info-circle';
+    if (type === 'success') icon = 'fa-check-circle';
+    if (type === 'error') icon = 'fa-exclamation-circle';
+    
+    toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+    toastContainer.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add('show');
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 2500);
+    }, 100);
+}
+
+function showLoading(show) {
+    if (loadingOverlay) {
+        if (show) {
+            loadingOverlay.classList.remove('hidden');
+        } else {
+            loadingOverlay.classList.add('hidden');
+        }
+    }
+}
+
+function clearReply() {
+    replyingTo = null;
+    if (replyPreview) {
+        replyPreview.classList.add('hidden');
+    }
+}
+
+function openImageModal(url) {
+    if (!imageModal || !modalImage) return;
+    modalImage.src = url;
+    imageModal.classList.add('active');
+}
+
+// ================= SUPABASE UPLOAD FUNCTION =================
+async function uploadImageToSupabase(file, chatId) {
+    if (!supabase) {
+        showToast('Supabase not initialized. Check if the script is loaded.', 'error');
+        return null;
+    }
+    
+    try {
+        showLoading(true);
+        
+        // Create unique filename
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${chatId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        
+        // Upload to Supabase Storage
+        const { data, error } = await supabase.storage
+            .from('chat-images')
+            .upload(fileName, file, {
+                cacheControl: '3600',
+                upsert: false
+            });
+            
+        if (error) throw error;
+        
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+            .from('chat-images')
+            .getPublicUrl(fileName);
+            
+        return publicUrl;
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        showToast('Failed to upload image: ' + error.message, 'error');
+        return null;
+    } finally {
+        showLoading(false);
+    }
+}
+
 // ================= AUTHENTICATION =================
 // Check if user is logged in
 onAuthStateChanged(auth, async (user) => {
@@ -142,8 +266,7 @@ onAuthStateChanged(auth, async (user) => {
             uid: user.uid,
             displayName: user.displayName,
             email: user.email,
-            photoURL: user.photoURL || 'https://via.placeholder.com/100',
-            phoneNumber: user.phoneNumber
+            photoURL: user.photoURL || 'https://via.placeholder.com/100'
         };
         
         // Save user to Firestore
@@ -157,7 +280,7 @@ onAuthStateChanged(auth, async (user) => {
         loadRecentChats();
         setupPresence();
         
-        console.log('User logged in:', currentUser);
+        console.log('User logged in:', currentUser.displayName);
     } else {
         // No user, redirect to login
         window.location.href = 'index.html';
@@ -222,12 +345,12 @@ function setupPresence() {
     const usersRef = collection(db, 'users');
     onSnapshot(usersRef, (snapshot) => {
         snapshot.docChanges().forEach((change) => {
+            const userData = change.doc.data();
             if (change.type === 'added' || change.type === 'modified') {
-                const user = change.doc.data();
-                if (user.status === 'online') {
-                    onlineUsers.add(user.uid);
+                if (userData.status === 'online') {
+                    onlineUsers.add(change.doc.id);
                 } else {
-                    onlineUsers.delete(user.uid);
+                    onlineUsers.delete(change.doc.id);
                 }
             }
         });
@@ -240,14 +363,16 @@ function loadUsers() {
     if (!currentUser) return;
     
     const usersRef = collection(db, 'users');
-    const q = query(usersRef, where('uid', '!=', currentUser.uid));
+    const q = query(usersRef);
     
     if (usersUnsubscribe) usersUnsubscribe();
     
     usersUnsubscribe = onSnapshot(q, (snapshot) => {
         const users = [];
         snapshot.forEach((doc) => {
-            users.push({ id: doc.id, ...doc.data() });
+            if (doc.id !== currentUser.uid) {
+                users.push({ id: doc.id, ...doc.data() });
+            }
         });
         allUsers = users;
         renderContacts(users);
@@ -268,6 +393,7 @@ function renderContacts(users) {
         const isOnline = onlineUsers.has(user.uid);
         const contactEl = document.createElement('div');
         contactEl.className = 'contact-item';
+        contactEl.setAttribute('data-userid', user.uid);
         contactEl.onclick = () => openChat(user);
         contactEl.innerHTML = `
             <img src="${user.photoURL || 'https://via.placeholder.com/56'}" 
@@ -289,10 +415,33 @@ function renderContacts(users) {
 function updateUserStatusIndicators() {
     // Update contacts list
     document.querySelectorAll('.contact-item').forEach(item => {
+        const userId = item.getAttribute('data-userid');
         const avatar = item.querySelector('.contact-avatar');
-        if (avatar) {
-            // Logic to update online status
+        const nameEl = item.querySelector('.contact-name');
+        const statusEl = item.querySelector('.contact-status');
+        
+        if (userId && onlineUsers.has(userId)) {
+            if (avatar) avatar.classList.add('online');
+            if (nameEl) {
+                if (!nameEl.querySelector('.status-indicator')) {
+                    nameEl.innerHTML += '<span class="status-indicator online"></span>';
+                }
+            }
+            if (statusEl) statusEl.textContent = 'Online';
+        } else {
+            if (avatar) avatar.classList.remove('online');
+            if (nameEl) {
+                const indicator = nameEl.querySelector('.status-indicator');
+                if (indicator) indicator.remove();
+            }
+            if (statusEl) statusEl.textContent = 'Offline';
         }
+    });
+    
+    // Update chat list online indicators
+    document.querySelectorAll('.chat-item').forEach(item => {
+        const avatar = item.querySelector('.chat-avatar');
+        // Online status is handled by the class already from render
     });
 }
 
@@ -319,26 +468,33 @@ function loadRecentChats() {
 }
 
 // Render recent chats
-function renderRecentChats(chats) {
+async function renderRecentChats(chats) {
     if (!recentChatsList) return;
     
     if (chats.length === 0) {
-        emptyChats.classList.remove('hidden');
+        if (emptyChats) emptyChats.classList.remove('hidden');
         recentChatsList.innerHTML = '';
         return;
     }
     
-    emptyChats.classList.add('hidden');
+    if (emptyChats) emptyChats.classList.add('hidden');
     recentChatsList.innerHTML = '';
     
-    chats.forEach(async (chat) => {
+    for (const chat of chats) {
         const otherUserId = chat.participants.find(id => id !== currentUser.uid);
+        if (!otherUserId) continue;
+        
         const userDoc = await getDoc(doc(db, 'users', otherUserId));
         const otherUser = userDoc.data();
         
+        if (!otherUser) continue;
+        
         const isOnline = onlineUsers.has(otherUserId);
+        const lastMessageTime = safeToDate(chat.lastMessageTime);
+        
         const chatEl = document.createElement('div');
         chatEl.className = 'chat-item';
+        chatEl.setAttribute('data-chatid', chat.id);
         chatEl.onclick = () => openChat(otherUser, chat.id);
         chatEl.innerHTML = `
             <img src="${otherUser.photoURL || 'https://via.placeholder.com/56'}" 
@@ -353,27 +509,29 @@ function renderRecentChats(chats) {
                     ${chat.lastMessage?.type === 'text' ? chat.lastMessage.content : 'Media message'}
                 </div>
             </div>
-            <div class="chat-time">${formatTime(chat.lastMessageTime?.toDate())}</div>
+            <div class="chat-time">${formatTime(lastMessageTime)}</div>
             ${chat.unreadCount ? `<span class="unread-badge">${chat.unreadCount}</span>` : ''}
         `;
         recentChatsList.appendChild(chatEl);
-    });
+    }
 }
 
 // ================= OPEN CHAT =================
 async function openChat(user, existingChatId = null) {
-    if (!currentUser) return;
+    if (!currentUser || !user) return;
     
     currentChatUser = user;
     
     // Update UI
-    chatAvatar.src = user.photoURL || 'https://via.placeholder.com/56';
-    chatWithName.textContent = user.displayName;
+    if (chatAvatar) chatAvatar.src = user.photoURL || 'https://via.placeholder.com/56';
+    if (chatWithName) chatWithName.textContent = user.displayName;
     
     // Check online status
     const isOnline = onlineUsers.has(user.uid);
-    chatStatusIndicator.className = `status-indicator ${isOnline ? 'online' : 'offline'}`;
-    chatStatusText.textContent = isOnline ? 'Online' : 'Offline';
+    if (chatStatusIndicator) {
+        chatStatusIndicator.className = `status-indicator ${isOnline ? 'online' : 'offline'}`;
+    }
+    if (chatStatusText) chatStatusText.textContent = isOnline ? 'Online' : 'Offline';
     
     // Get or create chat
     if (existingChatId) {
@@ -383,8 +541,8 @@ async function openChat(user, existingChatId = null) {
     }
     
     // Switch to chat screen
-    homeScreen.classList.remove('active');
-    chatScreen.classList.add('active');
+    if (homeScreen) homeScreen.classList.remove('active');
+    if (chatScreen) chatScreen.classList.add('active');
     
     // Load messages
     loadMessages(currentChatId);
@@ -430,6 +588,7 @@ async function getOrCreateChat(otherUserId) {
 // ================= LOAD MESSAGES =================
 function loadMessages(chatId) {
     if (messagesUnsubscribe) messagesUnsubscribe();
+    if (!chatId) return;
     
     const messagesRef = collection(db, 'chats', chatId, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
@@ -458,11 +617,11 @@ function renderMessages(messages) {
     let lastDate = null;
     
     messages.forEach((message) => {
-        const messageDate = message.timestamp?.toDate();
-        const messageDay = messageDate?.toDateString();
+        const messageDate = safeToDate(message.timestamp);
+        const messageDay = messageDate ? messageDate.toDateString() : null;
         
         // Add date separator
-        if (messageDay !== lastDate && messageDate) {
+        if (messageDay && messageDay !== lastDate) {
             const dateSeparator = document.createElement('div');
             dateSeparator.className = 'date-separator';
             dateSeparator.innerHTML = `<span>${formatDate(messageDate)}</span>`;
@@ -478,7 +637,7 @@ function renderMessages(messages) {
             messageEl.innerHTML = `
                 <div class="message-content">
                     ${message.replyTo ? `<div class="reply-preview-mini">Replying to: ${message.replyTo}</div>` : ''}
-                    ${message.content}
+                    ${message.content || ''}
                 </div>
                 <div class="message-info">
                     <span class="message-time">${formatTime(messageDate)}</span>
@@ -493,7 +652,7 @@ function renderMessages(messages) {
             messageEl.innerHTML = `
                 <div class="message-content">
                     ${message.replyTo ? `<div class="reply-preview-mini">Replying to: ${message.replyTo}</div>` : ''}
-                    <img src="${message.url}" class="message-image" onclick="openImageModal('${message.url}')">
+                    <img src="${message.url}" class="message-image" onclick='openImageModal("${message.url}")' style="max-width: 200px; max-height: 200px; border-radius: 8px; cursor: pointer;">
                 </div>
                 <div class="message-info">
                     <span class="message-time">${formatTime(messageDate)}</span>
@@ -512,8 +671,12 @@ function renderMessages(messages) {
 
 // ================= SEND MESSAGE =================
 async function sendMessage() {
-    const content = msgInput.value.trim();
+    const content = msgInput ? msgInput.value.trim() : '';
     if (!content && !replyingTo) return;
+    if (!currentChatId) {
+        showToast('No active chat', 'error');
+        return;
+    }
     
     const message = {
         senderId: currentUser.uid,
@@ -536,97 +699,64 @@ async function sendMessage() {
         });
         
         // Clear input
-        msgInput.value = '';
+        if (msgInput) msgInput.value = '';
         
         // Clear reply
         clearReply();
         
-        // Show send button
-        micBtn.classList.add('hidden');
-        sendBtn.classList.remove('hidden');
+        // Show mic button, hide send button
+        if (micBtn && sendBtn) {
+            micBtn.classList.remove('hidden');
+            sendBtn.classList.add('hidden');
+        }
     } catch (error) {
         console.error('Error sending message:', error);
         showToast('Failed to send message', 'error');
     }
 }
 
-// Send image
+// ================= SEND IMAGE WITH SUPABASE =================
 async function sendImage(file) {
-    if (!file) return;
+    if (!file || !currentChatId) {
+        showToast('No active chat or file', 'error');
+        return;
+    }
     
-    showLoading(true);
+    // Upload to Supabase
+    const imageUrl = await uploadImageToSupabase(file, currentChatId);
+    
+    if (!imageUrl) return;
+    
+    // Send message with image URL (store in Firestore)
+    const message = {
+        senderId: currentUser.uid,
+        type: 'image',
+        url: imageUrl,
+        filename: file.name,
+        timestamp: serverTimestamp(),
+        status: 'sent'
+    };
     
     try {
-        // Upload to storage
-        const storageRef = ref(storage, `chats/${currentChatId}/${Date.now()}_${file.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, file);
+        await addDoc(collection(db, 'chats', currentChatId, 'messages'), message);
         
-        uploadTask.on('state_changed',
-            (snapshot) => {
-                const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                console.log('Upload progress:', progress);
-            },
-            (error) => {
-                console.error('Upload error:', error);
-                showToast('Upload failed', 'error');
-                showLoading(false);
-            },
-            async () => {
-                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                
-                // Send message with image
-                const message = {
-                    senderId: currentUser.uid,
-                    type: 'image',
-                    url: downloadURL,
-                    filename: file.name,
-                    timestamp: serverTimestamp(),
-                    status: 'sent'
-                };
-                
-                await addDoc(collection(db, 'chats', currentChatId, 'messages'), message);
-                
-                // Update chat
-                await updateDoc(doc(db, 'chats', currentChatId), {
-                    lastMessage: message,
-                    lastMessageTime: serverTimestamp()
-                });
-                
-                showLoading(false);
-                showToast('Image sent', 'success');
-            }
-        );
+        // Update chat last message
+        await updateDoc(doc(db, 'chats', currentChatId), {
+            lastMessage: message,
+            lastMessageTime: serverTimestamp()
+        });
+        
+        showToast('Image sent', 'success');
     } catch (error) {
-        console.error('Error sending image:', error);
-        showToast('Failed to send image', 'error');
-        showLoading(false);
+        console.error('Error sending message:', error);
+        showToast('Failed to send message', 'error');
     }
 }
 
-// ================= TYPING INDICATOR =================
-msgInput.addEventListener('input', () => {
-    // Show send button when typing
-    if (msgInput.value.trim()) {
-        micBtn.classList.add('hidden');
-        sendBtn.classList.remove('hidden');
-    } else {
-        micBtn.classList.remove('hidden');
-        sendBtn.classList.add('hidden');
-    }
-    
-    // Send typing indicator
-    if (currentChatId) {
-        const chatRef = doc(db, 'chats', currentChatId);
-        if (typingTimeout) clearTimeout(typingTimeout);
-        
-        typingTimeout = setTimeout(() => {
-            // Clear typing indicator
-        }, 1000);
-    }
-});
-
 // ================= MARK AS READ =================
 async function markChatAsRead(chatId) {
+    if (!chatId) return;
+    
     const chatRef = doc(db, 'chats', chatId);
     await updateDoc(chatRef, {
         unreadCount: 0
@@ -644,188 +774,218 @@ async function markChatAsRead(chatId) {
     });
 }
 
-// ================= UTILITY FUNCTIONS =================
-function formatTime(date) {
-    if (!date) return '';
-    const now = new Date();
-    const diff = now - date;
-    
-    if (diff < 86400000) { // Less than 24 hours
-        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    } else {
-        return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-    }
-}
-
-function formatDate(date) {
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (date.toDateString() === today.toDateString()) {
-        return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-        return 'Yesterday';
-    } else {
-        return date.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-    }
-}
-
-function scrollToBottom() {
-    messageBox.scrollTop = messageBox.scrollHeight;
-}
-
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
-    toastContainer.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.classList.add('show');
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toast.remove(), 300);
-        }, 2500);
-    }, 100);
-}
-
-function showLoading(show) {
-    if (loadingOverlay) {
-        if (show) {
-            loadingOverlay.classList.remove('hidden');
-        } else {
-            loadingOverlay.classList.add('hidden');
-        }
-    }
-}
-
-function clearReply() {
-    replyingTo = null;
-    replyPreview.classList.add('hidden');
-}
-
-function openImageModal(url) {
-    modalImage.src = url;
-    imageModal.classList.add('active');
-}
-
 // ================= EVENT LISTENERS =================
 // Tab switching
-tabChats.addEventListener('click', () => {
-    document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
-    tabChats.classList.add('active');
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    chatsView.classList.add('active');
-});
+if (tabChats) {
+    tabChats.addEventListener('click', () => {
+        document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+        tabChats.classList.add('active');
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        if (chatsView) chatsView.classList.add('active');
+    });
+}
 
-tabContacts.addEventListener('click', () => {
-    document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
-    tabContacts.classList.add('active');
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    contactsView.classList.add('active');
-});
+if (tabContacts) {
+    tabContacts.addEventListener('click', () => {
+        document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+        tabContacts.classList.add('active');
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        if (contactsView) contactsView.classList.add('active');
+    });
+}
 
-tabCalls.addEventListener('click', () => {
-    document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
-    tabCalls.classList.add('active');
-    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
-    callsView.classList.add('active');
-});
+if (tabCalls) {
+    tabCalls.addEventListener('click', () => {
+        document.querySelectorAll('.filter-item').forEach(el => el.classList.remove('active'));
+        tabCalls.classList.add('active');
+        document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+        if (callsView) callsView.classList.add('active');
+    });
+}
 
 // Back button
-backBtn.addEventListener('click', () => {
-    chatScreen.classList.remove('active');
-    homeScreen.classList.add('active');
-    if (messagesUnsubscribe) messagesUnsubscribe();
-});
+if (backBtn) {
+    backBtn.addEventListener('click', () => {
+        if (chatScreen) chatScreen.classList.remove('active');
+        if (homeScreen) homeScreen.classList.add('active');
+        if (messagesUnsubscribe) messagesUnsubscribe();
+    });
+}
 
 // Send message
-sendBtn.addEventListener('click', sendMessage);
+if (sendBtn) {
+    sendBtn.addEventListener('click', sendMessage);
+}
 
-msgInput.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-        e.preventDefault();
-        sendMessage();
-    }
-});
+if (msgInput) {
+    msgInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+    
+    msgInput.addEventListener('input', () => {
+        // Show send button when typing
+        if (msgInput.value.trim()) {
+            if (micBtn) micBtn.classList.add('hidden');
+            if (sendBtn) sendBtn.classList.remove('hidden');
+        } else {
+            if (micBtn) micBtn.classList.remove('hidden');
+            if (sendBtn) sendBtn.classList.add('hidden');
+        }
+        
+        // Send typing indicator (simplified)
+        if (currentChatId) {
+            if (typingTimeout) clearTimeout(typingTimeout);
+            
+            typingTimeout = setTimeout(() => {
+                // Clear typing indicator logic here
+                if (typingIndicator) typingIndicator.style.display = 'none';
+            }, 1000);
+            
+            if (typingIndicator) {
+                typingIndicator.style.display = 'inline';
+                typingIndicator.textContent = 'typing...';
+            }
+        }
+    });
+}
 
 // Image upload
-imageUpload.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-        sendImage(file);
-    }
-});
+if (imageUpload) {
+    imageUpload.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showToast('Please select an image file', 'error');
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('Image must be less than 5MB', 'error');
+                return;
+            }
+            
+            await sendImage(file);
+            
+            // Clear input
+            imageUpload.value = '';
+        }
+    });
+}
 
 // Attach button
-attachBtn.addEventListener('click', () => {
-    imageUpload.click();
-});
+if (attachBtn) {
+    attachBtn.addEventListener('click', () => {
+        if (imageUpload) imageUpload.click();
+    });
+}
 
 // Close modal
-closeModal.addEventListener('click', () => {
-    imageModal.classList.remove('active');
-});
+if (closeModal) {
+    closeModal.addEventListener('click', () => {
+        if (imageModal) imageModal.classList.remove('active');
+    });
+}
 
-window.addEventListener('click', (e) => {
-    if (e.target === imageModal) {
-        imageModal.classList.remove('active');
-    }
-});
+if (imageModal) {
+    window.addEventListener('click', (e) => {
+        if (e.target === imageModal) {
+            imageModal.classList.remove('active');
+        }
+    });
+}
 
 // Search toggle
-searchToggle.addEventListener('click', () => {
-    searchBar.classList.toggle('hidden');
-    if (!searchBar.classList.contains('hidden')) {
-        globalSearch.focus();
-    }
-});
+if (searchToggle && searchBar) {
+    searchToggle.addEventListener('click', () => {
+        searchBar.classList.toggle('hidden');
+        if (!searchBar.classList.contains('hidden') && globalSearch) {
+            globalSearch.focus();
+        }
+    });
+}
 
 // Clear search
-clearSearch.addEventListener('click', () => {
-    globalSearch.value = '';
-    renderContacts(allUsers);
-});
+if (clearSearch && globalSearch) {
+    clearSearch.addEventListener('click', () => {
+        globalSearch.value = '';
+        renderContacts(allUsers);
+    });
+}
 
 // Search functionality
-globalSearch.addEventListener('input', (e) => {
-    const query = e.target.value.toLowerCase();
-    if (query.trim()) {
-        const filtered = allUsers.filter(user => 
-            user.displayName.toLowerCase().includes(query)
-        );
-        renderContacts(filtered);
-    } else {
-        renderContacts(allUsers);
-    }
-});
+if (globalSearch) {
+    globalSearch.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        if (query) {
+            const filtered = allUsers.filter(user => 
+                user.displayName && user.displayName.toLowerCase().includes(query)
+            );
+            renderContacts(filtered);
+        } else {
+            renderContacts(allUsers);
+        }
+    });
+}
 
 // Invite button
-inviteBtn.addEventListener('click', () => {
-    const inviteText = `Join me on Crunk Chat!`;
-    if (navigator.share) {
-        navigator.share({
-            title: 'Crunk Chat',
-            text: inviteText,
-            url: window.location.origin
-        });
-    } else {
-        navigator.clipboard.writeText(window.location.origin);
-        showToast('Link copied to clipboard!', 'success');
-    }
-});
+if (inviteBtn) {
+    inviteBtn.addEventListener('click', () => {
+        const inviteText = `Join me on Crunk Chat!`;
+        if (navigator.share) {
+            navigator.share({
+                title: 'Crunk Chat',
+                text: inviteText,
+                url: window.location.origin
+            }).catch(() => {
+                navigator.clipboard.writeText(window.location.origin);
+                showToast('Link copied to clipboard!', 'success');
+            });
+        } else {
+            navigator.clipboard.writeText(window.location.origin);
+            showToast('Link copied to clipboard!', 'success');
+        }
+    });
+}
 
 // Close reply
-closeReply.addEventListener('click', clearReply);
+if (closeReply) {
+    closeReply.addEventListener('click', clearReply);
+}
+
+// ================= TEST SUPABASE CONNECTION =================
+async function testSupabase() {
+    if (!supabase) {
+        console.warn('⚠️ Supabase not initialized. Make sure to include the Supabase script in HTML.');
+        return;
+    }
+    
+    try {
+        const { data, error } = await supabase.storage.listBuckets();
+        if (error) throw error;
+        console.log('✅ Supabase connected! Buckets:', data);
+        showToast('Supabase connected', 'success');
+    } catch (error) {
+        console.error('❌ Supabase error:', error);
+        showToast('Supabase connection failed', 'error');
+    }
+}
+
+// Run test after a short delay
+setTimeout(testSupabase, 2000);
 
 // ================= EXPOSE GLOBALLY =================
 window.switchTab = (tab) => {
-    if (tab === 'contacts') {
+    if (tab === 'contacts' && tabContacts) {
         tabContacts.click();
     }
 };
 
 window.openImageModal = openImageModal;
+window.sendMessage = sendMessage;
 
-console.log('Chat app initialized');
+console.log('✅ Chat app initialized successfully');
