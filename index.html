@@ -1,3 +1,4 @@
+
 <!-- Created by rajola - Updated with country codes and Google OAuth -->
 <!DOCTYPE html>
 <html lang="en">
@@ -10,8 +11,35 @@
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="login.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="./login.css">
+    
     <title>Crunk Games - Login & Register</title>
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyBWW5kT1GqpIGou84aOfmo3y0osUd7rRQ",
+            authDomain: "zchat-7b59a.firebaseapp.com",
+            projectId: "zchat-7b59a",
+            storageBucket: "zchat-7b59a.firebasestorage.app",
+            messagingSenderId: "391204652656",
+            appId: "1:391204652656:web:7c88d2bfb7ca2261ecd6b5",
+            measurementId: "G-YB4MSXJ6QC"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        window.auth = auth; // make auth accessible globally
+        console.log("Firebase initialized successfully");
+    </script>
 </head>
 <body>
     <!-- Animated Background -->
@@ -52,7 +80,8 @@
             <div class="form-control">
                 <div class="phone-input-group">
                     <select id="countryCode" class="country-code" required>
-                        <option value="" disabled selected>🌍 Select Code</option>
+                        <option value="" disabled selected>🌍 Code</option>
+                        <!-- Will be populated by JavaScript -->
                     </select>
                     <div class="phone-input-wrapper">
                         <input type="tel" id="phone" required autocomplete="off">
@@ -80,10 +109,19 @@
         
         <!-- Google Login Button -->
         <div class="google-login-wrapper">
-            <button onclick="handleGoogleLogin()" class="btn btn-primary" style="background: #DB4437;">
-                <i class="fab fa-google"></i>
-                <span>Continue with Google</span>
-            </button>
+            <div id="g_id_onload"
+                 data-client_id="623364824323-8tmsb3fpetb6he5dqlemh6sehd0sonod.apps.googleusercontent.com"
+                 data-callback="handleCredentialResponse"
+                 data-auto_prompt="false">
+            </div>
+            <div class="g_id_signin" 
+                 data-type="standard"
+                 data-theme="outline"
+                 data-text="signin_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left"
+                 data-width="300">
+            </div>
         </div>
         
         <!-- Alternative Login Options -->
@@ -112,9 +150,7 @@
             <div class="modal-form">
                 <div class="form-control">
                     <div class="phone-input-group">
-                        <select id="modalCountryCode" class="country-code">
-                            <option value="" disabled selected>🌍 Select Code</option>
-                        </select>
+                        <select id="modalCountryCode" class="country-code"></select>
                         <input type="tel" id="modalPhone" placeholder="Phone number">
                     </div>
                 </div>
@@ -146,404 +182,35 @@
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
 
-    <!-- Firebase SDK -->
-    <script type="module">
-        // Import Firebase
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-        import { getAuth, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
-        
-        // Firebase Configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyBW0Sz7TODfa8tQJTfNUaLhfK9qJhdA1yE",
-            authDomain: "crunck-app.firebaseapp.com",
-            projectId: "crunck-app",
-            storageBucket: "crunck-app.firebasestorage.app",
-            messagingSenderId: "475953302982",
-            appId: "1:475953302982:web:607e08379adb12f985f6c7",
-            measurementId: "G-7ZQ20HK4SD"
-        };
-        
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        const googleProvider = new GoogleAuthProvider();
-        
-        // Make available globally
-        window.auth = auth;
-        window.db = db;
-        window.googleProvider = googleProvider;
-        
-        console.log("Firebase initialized successfully");
-        
-        // ================= SESSION CHECK =================
-        const savedUser = localStorage.getItem("crunkUser");
-        if (savedUser) {
-            window.location.href = "home.html";
+    <!-- Scripts -->
+    <script type="module" src="./login.js"></script>
+    
+    <!-- Additional script for modal functions -->
+    <script>
+        // Modal functions
+        function showPhoneLogin() {
+            document.getElementById('phoneModal').style.display = 'flex';
         }
         
-        // ================= COUNTRY CODES =================
-        const countryCodes = [
-            { code: "+93", country: "Afghanistan" },
-            { code: "+355", country: "Albania" },
-            { code: "+213", country: "Algeria" },
-            { code: "+376", country: "Andorra" },
-            { code: "+244", country: "Angola" },
-            { code: "+54", country: "Argentina" },
-            { code: "+374", country: "Armenia" },
-            { code: "+61", country: "Australia" },
-            { code: "+43", country: "Austria" },
-            { code: "+994", country: "Azerbaijan" },
-            { code: "+973", country: "Bahrain" },
-            { code: "+880", country: "Bangladesh" },
-            { code: "+375", country: "Belarus" },
-            { code: "+32", country: "Belgium" },
-            { code: "+55", country: "Brazil" },
-            { code: "+359", country: "Bulgaria" },
-            { code: "+1", country: "Canada" },
-            { code: "+56", country: "Chile" },
-            { code: "+86", country: "China" },
-            { code: "+57", country: "Colombia" },
-            { code: "+506", country: "Costa Rica" },
-            { code: "+385", country: "Croatia" },
-            { code: "+357", country: "Cyprus" },
-            { code: "+420", country: "Czech Republic" },
-            { code: "+45", country: "Denmark" },
-            { code: "+593", country: "Ecuador" },
-            { code: "+20", country: "Egypt" },
-            { code: "+503", country: "El Salvador" },
-            { code: "+372", country: "Estonia" },
-            { code: "+358", country: "Finland" },
-            { code: "+33", country: "France" },
-            { code: "+995", country: "Georgia" },
-            { code: "+49", country: "Germany" },
-            { code: "+30", country: "Greece" },
-            { code: "+502", country: "Guatemala" },
-            { code: "+852", country: "Hong Kong" },
-            { code: "+36", country: "Hungary" },
-            { code: "+354", country: "Iceland" },
-            { code: "+91", country: "India" },
-            { code: "+62", country: "Indonesia" },
-            { code: "+98", country: "Iran" },
-            { code: "+964", country: "Iraq" },
-            { code: "+353", country: "Ireland" },
-            { code: "+972", country: "Israel" },
-            { code: "+39", country: "Italy" },
-            { code: "+81", country: "Japan" },
-            { code: "+962", country: "Jordan" },
-            { code: "+7", country: "Kazakhstan" },
-            { code: "+254", country: "Kenya" },
-            { code: "+965", country: "Kuwait" },
-            { code: "+856", country: "Laos" },
-            { code: "+371", country: "Latvia" },
-            { code: "+961", country: "Lebanon" },
-            { code: "+370", country: "Lithuania" },
-            { code: "+352", country: "Luxembourg" },
-            { code: "+853", country: "Macau" },
-            { code: "+389", country: "North Macedonia" },
-            { code: "+60", country: "Malaysia" },
-            { code: "+960", country: "Maldives" },
-            { code: "+356", country: "Malta" },
-            { code: "+52", country: "Mexico" },
-            { code: "+373", country: "Moldova" },
-            { code: "+377", country: "Monaco" },
-            { code: "+976", country: "Mongolia" },
-            { code: "+382", country: "Montenegro" },
-            { code: "+212", country: "Morocco" },
-            { code: "+95", country: "Myanmar" },
-            { code: "+977", country: "Nepal" },
-            { code: "+31", country: "Netherlands" },
-            { code: "+64", country: "New Zealand" },
-            { code: "+505", country: "Nicaragua" },
-            { code: "+234", country: "Nigeria" },
-            { code: "+47", country: "Norway" },
-            { code: "+968", country: "Oman" },
-            { code: "+92", country: "Pakistan" },
-            { code: "+970", country: "Palestine" },
-            { code: "+507", country: "Panama" },
-            { code: "+595", country: "Paraguay" },
-            { code: "+51", country: "Peru" },
-            { code: "+63", country: "Philippines" },
-            { code: "+48", country: "Poland" },
-            { code: "+351", country: "Portugal" },
-            { code: "+974", country: "Qatar" },
-            { code: "+40", country: "Romania" },
-            { code: "+7", country: "Russia" },
-            { code: "+250", country: "Rwanda" },
-            { code: "+966", country: "Saudi Arabia" },
-            { code: "+221", country: "Senegal" },
-            { code: "+381", country: "Serbia" },
-            { code: "+65", country: "Singapore" },
-            { code: "+421", country: "Slovakia" },
-            { code: "+386", country: "Slovenia" },
-            { code: "+27", country: "South Africa" },
-            { code: "+82", country: "South Korea" },
-            { code: "+34", country: "Spain" },
-            { code: "+94", country: "Sri Lanka" },
-            { code: "+46", country: "Sweden" },
-            { code: "+41", country: "Switzerland" },
-            { code: "+886", country: "Taiwan" },
-            { code: "+255", country: "Tanzania" },
-            { code: "+66", country: "Thailand" },
-            { code: "+216", country: "Tunisia" },
-            { code: "+90", country: "Turkey" },
-            { code: "+380", country: "Ukraine" },
-            { code: "+971", country: "United Arab Emirates" },
-            { code: "+44", country: "United Kingdom" },
-            { code: "+1", country: "United States" },
-            { code: "+598", country: "Uruguay" },
-            { code: "+998", country: "Uzbekistan" },
-            { code: "+84", country: "Vietnam" }
-        ];
-        
-        // Populate country codes
-        function populateCountryCodes() {
-            const selects = ['countryCode', 'modalCountryCode'];
-            
-            selects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                if (!select) return;
-                
-                // Clear existing options
-                select.innerHTML = '<option value="" disabled selected>🌍 Select Code</option>';
-                
-                // Sort countries by name
-                const sorted = [...countryCodes].sort((a, b) => a.country.localeCompare(b.country));
-                
-                sorted.forEach(country => {
-                    const option = document.createElement('option');
-                    option.value = country.code;
-                    option.textContent = `${country.country} (${country.code})`;
-                    select.appendChild(option);
-                });
-            });
+        function closePhoneModal() {
+            document.getElementById('phoneModal').style.display = 'none';
         }
         
-        // Run on load
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', populateCountryCodes);
-        } else {
-            populateCountryCodes();
+        function sendOTP() {
+            alert('Phone login will be implemented soon!');
         }
         
-        // ================= LABEL ANIMATION =================
-        window.addEventListener('load', () => {
-            const container = document.querySelector('.container');
-            if (container) container.style.opacity = 1;
-
-            const labels = document.querySelectorAll('.form-control label');
-            labels.forEach(label => {
-                label.innerHTML = label.innerText
-                    .split('')
-                    .map((letter, idx) => `<span style="transition-delay:${idx * 30}ms">${letter}</span>`)
-                    .join('');
-            });
-        });
-        
-        // ================= FORM SUBMIT =================
-        const form = document.getElementById('loginForm');
-        const message = document.getElementById('message');
-        
-        if (form) {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                
-                const username = document.getElementById('username').value.trim();
-                const email = document.getElementById('email').value.trim();
-                const countryCodeSelect = document.getElementById('countryCode');
-                const countryCode = countryCodeSelect?.value || '+1';
-                const phoneNumber = document.getElementById('phone').value.trim();
-                const fullPhoneNumber = countryCode + phoneNumber;
-                
-                // Validation
-                if (!username || !email || !phoneNumber) {
-                    showMessage('Please fill all fields.', 'error');
-                    return;
-                }
-                
-                if (!countryCodeSelect?.value) {
-                    showMessage('Please select your country code.', 'error');
-                    return;
-                }
-                
-                if (username.length < 3) {
-                    showMessage('Username must be at least 3 characters.', 'error');
-                    return;
-                }
-                
-                if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-                    showMessage('Username can only contain letters, numbers, and underscores.', 'error');
-                    return;
-                }
-                
-                if (!/^\S+@\S+\.\S+$/.test(email)) {
-                    showMessage('Enter a valid email address.', 'error');
-                    return;
-                }
-                
-                if (!/^\d{7,15}$/.test(phoneNumber)) {
-                    showMessage('Enter a valid phone number (7-15 digits).', 'error');
-                    return;
-                }
-                
-                try {
-                    showLoader(true);
-                    
-                    // Check if user exists
-                    const usersRef = collection(db, 'users');
-                    const q = query(usersRef, where('email', '==', email));
-                    const querySnapshot = await getDocs(q);
-                    
-                    if (!querySnapshot.empty) {
-                        // User exists - log them in
-                        const existingUser = querySnapshot.docs[0].data();
-                        localStorage.setItem('crunkUser', JSON.stringify({
-                            username: existingUser.displayName || existingUser.username,
-                            displayName: existingUser.displayName || existingUser.username,
-                            email: existingUser.email,
-                            phone: existingUser.phone,
-                            photoURL: existingUser.photoURL || null,
-                            userId: querySnapshot.docs[0].id
-                        }));
-                        
-                        showMessage('Login successful! Redirecting...', 'success');
-                        setTimeout(() => {
-                            window.location.href = 'home.html';
-                        }, 1000);
-                        return;
-                    }
-                    
-                    // Create new user
-                    const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-                    
-                    const newUser = {
-                        uid: userId,
-                        username: username,
-                        displayName: username,
-                        email: email,
-                        phone: fullPhoneNumber,
-                        countryCode: countryCode,
-                        phoneNumber: phoneNumber,
-                        photoURL: null,
-                        loginMethod: 'form',
-                        createdAt: new Date().toISOString(),
-                        lastSeen: new Date().toISOString(),
-                        status: 'online',
-                        userId: userId
-                    };
-                    
-                    await setDoc(doc(db, 'users', userId), newUser);
-                    
-                    localStorage.setItem('crunkUser', JSON.stringify({ 
-                        username: username,
-                        displayName: username,
-                        email: email, 
-                        phone: fullPhoneNumber,
-                        photoURL: null,
-                        userId: userId 
-                    }));
-                    
-                    showMessage('Registration successful! Redirecting...', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'home.html';
-                    }, 1000);
-                    
-                } catch (err) {
-                    console.error('Login error:', err);
-                    showMessage('Error processing login. Please try again.', 'error');
-                } finally {
-                    showLoader(false);
-                }
-            });
+        function verifyOTP() {
+            alert('OTP verification coming soon!');
         }
         
-        // ================= GOOGLE LOGIN =================
-        window.handleGoogleLogin = async function() {
-            try {
-                showLoader(true);
-                
-                const result = await signInWithPopup(auth, googleProvider);
-                const user = result.user;
-                
-                const userDocRef = doc(db, 'users', user.uid);
-                const userDoc = await getDoc(userDocRef);
-                
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    localStorage.setItem('crunkUser', JSON.stringify({
-                        username: userData.displayName || user.displayName,
-                        displayName: userData.displayName || user.displayName,
-                        email: user.email,
-                        photoURL: user.photoURL,
-                        userId: user.uid
-                    }));
-                } else {
-                    const newUser = {
-                        uid: user.uid,
-                        username: user.displayName,
-                        displayName: user.displayName,
-                        email: user.email,
-                        photoURL: user.photoURL,
-                        loginMethod: 'google',
-                        createdAt: new Date().toISOString(),
-                        lastSeen: new Date().toISOString(),
-                        status: 'online',
-                        userId: user.uid,
-                        emailVerified: user.emailVerified
-                    };
-                    
-                    await setDoc(userDocRef, newUser);
-                    
-                    localStorage.setItem('crunkUser', JSON.stringify({
-                        username: user.displayName,
-                        displayName: user.displayName,
-                        email: user.email,
-                        photoURL: user.photoURL,
-                        userId: user.uid
-                    }));
-                }
-                
-                showMessage('Google login successful! Redirecting...', 'success');
-                setTimeout(() => {
-                    window.location.href = 'home.html';
-                }, 1000);
-                
-            } catch (error) {
-                console.error('Google login error:', error);
-                
-                if (error.code === 'auth/popup-closed-by-user') {
-                    showMessage('Login cancelled. Please try again.', 'info');
-                } else if (error.code === 'auth/popup-blocked') {
-                    showMessage('Popup was blocked. Please allow popups.', 'error');
-                } else if (error.code === 'auth/account-exists-with-different-credential') {
-                    showMessage('Account exists with different sign-in method.', 'error');
-                } else {
-                    showMessage('Error with Google login. Please try again.', 'error');
-                }
-            } finally {
-                showLoader(false);
-            }
-        };
-        
-        // ================= HELPER FUNCTIONS =================
-        function showMessage(text, type = 'info') {
-            if (!message) return;
-            
-            message.innerText = text;
-            message.className = `message ${type}`;
-        }
-        
-        function showLoader(show) {
-            const loader = document.getElementById('loader');
-            if (loader) {
-                loader.style.display = show ? 'flex' : 'none';
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('phoneModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
             }
         }
-        
-        // ================= VALIDATION =================
-        const usernameInput = document.getElementById('username');
-        if (usernameInput) {
-            usernameInput.addEventListener('input', (e) => {
-                const value = e.target.value;
-                const
+    </script>
+</body>
+</html>
