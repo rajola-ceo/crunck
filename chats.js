@@ -989,3 +989,9 @@ window.openImageModal = openImageModal;
 window.sendMessage = sendMessage;
 
 console.log('✅ Chat app initialized successfully');
+window.updateUserStatus = function(status) {
+    console.log('User status changed to:', status);
+    // This will be handled by your Firebase presence system
+    // You can dispatch a custom event that your chat.js listens to
+    window.dispatchEvent(new CustomEvent('userStatusChanged', { detail: { status } }));
+};
