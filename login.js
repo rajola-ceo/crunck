@@ -656,3 +656,60 @@ if (phoneInput) {
 }
 
 console.log("✅ Login system initialized with correct Firebase project");
+// ================= GOOGLE LOGIN (DEBUG VERSION) =================
+window.handleGoogleLogin = async function() {
+    console.log("1️⃣ Google login started");
+    try {
+        showLoader(true);
+        console.log("2️⃣ Loader shown");
+        
+        const hostname = window.location.hostname;
+        const isRestrictedDomain = hostname.includes('github.io') || 
+                                   hostname.includes('netlify.app') ||
+                                   hostname.includes('vercel.app');
+        
+        console.log("3️⃣ Domain check:", hostname, "isRestricted:", isRestrictedDomain);
+        
+        let result;
+        
+        if (isRestrictedDomain) {
+            console.log("4️⃣ Using redirect sign-in");
+            googleProvider.setCustomParameters({
+                prompt: 'select_account'
+            });
+            
+            await signInWithRedirect(auth, googleProvider);
+            console.log("5️⃣ Redirect initiated - page will redirect");
+            return;
+        } else {
+            console.log("4️⃣ Using popup sign-in");
+            result = await signInWithPopup(auth, googleProvider);
+            console.log("5️⃣ Popup result received:", result.user?.email);
+        }
+        
+        if (result) {
+            console.log("6️⃣ Processing user:", result.user.uid);
+            await processGoogleUser(result.user);
+        }
+        
+    } catch (error) {
+        console.error("❌ Google login error:", error);
+        console.error("Error code:", error.code);
+        console.error("Error message:", error.message);
+        
+        if (error.code === 'auth/popup-closed-by-user') {
+            showMessage("Login cancelled. Please try again.", "info");
+        } else if (error.code === 'auth/popup-blocked') {
+            showMessage("Popup was blocked. Please allow popups.", "error");
+        } else if (error.code === 'auth/unauthorized-domain') {
+            const domain = window.location.hostname;
+            showMessage(`Please add "${domain}" to Firebase authorized domains.`, "error");
+            console.log(`❌ Add this domain to Firebase: ${domain}`);
+        } else {
+            showMessage("Error with Google login. Please try again.", "error");
+        }
+    } finally {
+        console.log("7️⃣ Finally block - hiding loader");
+        showLoader(false);
+    }
+};
