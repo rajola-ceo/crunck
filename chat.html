@@ -11,18 +11,14 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="chat.css">
     
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-storage.js"></script>
+    <!-- Supabase SDK (needed before chat.js) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <meta name="description" content="Chat with friends on Crunk Chat">
     <meta name="theme-color" content="#34d399">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
-    
 </head>
 <body>
     <div class="app-container">
@@ -84,7 +80,7 @@
                         </div>
                         <h3>No Chats Yet</h3>
                         <p>Start a conversation with your friends</p>
-                        <button class="btn-primary" onclick="switchTab('contacts')">
+                        <button class="btn-primary" onclick="window.switchTab('contacts')">
                             <i class="fas fa-user-plus"></i> Find Friends
                         </button>
                     </div>
@@ -201,53 +197,84 @@
         <p>Loading...</p>
     </div>
 
+    <!-- Main Chat Script (module) -->
     <script type="module" src="chat.js"></script>
     
+    <!-- Inline Script for PWA and Global Functions -->
     <script>
-        // Register Service Worker for PWA
+        // ================= GLOBAL TOAST FUNCTION =================
+        window.showToast = function(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            if (!toastContainer) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = 'fa-info-circle';
+            if (type === 'success') icon = 'fa-check-circle';
+            if (type === 'error') icon = 'fa-exclamation-circle';
+            
+            toast.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 2500);
+            }, 100);
+        };
+
+        // ================= USER STATUS FUNCTION =================
+        window.updateUserStatus = function(status) {
+            console.log('User status changed to:', status);
+            // Dispatch event for chat.js to listen to
+            window.dispatchEvent(new CustomEvent('userStatusChanged', { 
+                detail: { status } 
+            }));
+        };
+
+        // ================= SERVICE WORKER =================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js')
                     .then(registration => {
-                        console.log('ServiceWorker registered:', registration);
+                        console.log('✅ ServiceWorker registered:', registration);
                     })
                     .catch(error => {
-                        console.log('ServiceWorker registration failed:', error);
+                        console.log('❌ ServiceWorker registration failed:', error);
                     });
             });
         }
 
-        // Handle visibility change for online/offline status
+        // ================= VISIBILITY CHANGE HANDLER =================
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'visible') {
                 console.log('App is visible');
-                // Update user status to online
-                if (window.updateUserStatus) {
-                    window.updateUserStatus('online');
-                }
+                window.updateUserStatus('online');
             } else {
                 console.log('App is hidden');
-                // Update user status to away
-                if (window.updateUserStatus) {
-                    window.updateUserStatus('away');
-                }
+                window.updateUserStatus('away');
             }
         });
 
-        // Handle online/offline events
+        // ================= NETWORK STATUS HANDLERS =================
         window.addEventListener('online', () => {
-            showToast('You are back online!');
-            if (window.updateUserStatus) {
-                window.updateUserStatus('online');
-            }
+            window.showToast('You are back online!', 'success');
+            window.updateUserStatus('online');
         });
 
         window.addEventListener('offline', () => {
-            showToast('You are offline. Messages will send when you reconnect.');
-            if (window.updateUserStatus) {
-                window.updateUserStatus('offline');
-            }
+            window.showToast('You are offline. Messages will send when you reconnect.', 'error');
+            window.updateUserStatus('offline');
         });
+
+        // ================= EXPOSE SWITCH TAB (will be overridden by chat.js) =================
+        window.switchTab = window.switchTab || function(tab) {
+            console.log('Switch tab to:', tab);
+            // This will be replaced by the actual function from chat.js
+        };
     </script>
 </body>
 </html>
