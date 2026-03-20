@@ -283,6 +283,22 @@
             });
         }
     });
+    <!-- Ensure bottom navigation is properly styled -->
+    document.addEventListener('DOMContentLoaded', function() {
+        // Force highlight of tournaments tab on tournaments page
+        const currentPage = window.location.pathname.split('/').pop();
+        if (currentPage === 'tournaments.html') {
+            setTimeout(() => {
+                const navItems = document.querySelectorAll('.nav-item');
+                navItems.forEach(item => {
+                    item.classList.remove('active');
+                    if (item.getAttribute('data-tab') === 'tournaments') {
+                        item.classList.add('active');
+                    }
+                });
+            }, 100);
+        }
+    });
 </script>
 </body>
 </html>
