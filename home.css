@@ -2904,3 +2904,53 @@ body.light-theme #themeToggle .fa-moon {
         padding-bottom: calc(70px + env(safe-area-inset-bottom));
     }
 }
+/* ===============================
+   MOBILE TOP BAR OPTIMIZATION
+=============================== */
+
+/* Hide Veno Coin label on very small screens */
+@media (max-width: 480px) {
+    .veno-coins-display .coin-label {
+        display: none;
+    }
+    
+    /* Make top bar more compact */
+    .topbar {
+        height: 55px;
+        padding: 0 12px;
+    }
+    
+    /* Reduce icon sizes */
+    .icons {
+        gap: 10px;
+    }
+    
+    /* Make search bar smaller if present */
+    .top-search {
+        display: none;
+    }
+    
+    /* Add search icon for mobile */
+    .mobile-search-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: rgba(16, 185, 129, 0.1);
+        border-radius: 50%;
+        cursor: pointer;
+    }
+    
+    .mobile-search-icon i {
+        font-size: 16px;
+        color: #10b981;
+    }
+}
+
+/* Hide coin label on tablets if needed */
+@media (min-width: 481px) and (max-width: 600px) {
+    .veno-coins-display .coin-label {
+        display: none;
+    }
+}
