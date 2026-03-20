@@ -46,6 +46,13 @@ const accountName = document.getElementById("accountName");
 const accountEmail = document.getElementById("accountEmail");
 const logoutBtn = document.getElementById("logoutBtn");
 
+// Venaura App Icon
+const venauraIcon = document.getElementById("venauraIcon");
+
+// Veno Coins Elements
+const venoCoinsAmount = document.getElementById("venoCoinsAmount");
+const claimVenoCoinsBtn = document.getElementById("claimVenoCoinsBtn");
+
 // Notification
 const notificationBell = document.getElementById("notificationBell");
 const notificationPopup = document.getElementById("notificationPopup");
@@ -72,6 +79,93 @@ const toastContainer = document.getElementById("toastContainer") || (() => {
     document.body.appendChild(container);
     return container;
 })();
+
+// ===============================
+// VENO COINS SYSTEM
+// ===============================
+const VENO_COINS_KEY = "venoCoins";
+const LAST_CLAIM_KEY = "lastVenoClaim";
+
+function getVenoCoins() {
+    const coins = localStorage.getItem(VENO_COINS_KEY);
+    return coins ? parseInt(coins) : 0;
+}
+
+function updateVenoCoinsDisplay() {
+    if (venoCoinsAmount) {
+        venoCoinsAmount.textContent = getVenoCoins();
+    }
+}
+
+function canClaimVenoCoins() {
+    const lastClaim = localStorage.getItem(LAST_CLAIM_KEY);
+    if (!lastClaim) return true;
+    
+    const lastClaimDate = new Date(parseInt(lastClaim));
+    const now = new Date();
+    const hoursSinceClaim = (now - lastClaimDate) / (1000 * 60 * 60);
+    
+    return hoursSinceClaim >= 24;
+}
+
+function getRemainingTime() {
+    const lastClaim = localStorage.getItem(LAST_CLAIM_KEY);
+    if (!lastClaim) return null;
+    
+    const lastClaimDate = new Date(parseInt(lastClaim));
+    const nextClaimDate = new Date(lastClaimDate.getTime() + (24 * 60 * 60 * 1000));
+    const now = new Date();
+    
+    if (now >= nextClaimDate) return null;
+    
+    const diff = nextClaimDate - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours}h ${minutes}m`;
+}
+
+function claimVenoCoins() {
+    if (!canClaimVenoCoins()) {
+        const remaining = getRemainingTime();
+        showToast(`Already claimed! Next claim in ${remaining}`, "error");
+        return false;
+    }
+    
+    const currentCoins = getVenoCoins();
+    const newCoins = currentCoins + 10;
+    localStorage.setItem(VENO_COINS_KEY, newCoins);
+    localStorage.setItem(LAST_CLAIM_KEY, Date.now().toString());
+    
+    updateVenoCoinsDisplay();
+    showToast("🎉 You claimed 10 Veno Coins!", "success");
+    
+    // Update claim button
+    if (claimVenoCoinsBtn) {
+        claimVenoCoinsBtn.disabled = true;
+        claimVenoCoinsBtn.innerHTML = '<i class="fas fa-clock"></i> Claimed - Wait 24h';
+    }
+    
+    return true;
+}
+
+function updateClaimButton() {
+    if (!claimVenoCoinsBtn) return;
+    
+    if (canClaimVenoCoins()) {
+        claimVenoCoinsBtn.disabled = false;
+        claimVenoCoinsBtn.innerHTML = '<i class="fas fa-gift"></i> Claim 10 Veno Coins';
+        claimVenoCoinsBtn.style.opacity = "1";
+    } else {
+        claimVenoCoinsBtn.disabled = true;
+        const remaining = getRemainingTime();
+        claimVenoCoinsBtn.innerHTML = `<i class="fas fa-clock"></i> Claim in ${remaining}`;
+        claimVenoCoinsBtn.style.opacity = "0.6";
+    }
+}
+
+// Update claim button every minute
+setInterval(updateClaimButton, 60000);
 
 // ===============================
 // NOTIFICATION SYSTEM
@@ -318,10 +412,24 @@ const user = JSON.parse(localStorage.getItem("crunkUser"));
 if (!user) {
     window.location.href = "index.html";
 } else {
-    if (googleProfilePic) googleProfilePic.src = user.picture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.username || "User") + "&background=34d399&color=fff&size=128";
-    if (popupProfilePic) popupProfilePic.src = user.picture || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.username || "User") + "&background=34d399&color=fff&size=128";
-    if (accountName) accountName.innerText = user.username || "User";
+    if (googleProfilePic) googleProfilePic.src = user.photoURL || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.displayName || user.username || "User") + "&background=34d399&color=fff&size=128";
+    if (popupProfilePic) popupProfilePic.src = user.photoURL || "https://ui-avatars.com/api/?name=" + encodeURIComponent(user.displayName || user.username || "User") + "&background=34d399&color=fff&size=128";
+    if (accountName) accountName.innerText = user.displayName || user.username || "User";
     if (accountEmail) accountEmail.innerText = user.email || "";
+    
+    // Initialize Veno Coins display
+    updateVenoCoinsDisplay();
+    updateClaimButton();
+}
+
+// ===============================
+// VENAURA APP ICON
+// ===============================
+if (venauraIcon) {
+    venauraIcon.addEventListener("click", () => {
+        // Replace this URL with your Venaura app URL
+        window.open("https://your-venaura-app-url.com", "_blank");
+    });
 }
 
 // ===============================
@@ -473,6 +581,8 @@ if (profilePopup) {
 if (logoutBtn) {
     logoutBtn.addEventListener("click", () => {
         localStorage.removeItem("crunkUser");
+        localStorage.removeItem(VENO_COINS_KEY);
+        localStorage.removeItem(LAST_CLAIM_KEY);
         window.location.href = "index.html";
     });
 }
@@ -769,14 +879,10 @@ window.addEventListener("scroll", async () => {
             const data = await res.json();
             
             if (data.results?.length > 0) {
-                // Fix: Pass the games directly to renderGames
-                const currentGames = Array.from(gamesContainer.children).length;
-                // This is a simplified approach - you might want to append instead of re-render
                 data.results.forEach(game => {
                     const stars = "⭐".repeat(Math.floor(game.rating || 0));
                     const card = document.createElement("div");
                     card.className = "game-card";
-                    card.style.animationDelay = `${currentGames * 0.05}s`;
                     card.innerHTML = `
                         <div class="game-card-inner">
                             <img src="${game.background_image || 'https://via.placeholder.com/300x200?text=🎮'}" 
@@ -812,13 +918,28 @@ window.addEventListener("scroll", async () => {
 // INITIALIZE
 // ===============================
 document.addEventListener('DOMContentLoaded', () => {
-    // Show welcome notification
+    // Welcome message - will be styled horizontally
+    const welcomeToast = document.createElement("div");
+    welcomeToast.className = "welcome-toast";
+    welcomeToast.innerHTML = `<i class="bx bx-game"></i> Welcome to Crunk Games! 🎮`;
+    document.body.appendChild(welcomeToast);
+    
     setTimeout(() => {
-        showToast("Welcome to Crunk Games! 🎮");
-    }, 1000);
+        welcomeToast.classList.add("show");
+        setTimeout(() => {
+            welcomeToast.classList.remove("show");
+            setTimeout(() => welcomeToast.remove(), 500);
+        }, 3000);
+    }, 500);
+    
+    // Initialize Veno Coins claim button
+    if (claimVenoCoinsBtn) {
+        claimVenoCoinsBtn.addEventListener("click", claimVenoCoins);
+    }
+    
+    // Update claim button every minute
+    setInterval(updateClaimButton, 60000);
+    updateClaimButton();
 });
 
-// Clean up interval on page unload
-window.addEventListener('beforeunload', () => {
-    if (slideInterval) clearInterval(slideInterval);
-});
+console.log("✅ Games page loaded with Veno Coins system");
