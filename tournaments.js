@@ -770,3 +770,70 @@ observer.observe(document.body, { attributes: true, subtree: true });
 
 // Add spin button to quick actions
 setTimeout(addSpinButton, 500);
+function doSpin() {
+    if (isSpinning) return;
+    
+    const coins = getVenoCoins();
+    
+    // Check if user has enough coins
+    if (coins < 200) {
+        showToast("❌ Need 200 Veno Coins to spin! You have " + coins + " coins.", "error");
+        return;
+    }
+    
+    // Show deduction message
+    showToast(`🎰 Spinning... 200 coins deducted! You have ${coins - 200} coins left.`, "info");
+    
+    // DEDUCT COINS FIRST
+    localStorage.setItem('venoCoins', coins - 200);
+    updateVenoCoinsDisplay();
+    if (spinBalance) spinBalance.innerText = coins - 200;
+    
+    isSpinning = true;
+    if (spinWheelBtn) spinWheelBtn.disabled = true;
+    
+    const spins = 8 + Math.random() * 8;
+    const targetRotation = spinRotation + (Math.PI * 2 * spins);
+    const startTime = performance.now();
+    const duration = 2500;
+    
+    function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        spinRotation = targetRotation * easeOut;
+        drawSpinWheel();
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            spinRotation = targetRotation % (Math.PI * 2);
+            drawSpinWheel();
+            
+            // ADD WINNINGS AFTER SPIN
+            const prize = getSpinPrize();
+            const currentCoins = getVenoCoins();
+            const newCoins = currentCoins + prize.value;
+            
+            localStorage.setItem('venoCoins', newCoins);
+            updateVenoCoinsDisplay();
+            
+            // Show win message with net change
+            const netChange = prize.value - 200;  // Winnings minus cost
+            if (netChange > 0) {
+                showToast(`🎉 You won ${prize.value} coins! Net gain: +${netChange} coins!`, "success");
+            } else if (netChange === 0) {
+                showToast(`🎁 You won ${prize.value} coins! You got your coins back!`, "success");
+            } else {
+                showToast(`✨ You won ${prize.value} coins! Net loss: ${netChange} coins.`, "info");
+            }
+            
+            showSpinResult(prize);
+            
+            isSpinning = false;
+            if (spinWheelBtn) spinWheelBtn.disabled = false;
+        }
+    }
+    
+    requestAnimationFrame(animate);
+}
