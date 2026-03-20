@@ -146,7 +146,6 @@ function loadFeaturedLeagues() {
             return;
         }
         
-        // Show latest 6 leagues
         const latestLeagues = leagues.slice(0, 6);
         latestLeagues.forEach(league => {
             featuredLeaguesContainer.appendChild(createLeagueCard(league));
@@ -216,7 +215,6 @@ window.joinLeague = function(leagueId) {
     
     const league = leagues[leagueIndex];
     
-    // Check if user already requested or joined
     const alreadyRequested = league.pendingRequests?.some(r => r.ownerId === currentUser.uid);
     const alreadyJoined = league.teams?.some(t => t.ownerId === currentUser.uid);
     
@@ -235,13 +233,10 @@ window.joinLeague = function(leagueId) {
         return;
     }
     
-    // Show confirmation dialog
     if (confirm(`Join ${league.name}?\n\nEntry Fee: ${league.entryFee} Veno Coins\nPrize Pool: ${league.prizePool} Veno Coins`)) {
-        // Deduct coins
         localStorage.setItem('venoCoins', userCoins - league.entryFee);
         updateVenoCoinsDisplay();
         
-        // Add to pending requests
         if (!league.pendingRequests) league.pendingRequests = [];
         league.pendingRequests.push({
             id: 'req_' + Date.now(),
@@ -252,7 +247,6 @@ window.joinLeague = function(leagueId) {
             requestedAt: new Date().toISOString()
         });
         
-        // Save back to localStorage
         leagues[leagueIndex] = league;
         localStorage.setItem('leagues', JSON.stringify(leagues));
         
@@ -264,7 +258,6 @@ window.viewLeague = function(leagueId) {
     window.location.href = `league-view.html?id=${leagueId}`;
 };
 
-// ================= NOTIFICATION FUNCTIONS =================
 function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
     if (!container) return;
@@ -279,6 +272,181 @@ function showToast(message, type = 'success') {
         toast.classList.remove('show');
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+// ================= SPIN WHEEL FUNCTIONALITY =================
+let spinCanvas = null;
+let spinCtx = null;
+let spinRotation = 0;
+let isSpinning = false;
+
+const spinPrizes = [
+    { name: "50 Coins", value: 50, color: "#3b82f6", chance: 34 },
+    { name: "100 Coins", value: 100, color: "#10b981", chance: 30 },
+    { name: "200 Coins", value: 200, color: "#f59e0b", chance: 20 },
+    { name: "500 Coins", value: 500, color: "#8b5cf6", chance: 10 },
+    { name: "1000 Coins", value: 1000, color: "#ec489a", chance: 5 },
+    { name: "5000 Coins", value: 5000, color: "#ef4444", chance: 1 }
+];
+
+function drawSpinWheel() {
+    if (!spinCanvas) return;
+    const size = 400;
+    spinCanvas.width = size;
+    spinCanvas.height = size;
+    spinCtx = spinCanvas.getContext('2d');
+    
+    const centerX = size / 2;
+    const centerY = size / 2;
+    const radius = size / 2;
+    const anglePerSlice = (Math.PI * 2) / spinPrizes.length;
+    
+    for (let i = 0; i < spinPrizes.length; i++) {
+        const startAngle = i * anglePerSlice + spinRotation;
+        const endAngle = (i + 1) * anglePerSlice + spinRotation;
+        
+        spinCtx.beginPath();
+        spinCtx.moveTo(centerX, centerY);
+        spinCtx.arc(centerX, centerY, radius, startAngle, endAngle);
+        spinCtx.fillStyle = spinPrizes[i].color;
+        spinCtx.fill();
+        spinCtx.strokeStyle = "white";
+        spinCtx.lineWidth = 2;
+        spinCtx.stroke();
+        
+        spinCtx.save();
+        spinCtx.translate(centerX, centerY);
+        spinCtx.rotate(startAngle + anglePerSlice / 2);
+        spinCtx.textAlign = "center";
+        spinCtx.fillStyle = "white";
+        spinCtx.font = "bold 12px Arial";
+        spinCtx.fillText(spinPrizes[i].name, radius * 0.65, 8);
+        spinCtx.restore();
+    }
+    
+    spinCtx.beginPath();
+    spinCtx.arc(centerX, centerY, 35, 0, Math.PI * 2);
+    spinCtx.fillStyle = "#1f2937";
+    spinCtx.fill();
+    spinCtx.fillStyle = "#10b981";
+    spinCtx.font = "bold 14px Arial";
+    spinCtx.textAlign = "center";
+    spinCtx.textBaseline = "middle";
+    spinCtx.fillText("SPIN", centerX, centerY);
+}
+
+function getSpinPrize() {
+    const anglePerSlice = (Math.PI * 2) / spinPrizes.length;
+    const pointerAngle = (Math.PI * 2 - (spinRotation % (Math.PI * 2)) + Math.PI / 2) % (Math.PI * 2);
+    const index = Math.floor(pointerAngle / anglePerSlice) % spinPrizes.length;
+    return spinPrizes[index];
+}
+
+function doSpin() {
+    if (isSpinning) return;
+    
+    const coins = getVenoCoins();
+    if (coins < 200) {
+        showToast(`Need 200 Veno Coins to spin! You have ${coins} coins.`, "error");
+        return;
+    }
+    
+    // Deduct coins
+    showToast(`🎰 Spinning... 200 coins deducted!`, "info");
+    localStorage.setItem('venoCoins', coins - 200);
+    updateVenoCoinsDisplay();
+    
+    const spinBalanceSpan = document.getElementById('spinBalance');
+    if (spinBalanceSpan) spinBalanceSpan.innerText = coins - 200;
+    
+    isSpinning = true;
+    const spinBtn = document.getElementById('spinWheelBtn');
+    if (spinBtn) spinBtn.disabled = true;
+    
+    const spins = 8 + Math.random() * 8;
+    const targetRotation = spinRotation + (Math.PI * 2 * spins);
+    const startTime = performance.now();
+    const duration = 2500;
+    
+    function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        spinRotation = targetRotation * easeOut;
+        drawSpinWheel();
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            spinRotation = targetRotation % (Math.PI * 2);
+            drawSpinWheel();
+            
+            const prize = getSpinPrize();
+            const currentCoins = getVenoCoins();
+            const newCoins = currentCoins + prize.value;
+            localStorage.setItem('venoCoins', newCoins);
+            updateVenoCoinsDisplay();
+            
+            const netChange = prize.value - 200;
+            if (netChange > 0) {
+                showToast(`🎉 You won ${prize.value} coins! Net gain: +${netChange} coins!`, "success");
+            } else if (netChange === 0) {
+                showToast(`🎁 You won ${prize.value} coins! You got your coins back!`, "success");
+            } else {
+                showToast(`✨ You won ${prize.value} coins! Net loss: ${netChange} coins.`, "info");
+            }
+            
+            showSpinResultPopup(prize);
+            
+            isSpinning = false;
+            if (spinBtn) spinBtn.disabled = false;
+        }
+    }
+    
+    requestAnimationFrame(animate);
+}
+
+function showSpinResultPopup(prize) {
+    const resultDiv = document.createElement('div');
+    resultDiv.className = 'spin-result-popup';
+    resultDiv.innerHTML = `
+        <div class="spin-result-icon">${prize.value >= 1000 ? '🏆' : prize.value >= 500 ? '⭐' : '🎁'}</div>
+        <h3>${prize.value >= 1000 ? 'JACKPOT!' : 'You Won!'}</h3>
+        <div class="spin-result-amount">+${prize.value} Coins</div>
+        <button class="spin-result-close" onclick="this.parentElement.remove()">Continue</button>
+    `;
+    document.body.appendChild(resultDiv);
+    setTimeout(() => resultDiv.classList.add('show'), 10);
+    
+    if (prize.value >= 1000) {
+        createConfetti();
+    }
+}
+
+function createConfetti() {
+    for (let i = 0; i < 80; i++) {
+        const confetti = document.createElement('div');
+        confetti.style.cssText = `
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: hsl(${Math.random() * 360}, 100%, 50%);
+            left: ${Math.random() * window.innerWidth}px;
+            top: -10px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10002;
+        `;
+        document.body.appendChild(confetti);
+        
+        confetti.animate([
+            { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+            { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+        ], {
+            duration: 1500 + Math.random() * 1000,
+            easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)'
+        }).onfinish = () => confetti.remove();
+    }
 }
 
 // ================= NAVIGATION =================
@@ -379,17 +547,9 @@ if (menuTheme) {
         const isLight = document.body.classList.contains('light-theme');
         themeLabel.innerText = isLight ? 'Light' : 'Dark';
         localStorage.setItem('theme', isLight ? 'light' : 'dark');
-        
-        const sunIcon = menuTheme.querySelector('.bx-sun');
-        const moonIcon = menuTheme.querySelector('.bx-moon');
-        if (sunIcon && moonIcon) {
-            sunIcon.style.display = isLight ? 'inline-block' : 'none';
-            moonIcon.style.display = isLight ? 'none' : 'inline-block';
-        }
     });
 }
 
-// Load saved theme
 const savedTheme = localStorage.getItem('theme');
 if (savedTheme === 'light') {
     document.body.classList.add('light-theme');
@@ -401,7 +561,6 @@ onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
         
-        // Update profile images
         const googleProfilePic = document.getElementById('googleProfilePic');
         const popupProfilePic = document.getElementById('popupProfilePic');
         const accountName = document.getElementById('accountName');
@@ -426,6 +585,50 @@ document.addEventListener('DOMContentLoaded', () => {
     loadFeaturedLeagues();
     loadActiveLeagues();
     updateVenoCoinsDisplay();
+    
+    // Initialize spin modal
+    const spinModal = document.getElementById('spinModal');
+    if (spinModal) {
+        const spinClose = spinModal.querySelector('.spin-close');
+        if (spinClose) {
+            spinClose.addEventListener('click', () => spinModal.classList.remove('active'));
+        }
+        
+        spinModal.addEventListener('click', (e) => {
+            if (e.target === spinModal) spinModal.classList.remove('active');
+        });
+        
+        const spinWheelBtn = document.getElementById('spinWheelBtn');
+        if (spinWheelBtn) {
+            spinWheelBtn.addEventListener('click', doSpin);
+        }
+    }
+    
+    // Add spin card to quick actions
+    const quickActions = document.querySelector('.quick-actions');
+    if (quickActions && !document.querySelector('.spin-action-card')) {
+        const spinCard = document.createElement('div');
+        spinCard.className = 'action-card spin-action-card';
+        spinCard.id = 'spinCard';
+        spinCard.innerHTML = `
+            <i class="fas fa-chart-simple"></i>
+            <h3>Spin & Win</h3>
+            <p>Win up to 5000 Veno Coins!</p>
+        `;
+        spinCard.onclick = () => {
+            const modal = document.getElementById('spinModal');
+            if (modal) {
+                modal.classList.add('active');
+                const balanceSpan = document.getElementById('spinBalance');
+                if (balanceSpan) balanceSpan.innerText = getVenoCoins();
+                setTimeout(() => {
+                    spinCanvas = document.getElementById('spinWheelCanvas');
+                    if (spinCanvas) drawSpinWheel();
+                }, 100);
+            }
+        };
+        quickActions.appendChild(spinCard);
+    }
 });
 
 // ================= VENO COINS CLAIM =================
@@ -472,368 +675,4 @@ if (claimBtn) {
     setInterval(updateClaimButton, 60000);
 }
 
-// ================= NOTIFICATIONS =================
-const notificationList = document.getElementById('notificationList');
-const notificationCount = document.getElementById('notificationCount');
-const markAllRead = document.getElementById('markAllRead');
-
-function loadNotifications() {
-    const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-    if (notificationList) {
-        notificationList.innerHTML = '';
-        if (notifications.length === 0) {
-            notificationList.innerHTML = '<div class="empty-state">No notifications</div>';
-        } else {
-            notifications.slice(0, 5).forEach(notif => {
-                const item = document.createElement('div');
-                item.className = `notification-item ${notif.read ? 'read' : 'unread'}`;
-                item.innerHTML = `
-                    <div class="notification-icon">${notif.icon || '🔔'}</div>
-                    <div class="notification-content">
-                        <div class="notification-title">${notif.title}</div>
-                        <div class="notification-message">${notif.message}</div>
-                        <div class="notification-time">${notif.time}</div>
-                    </div>
-                `;
-                notificationList.appendChild(item);
-            });
-        }
-    }
-    
-    const unreadCount = notifications.filter(n => !n.read).length;
-    if (notificationCount) {
-        notificationCount.textContent = unreadCount;
-        notificationCount.style.display = unreadCount > 0 ? 'flex' : 'none';
-    }
-}
-
-if (markAllRead) {
-    markAllRead.addEventListener('click', () => {
-        const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-        notifications.forEach(n => n.read = true);
-        localStorage.setItem('notifications', JSON.stringify(notifications));
-        loadNotifications();
-        if (notificationCount) notificationCount.style.display = 'none';
-    });
-}
-
-// Sample welcome notification
-setTimeout(() => {
-    const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
-    const welcomeExists = notifications.some(n => n.title === 'Welcome to Tournaments');
-    if (!welcomeExists && currentUser) {
-        notifications.unshift({
-            id: Date.now(),
-            title: 'Welcome to Tournaments!',
-            message: `Welcome ${currentUser.displayName}! Create your own league or join existing ones to win Veno Coins!`,
-            time: 'Just now',
-            read: false,
-            icon: '🏆'
-        });
-        localStorage.setItem('notifications', JSON.stringify(notifications));
-        loadNotifications();
-    }
-}, 2000);
-
-loadNotifications();
-
-// Notification bell toggle
-const notificationBtn = document.getElementById('notificationBtn');
-const notificationPopup = document.getElementById('notificationPopup');
-if (notificationBtn && notificationPopup) {
-    notificationBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        notificationPopup.classList.toggle('active');
-        loadNotifications();
-    });
-    
-    document.addEventListener('click', (e) => {
-        if (!notificationBtn.contains(e.target) && !notificationPopup.contains(e.target)) {
-            notificationPopup.classList.remove('active');
-        }
-    });
-}
-
-console.log('✅ Tournaments page loaded successfully');
-// ================= SPIN WHEEL FUNCTIONALITY =================
-const spinModal = document.getElementById('spinModal');
-const spinWheelBtn = document.getElementById('spinWheelBtn');
-const spinBalance = document.getElementById('spinBalance');
-let spinCanvas = null;
-let spinCtx = null;
-let spinRotation = 0;
-let isSpinning = false;
-
-const spinPrizes = [
-    { name: "50 Coins", value: 50, color: "#3b82f6", chance: 34 },
-    { name: "100 Coins", value: 100, color: "#10b981", chance: 30 },
-    { name: "200 Coins", value: 200, color: "#f59e0b", chance: 20 },
-    { name: "500 Coins", value: 500, color: "#8b5cf6", chance: 10 },
-    { name: "1000 Coins", value: 1000, color: "#ec489a", chance: 5 },
-    { name: "5000 Coins", value: 5000, color: "#ef4444", chance: 1 }
-];
-
-function drawSpinWheel() {
-    if (!spinCanvas) return;
-    const size = 400;
-    spinCanvas.width = size;
-    spinCanvas.height = size;
-    spinCtx = spinCanvas.getContext('2d');
-    
-    const centerX = size / 2;
-    const centerY = size / 2;
-    const radius = size / 2;
-    const anglePerSlice = (Math.PI * 2) / spinPrizes.length;
-    
-    for (let i = 0; i < spinPrizes.length; i++) {
-        const startAngle = i * anglePerSlice + spinRotation;
-        const endAngle = (i + 1) * anglePerSlice + spinRotation;
-        
-        spinCtx.beginPath();
-        spinCtx.moveTo(centerX, centerY);
-        spinCtx.arc(centerX, centerY, radius, startAngle, endAngle);
-        spinCtx.fillStyle = spinPrizes[i].color;
-        spinCtx.fill();
-        spinCtx.strokeStyle = "white";
-        spinCtx.lineWidth = 2;
-        spinCtx.stroke();
-        
-        // Draw text
-        spinCtx.save();
-        spinCtx.translate(centerX, centerY);
-        spinCtx.rotate(startAngle + anglePerSlice / 2);
-        spinCtx.textAlign = "center";
-        spinCtx.fillStyle = "white";
-        spinCtx.font = "bold 12px Arial";
-        spinCtx.fillText(spinPrizes[i].name, radius * 0.65, 8);
-        spinCtx.restore();
-    }
-    
-    // Draw center
-    spinCtx.beginPath();
-    spinCtx.arc(centerX, centerY, 35, 0, Math.PI * 2);
-    spinCtx.fillStyle = "#1f2937";
-    spinCtx.fill();
-    spinCtx.fillStyle = "#10b981";
-    spinCtx.font = "bold 14px Arial";
-    spinCtx.textAlign = "center";
-    spinCtx.textBaseline = "middle";
-    spinCtx.fillText("SPIN", centerX, centerY);
-}
-
-function getSpinPrize() {
-    const anglePerSlice = (Math.PI * 2) / spinPrizes.length;
-    const pointerAngle = (Math.PI * 2 - (spinRotation % (Math.PI * 2)) + Math.PI / 2) % (Math.PI * 2);
-    const index = Math.floor(pointerAngle / anglePerSlice) % spinPrizes.length;
-    return spinPrizes[index];
-}
-
-function doSpin() {
-    if (isSpinning) return;
-    
-    const coins = getVenoCoins();
-    if (coins < 200) {
-        showToast("Need 200 Veno Coins to spin!", "error");
-        return;
-    }
-    
-    // Deduct coins
-    localStorage.setItem('venoCoins', coins - 200);
-    updateVenoCoinsDisplay();
-    if (spinBalance) spinBalance.innerText = coins - 200;
-    
-    isSpinning = true;
-    if (spinWheelBtn) spinWheelBtn.disabled = true;
-    
-    const spins = 8 + Math.random() * 8;
-    const targetRotation = spinRotation + (Math.PI * 2 * spins);
-    const startTime = performance.now();
-    const duration = 2500;
-    
-    function animate(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        spinRotation = targetRotation * easeOut;
-        drawSpinWheel();
-        
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            spinRotation = targetRotation % (Math.PI * 2);
-            drawSpinWheel();
-            
-            const prize = getSpinPrize();
-            const newCoins = getVenoCoins() + prize.value;
-            localStorage.setItem('venoCoins', newCoins);
-            updateVenoCoinsDisplay();
-            
-            showSpinResult(prize);
-            
-            isSpinning = false;
-            if (spinWheelBtn) spinWheelBtn.disabled = false;
-        }
-    }
-    
-    requestAnimationFrame(animate);
-}
-
-function showSpinResult(prize) {
-    const resultDiv = document.createElement('div');
-    resultDiv.className = 'spin-result-popup';
-    resultDiv.innerHTML = `
-        <div class="spin-result-icon">${prize.value >= 1000 ? '🏆' : prize.value >= 500 ? '⭐' : '🎁'}</div>
-        <h3>${prize.value >= 1000 ? 'JACKPOT!' : 'You Won!'}</h3>
-        <div class="spin-result-amount">+${prize.value} Coins</div>
-        <button class="spin-result-close" onclick="this.parentElement.remove()">Continue</button>
-    `;
-    document.body.appendChild(resultDiv);
-    setTimeout(() => resultDiv.classList.add('show'), 10);
-    
-    // Confetti for big wins
-    if (prize.value >= 1000) {
-        createConfetti();
-    }
-}
-
-function createConfetti() {
-    for (let i = 0; i < 80; i++) {
-        const confetti = document.createElement('div');
-        confetti.style.cssText = `
-            position: fixed;
-            width: 10px;
-            height: 10px;
-            background: hsl(${Math.random() * 360}, 100%, 50%);
-            left: ${Math.random() * window.innerWidth}px;
-            top: -10px;
-            border-radius: 50%;
-            pointer-events: none;
-            z-index: 10002;
-        `;
-        document.body.appendChild(confetti);
-        
-        confetti.animate([
-            { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
-            { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
-        ], {
-            duration: 1500 + Math.random() * 1000,
-            easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)'
-        }).onfinish = () => confetti.remove();
-    }
-}
-
-// Add Spin Button to Quick Actions
-const addSpinButton = () => {
-    const quickActions = document.querySelector('.quick-actions');
-    if (quickActions && !document.querySelector('.spin-action-card')) {
-        const spinCard = document.createElement('div');
-        spinCard.className = 'action-card spin-action-card';
-        spinCard.id = 'spinCard';
-        spinCard.innerHTML = `
-            <i class="fas fa-chart-simple"></i>
-            <h3>Spin & Win</h3>
-            <p>Win up to 5000 Veno Coins!</p>
-        `;
-        spinCard.onclick = () => {
-            if (spinModal) {
-                spinModal.classList.add('active');
-                if (spinBalance) spinBalance.innerText = getVenoCoins();
-                setTimeout(() => drawSpinWheel(), 100);
-            }
-        };
-        quickActions.appendChild(spinCard);
-    }
-};
-
-// Initialize spin wheel when modal opens
-if (spinModal) {
-    const spinClose = spinModal.querySelector('.spin-close');
-    spinClose?.addEventListener('click', () => spinModal.classList.remove('active'));
-    
-    spinModal.addEventListener('click', (e) => {
-        if (e.target === spinModal) spinModal.classList.remove('active');
-    });
-    
-    spinWheelBtn?.addEventListener('click', doSpin);
-}
-
-// Initialize canvas when modal opens
-const observer = new MutationObserver(() => {
-    if (spinModal && spinModal.classList.contains('active') && !spinCanvas) {
-        spinCanvas = document.getElementById('spinWheelCanvas');
-        if (spinCanvas) {
-            drawSpinWheel();
-        }
-    }
-});
-observer.observe(document.body, { attributes: true, subtree: true });
-
-// Add spin button to quick actions
-setTimeout(addSpinButton, 500);
-function doSpin() {
-    if (isSpinning) return;
-    
-    const coins = getVenoCoins();
-    
-    // Check if user has enough coins
-    if (coins < 200) {
-        showToast("❌ Need 200 Veno Coins to spin! You have " + coins + " coins.", "error");
-        return;
-    }
-    
-    // Show deduction message
-    showToast(`🎰 Spinning... 200 coins deducted! You have ${coins - 200} coins left.`, "info");
-    
-    // DEDUCT COINS FIRST
-    localStorage.setItem('venoCoins', coins - 200);
-    updateVenoCoinsDisplay();
-    if (spinBalance) spinBalance.innerText = coins - 200;
-    
-    isSpinning = true;
-    if (spinWheelBtn) spinWheelBtn.disabled = true;
-    
-    const spins = 8 + Math.random() * 8;
-    const targetRotation = spinRotation + (Math.PI * 2 * spins);
-    const startTime = performance.now();
-    const duration = 2500;
-    
-    function animate(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        spinRotation = targetRotation * easeOut;
-        drawSpinWheel();
-        
-        if (progress < 1) {
-            requestAnimationFrame(animate);
-        } else {
-            spinRotation = targetRotation % (Math.PI * 2);
-            drawSpinWheel();
-            
-            // ADD WINNINGS AFTER SPIN
-            const prize = getSpinPrize();
-            const currentCoins = getVenoCoins();
-            const newCoins = currentCoins + prize.value;
-            
-            localStorage.setItem('venoCoins', newCoins);
-            updateVenoCoinsDisplay();
-            
-            // Show win message with net change
-            const netChange = prize.value - 200;  // Winnings minus cost
-            if (netChange > 0) {
-                showToast(`🎉 You won ${prize.value} coins! Net gain: +${netChange} coins!`, "success");
-            } else if (netChange === 0) {
-                showToast(`🎁 You won ${prize.value} coins! You got your coins back!`, "success");
-            } else {
-                showToast(`✨ You won ${prize.value} coins! Net loss: ${netChange} coins.`, "info");
-            }
-            
-            showSpinResult(prize);
-            
-            isSpinning = false;
-            if (spinWheelBtn) spinWheelBtn.disabled = false;
-        }
-    }
-    
-    requestAnimationFrame(animate);
-}
+console.log('✅ Tournaments page loaded');
