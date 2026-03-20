@@ -402,4 +402,4 @@ document.addEventListener('DOMContentLoaded', ensureNavAtBottom);
 // Expose functions globally
 window.redirectToLogin = redirectToLogin;
 
-console.log("✅ Nav.js loaded - Direct Qonvo chat integration ready with fixed bottom nav");
+console.log("✅ Nav.js loaded - Direct Qonvo chat integration ready ");
