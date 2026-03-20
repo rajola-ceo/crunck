@@ -2491,3 +2491,416 @@ body.light-theme #themeToggle .fa-moon {
 .sidebar-user {
     display: none;
 }
+/* ===============================
+   RESPONSIVE DESIGN - MOBILE OPTIMIZATION
+=============================== */
+
+/* Small devices (phones, 480px and down) */
+@media (max-width: 480px) {
+    /* Top Bar - Compact for mobile */
+    .topbar {
+        height: 55px;
+        padding: 0 12px;
+    }
+    
+    .brand h1 {
+        font-size: 18px;
+    }
+    
+    .menu {
+        font-size: 20px;
+    }
+    
+    /* Veno Coins Container - Smaller on mobile */
+    .veno-coins-container {
+        padding: 3px 6px;
+        gap: 6px;
+    }
+    
+    .veno-coins-display {
+        padding: 4px 8px;
+        gap: 4px;
+    }
+    
+    .veno-coins-display i {
+        font-size: 12px;
+    }
+    
+    .veno-coins-display span {
+        font-size: 14px;
+    }
+    
+    .veno-coins-display .coin-label {
+        display: none;
+    }
+    
+    .claim-veno-btn {
+        padding: 4px 8px;
+        font-size: 10px;
+    }
+    
+    .claim-veno-btn i {
+        font-size: 10px;
+    }
+    
+    /* Icons - Smaller */
+    .icons i {
+        font-size: 18px;
+        padding: 6px;
+    }
+    
+    .profile-pic {
+        width: 32px;
+        height: 32px;
+    }
+    
+    /* Profile Popup - Smaller */
+    .profile-popup {
+        width: 220px;
+        padding: 12px;
+    }
+    
+    .account-info img {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .account-info div p:first-child {
+        font-size: 13px;
+    }
+    
+    .account-info div p:last-child {
+        font-size: 10px;
+    }
+    
+    /* Hero Section - Compact */
+    .tournaments-hero {
+        margin: 10px;
+        padding: 20px 15px;
+    }
+    
+    .tournaments-hero h1 {
+        font-size: 20px;
+    }
+    
+    .tournaments-hero p {
+        font-size: 12px;
+        margin-bottom: 15px;
+    }
+    
+    .hero-buttons {
+        gap: 10px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+    
+    /* Quick Actions - 2 columns on mobile */
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        padding: 0 10px;
+        margin-bottom: 20px;
+    }
+    
+    .action-card {
+        padding: 12px;
+    }
+    
+    .action-card i {
+        font-size: 24px;
+        margin-bottom: 6px;
+    }
+    
+    .action-card h3 {
+        font-size: 12px;
+        margin-bottom: 4px;
+    }
+    
+    .action-card p {
+        font-size: 10px;
+        display: none;
+    }
+    
+    /* Section Headers */
+    .section-header {
+        margin-bottom: 12px;
+        padding: 0 10px;
+    }
+    
+    .section-header h2 {
+        font-size: 16px;
+    }
+    
+    .section-header a {
+        font-size: 11px;
+    }
+    
+    /* League Cards - Compact */
+    .leagues-grid, .teams-grid {
+        gap: 10px;
+        padding: 0 10px;
+    }
+    
+    .league-card {
+        border-radius: 12px;
+    }
+    
+    .league-header {
+        padding: 12px;
+    }
+    
+    .league-icon {
+        font-size: 28px;
+        margin-bottom: 5px;
+    }
+    
+    .league-header h3 {
+        font-size: 14px;
+    }
+    
+    .league-game {
+        font-size: 10px;
+    }
+    
+    .league-type {
+        font-size: 9px;
+        padding: 2px 6px;
+        top: 6px;
+        right: 6px;
+    }
+    
+    .league-body {
+        padding: 10px;
+    }
+    
+    .stat-value {
+        font-size: 14px;
+    }
+    
+    .stat-label {
+        font-size: 9px;
+    }
+    
+    .league-prize {
+        font-size: 11px;
+        margin-bottom: 10px;
+    }
+    
+    .prize i {
+        font-size: 12px;
+    }
+    
+    .league-footer {
+        padding: 10px;
+        gap: 8px;
+    }
+    
+    .join-btn, .details-btn {
+        padding: 6px;
+        font-size: 11px;
+    }
+    
+    /* Team Cards - Compact */
+    .team-card {
+        padding: 10px;
+        gap: 10px;
+    }
+    
+    .team-logo {
+        width: 45px;
+        height: 45px;
+        font-size: 22px;
+    }
+    
+    .team-name {
+        font-size: 13px;
+    }
+    
+    .team-stats {
+        font-size: 10px;
+        gap: 10px;
+    }
+    
+    /* Footer - Compact */
+    .footer {
+        padding: 12px;
+    }
+    
+    .footer-content p {
+        font-size: 11px;
+    }
+    
+    .footer-links a {
+        font-size: 10px;
+    }
+    
+    /* Bottom Navigation - Smaller */
+    .bottom-nav {
+        padding: 8px 0 12px;
+    }
+    
+    .bottom-nav .nav-item i {
+        font-size: 20px;
+    }
+    
+    .bottom-nav .nav-item .label {
+        font-size: 9px;
+    }
+    
+    /* Toast - Smaller */
+    .toast {
+        padding: 8px 16px;
+        font-size: 12px;
+    }
+    
+    /* Spin Modal - Compact */
+    .spin-modal-content {
+        width: 95%;
+        max-height: 85vh;
+    }
+    
+    .wheel-wrapper {
+        width: 220px;
+        height: 220px;
+    }
+    
+    .spin-info {
+        font-size: 12px;
+        padding: 10px;
+    }
+    
+    .spin-balance strong, .spin-cost strong {
+        font-size: 14px;
+    }
+    
+    .prize-list-mini .prize-item {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+}
+
+/* Extra small devices (phones, 360px and down) */
+@media (max-width: 360px) {
+    .brand h1 {
+        font-size: 16px;
+    }
+    
+    .veno-coins-display {
+        display: none;
+    }
+    
+    .claim-veno-btn {
+        padding: 4px 6px;
+        font-size: 9px;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+    
+    .action-card {
+        padding: 8px;
+    }
+    
+    .action-card i {
+        font-size: 20px;
+    }
+    
+    .action-card h3 {
+        font-size: 11px;
+    }
+    
+    .league-header h3 {
+        font-size: 12px;
+    }
+    
+    .stat-value {
+        font-size: 12px;
+    }
+    
+    .league-footer {
+        flex-direction: column;
+    }
+    
+    .join-btn, .details-btn {
+        width: 100%;
+    }
+}
+
+/* Tablets (481px to 768px) */
+@media (min-width: 481px) and (max-width: 768px) {
+    .quick-actions {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+    }
+    
+    .leagues-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .teams-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .veno-coins-container {
+        padding: 4px 10px;
+    }
+    
+    .veno-coins-display .coin-label {
+        display: inline;
+    }
+}
+
+/* Desktop (769px and up) - Keep original large layout */
+@media (min-width: 769px) {
+    .quick-actions {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+    
+    .leagues-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+    
+    .teams-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+    
+    .veno-coins-display .coin-label {
+        display: inline;
+    }
+}
+
+/* Landscape mode on mobile */
+@media (max-width: 768px) and (orientation: landscape) {
+    .tournaments-hero {
+        padding: 15px;
+        margin: 10px;
+    }
+    
+    .tournaments-hero h1 {
+        font-size: 18px;
+    }
+    
+    .quick-actions {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .leagues-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Safe area for notched phones */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    .bottom-nav {
+        padding-bottom: calc(12px + env(safe-area-inset-bottom));
+    }
+    
+    body {
+        padding-bottom: calc(70px + env(safe-area-inset-bottom));
+    }
+}
