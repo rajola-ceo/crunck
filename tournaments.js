@@ -44,35 +44,7 @@ function updateVenoCoinsDisplay() {
     }
 }
 
-// Load Featured Leagues from localStorage
-function loadFeaturedLeagues() {
-    const leagues = JSON.parse(localStorage.getItem('leagues') || '[]');
-    
-    if (featuredLeaguesContainer) {
-        featuredLeaguesContainer.innerHTML = '';
-        
-        if (leagues.length === 0) {
-            featuredLeaguesContainer.innerHTML = `
-                <div class="empty-state">
-                    <i class="fas fa-trophy"></i>
-                    <p>No leagues yet. Be the first to create one!</p>
-                    <button class="btn-primary" onclick="window.location.href='league-create.html'">
-                        <i class="fas fa-plus"></i> Create League
-                    </button>
-                </div>
-            `;
-            return;
-        }
-        
-        // Show latest 6 leagues
-        const latestLeagues = leagues.slice(0, 6);
-        latestLeagues.forEach(league => {
-            featuredLeaguesContainer.appendChild(createLeagueCard(league));
-        });
-    }
-}
-
-// Create League Card
+// ================= LEAGUE FUNCTIONS =================
 function createLeagueCard(league) {
     const card = document.createElement('div');
     card.className = 'league-card';
@@ -119,10 +91,10 @@ function createLeagueCard(league) {
             </div>
         </div>
         <div class="league-footer">
-            <button class="join-btn" onclick="event.stopPropagation(); joinLeague('${league.id}')">
+            <button class="join-btn" onclick="event.stopPropagation(); window.joinLeague('${league.id}')">
                 <i class="fas fa-sign-in-alt"></i> Join League
             </button>
-            <button class="details-btn" onclick="event.stopPropagation(); viewLeague('${league.id}')">
+            <button class="details-btn" onclick="event.stopPropagation(); window.viewLeague('${league.id}')">
                 <i class="fas fa-info-circle"></i> Details
             </button>
         </div>
@@ -131,53 +103,8 @@ function createLeagueCard(league) {
     return card;
 }
 
-// Load Active Leagues from localStorage
-function loadActiveLeagues() {
-    if (!activeLeaguesContainer) return;
-    
-    const leagues = JSON.parse(localStorage.getItem('leagues') || '[]');
-    const activeLeagues = leagues.filter(l => l.status === 'live' || l.status === 'registration');
-    
-    activeLeaguesContainer.innerHTML = '';
-    
-    if (activeLeagues.length === 0) {
-        activeLeaguesContainer.innerHTML = '<div class="empty-state">No active leagues at the moment</div>';
-        return;
-    }
-    
-    activeLeagues.slice(0, 3).forEach(league => {
-        activeLeaguesContainer.appendChild(createLeagueCard(league));
-    });
-}
-
-// Load My Teams from localStorage
-function loadMyTeams() {
-    if (!myTeamsContainer) return;
-    
-    const teams = JSON.parse(localStorage.getItem('userTeams') || '[]');
-    
-    myTeamsContainer.innerHTML = '';
-    
-    if (teams.length === 0) {
-        myTeamsContainer.innerHTML = `
-            <div class="empty-state">
-                <i class="fas fa-users"></i>
-                <p>You haven't created any teams yet</p>
-                <button class="btn-primary" onclick="window.location.href='team-create.html'">
-                    <i class="fas fa-plus"></i> Create Your First Team
-                </button>
-            </div>
-        `;
-        return;
-    }
-    
-    teams.forEach(team => {
-        myTeamsContainer.appendChild(createTeamCard(team));
-    });
-}
-
-// Create Team Card
-function createTeamCard(team) {
+// ================= TEAM FUNCTIONS =================
+function createTeamCardFunction(team) {
     const card = document.createElement('div');
     card.className = 'team-card';
     card.onclick = () => window.location.href = `team-view.html?id=${team.id}`;
@@ -199,7 +126,78 @@ function createTeamCard(team) {
     return card;
 }
 
-// Join League Function
+// ================= LOAD FUNCTIONS =================
+function loadFeaturedLeagues() {
+    const leagues = JSON.parse(localStorage.getItem('leagues') || '[]');
+    
+    if (featuredLeaguesContainer) {
+        featuredLeaguesContainer.innerHTML = '';
+        
+        if (leagues.length === 0) {
+            featuredLeaguesContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-trophy"></i>
+                    <p>No leagues yet. Be the first to create one!</p>
+                    <button class="btn-primary" onclick="window.location.href='league-create.html'">
+                        <i class="fas fa-plus"></i> Create League
+                    </button>
+                </div>
+            `;
+            return;
+        }
+        
+        // Show latest 6 leagues
+        const latestLeagues = leagues.slice(0, 6);
+        latestLeagues.forEach(league => {
+            featuredLeaguesContainer.appendChild(createLeagueCard(league));
+        });
+    }
+}
+
+function loadActiveLeagues() {
+    if (!activeLeaguesContainer) return;
+    
+    const leagues = JSON.parse(localStorage.getItem('leagues') || '[]');
+    const activeLeagues = leagues.filter(l => l.status === 'live' || l.status === 'registration');
+    
+    activeLeaguesContainer.innerHTML = '';
+    
+    if (activeLeagues.length === 0) {
+        activeLeaguesContainer.innerHTML = '<div class="empty-state">No active leagues at the moment</div>';
+        return;
+    }
+    
+    activeLeagues.slice(0, 3).forEach(league => {
+        activeLeaguesContainer.appendChild(createLeagueCard(league));
+    });
+}
+
+function loadMyTeams() {
+    if (!myTeamsContainer) return;
+    
+    const teams = JSON.parse(localStorage.getItem('userTeams') || '[]');
+    
+    myTeamsContainer.innerHTML = '';
+    
+    if (teams.length === 0) {
+        myTeamsContainer.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-users"></i>
+                <p>You haven't created any teams yet</p>
+                <button class="btn-primary" onclick="window.location.href='team-create.html'">
+                    <i class="fas fa-plus"></i> Create Your First Team
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
+    teams.forEach(team => {
+        myTeamsContainer.appendChild(createTeamCardFunction(team));
+    });
+}
+
+// ================= ACTION FUNCTIONS =================
 window.joinLeague = function(leagueId) {
     if (!currentUser) {
         showToast('Please login first', 'error');
@@ -259,13 +257,6 @@ window.joinLeague = function(leagueId) {
         localStorage.setItem('leagues', JSON.stringify(leagues));
         
         showToast(`Join request sent to ${league.ownerName}!`, 'success');
-        
-        // Update button
-        const joinBtn = document.querySelector(`.join-btn[onclick*="${leagueId}"]`);
-        if (joinBtn) {
-            joinBtn.disabled = true;
-            joinBtn.textContent = 'Request Sent';
-        }
     }
 };
 
@@ -273,7 +264,24 @@ window.viewLeague = function(leagueId) {
     window.location.href = `league-view.html?id=${leagueId}`;
 };
 
-// Navigation
+// ================= NOTIFICATION FUNCTIONS =================
+function showToast(message, type = 'success') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+    
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
+    container.appendChild(toast);
+    
+    setTimeout(() => toast.classList.add('show'), 10);
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// ================= NAVIGATION =================
 if (createLeagueBtn) {
     createLeagueBtn.addEventListener('click', () => {
         window.location.href = 'league-create.html';
@@ -282,7 +290,7 @@ if (createLeagueBtn) {
 
 if (joinLeagueBtn) {
     joinLeagueBtn.addEventListener('click', () => {
-        document.querySelector('.featured-section').scrollIntoView({ behavior: 'smooth' });
+        document.querySelector('.featured-section')?.scrollIntoView({ behavior: 'smooth' });
     });
 }
 
@@ -294,7 +302,7 @@ if (createTeamCard) {
 
 if (joinLeagueCard) {
     joinLeagueCard.addEventListener('click', () => {
-        document.querySelector('.featured-section').scrollIntoView({ behavior: 'smooth' });
+        document.querySelector('.featured-section')?.scrollIntoView({ behavior: 'smooth' });
     });
 }
 
@@ -310,7 +318,7 @@ if (leaderboardCard) {
     });
 }
 
-// Sidebar navigation
+// ================= SIDEBAR NAVIGATION =================
 const menuHome = document.getElementById('menuHome');
 const menuTournaments = document.getElementById('menuTournaments');
 const menuLeagues = document.getElementById('menuLeagues');
@@ -329,7 +337,7 @@ if (menuCreateTeam) menuCreateTeam.addEventListener('click', () => window.locati
 if (menuLeaderboard) menuLeaderboard.addEventListener('click', () => window.location.href = 'leaderboard.html');
 if (menuSettings) menuSettings.addEventListener('click', () => window.location.href = 'settings.html');
 
-// Venaura Icon
+// ================= VENAURA ICON =================
 const venauraIcon = document.getElementById('venauraIcon');
 if (venauraIcon) {
     venauraIcon.addEventListener('click', () => {
@@ -337,7 +345,7 @@ if (venauraIcon) {
     });
 }
 
-// Profile Dropdown
+// ================= PROFILE DROPDOWN =================
 const profileDropdown = document.getElementById('profileDropdown');
 const profilePopup = document.getElementById('profilePopup');
 if (profileDropdown) {
@@ -353,7 +361,7 @@ if (profileDropdown) {
     });
 }
 
-// Logout
+// ================= LOGOUT =================
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
     logoutBtn.addEventListener('click', () => {
@@ -362,7 +370,7 @@ if (logoutBtn) {
     });
 }
 
-// Theme Toggle
+// ================= THEME TOGGLE =================
 const menuTheme = document.getElementById('menuTheme');
 const themeLabel = document.getElementById('themeLabel');
 if (menuTheme) {
@@ -388,7 +396,7 @@ if (savedTheme === 'light') {
     if (themeLabel) themeLabel.innerText = 'Light';
 }
 
-// Auth State Listener
+// ================= AUTH STATE =================
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUser = user;
@@ -413,14 +421,14 @@ onAuthStateChanged(auth, (user) => {
     }
 });
 
-// Initialize Page
+// ================= INITIALIZE =================
 document.addEventListener('DOMContentLoaded', () => {
     loadFeaturedLeagues();
     loadActiveLeagues();
     updateVenoCoinsDisplay();
 });
 
-// Veno Coins Claim
+// ================= VENO COINS CLAIM =================
 const claimBtn = document.getElementById('claimVenoCoinsBtn');
 if (claimBtn) {
     const LAST_CLAIM_KEY = 'lastVenoClaim';
@@ -464,7 +472,7 @@ if (claimBtn) {
     setInterval(updateClaimButton, 60000);
 }
 
-// Notification System (Sample)
+// ================= NOTIFICATIONS =================
 const notificationList = document.getElementById('notificationList');
 const notificationCount = document.getElementById('notificationCount');
 const markAllRead = document.getElementById('markAllRead');
@@ -513,11 +521,11 @@ if (markAllRead) {
 setTimeout(() => {
     const notifications = JSON.parse(localStorage.getItem('notifications') || '[]');
     const welcomeExists = notifications.some(n => n.title === 'Welcome to Tournaments');
-    if (!welcomeExists) {
+    if (!welcomeExists && currentUser) {
         notifications.unshift({
             id: Date.now(),
             title: 'Welcome to Tournaments!',
-            message: 'Create your own league or join existing ones to win Veno Coins!',
+            message: `Welcome ${currentUser.displayName}! Create your own league or join existing ones to win Veno Coins!`,
             time: 'Just now',
             read: false,
             icon: '🏆'
@@ -546,4 +554,4 @@ if (notificationBtn && notificationPopup) {
     });
 }
 
-console.log('✅ Tournaments page loaded with localStorage support');
+console.log('✅ Tournaments page loaded successfully');
