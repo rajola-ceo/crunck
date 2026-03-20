@@ -212,7 +212,44 @@
         </div>
     </footer>
 </div>
-
+<!-- Spin Wheel Modal -->
+<div id="spinModal" class="spin-modal">
+    <div class="spin-modal-content">
+        <div class="spin-modal-header">
+            <h2><i class="fas fa-chart-simple"></i> Spin & Win</h2>
+            <span class="spin-close">&times;</span>
+        </div>
+        <div class="spin-modal-body">
+            <div class="spin-info">
+                <div class="spin-balance">
+                    <i class="fas fa-coins"></i> Your Balance: 
+                    <strong id="spinBalance">0</strong> Veno Coins
+                </div>
+                <div class="spin-cost">
+                    <i class="fas fa-ticket-alt"></i> Cost per spin: <strong>200</strong> Veno Coins
+                </div>
+            </div>
+            
+            <div class="wheel-wrapper">
+                <canvas id="spinWheelCanvas" width="400" height="400"></canvas>
+                <div class="wheel-pointer">▼</div>
+            </div>
+            
+            <button class="spin-wheel-btn" id="spinWheelBtn">
+                <i class="fas fa-chart-simple"></i> SPIN (200 Coins)
+            </button>
+            
+            <div class="prize-list-mini">
+                <div class="prize-item">🏆 5000</div>
+                <div class="prize-item">⭐ 1000</div>
+                <div class="prize-item">🎁 500</div>
+                <div class="prize-item">🎫 200</div>
+                <div class="prize-item">🎖️ 100</div>
+                <div class="prize-item">✨ 50</div>
+            </div>
+        </div>
+    </div>
+</div>
 <!-- Toast Container -->
 <div id="toastContainer" class="toast-container"></div>
 
