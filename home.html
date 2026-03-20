@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Crunk Games - Play & Discover</title>
     
     <!-- Boxicons -->
@@ -37,6 +37,18 @@
         </div>
         
         <div class="icons">
+            <!-- VENO COINS DISPLAY -->
+            <div class="veno-coins-container">
+                <div class="veno-coins-display">
+                    <i class="fas fa-coins"></i>
+                    <span id="venoCoinsAmount">0</span>
+                    <span class="coin-label">Veno Coins</span>
+                </div>
+                <button id="claimVenoCoinsBtn" class="claim-veno-btn">
+                    <i class="fas fa-gift"></i> Claim 10
+                </button>
+            </div>
+
             <!-- NOTIFICATION BELL -->
             <div class="notification-container">
                 <div class="notification-bell" id="notificationBtn">
@@ -81,12 +93,16 @@
             <span class="close-sidebar" id="closeSidebar"><i class="bx bx-x"></i></span>
         </div>
         
-        <div class="sidebar-user">
-            <img id="sidebarProfilePic" src="https://ui-avatars.com/api/?name=User&background=34d399&color=fff&size=128" alt="Profile">
-            <div class="sidebar-user-info">
-                <p id="sidebarUserName">User Name</p>
-                <p id="sidebarUserEmail">user@example.com</p>
+        <!-- VENAURA ICON (Replaced user profile) -->
+        <div class="venaura-section" id="venauraIcon">
+            <div class="venaura-icon">
+                <img src="https://via.placeholder.com/60x60?text=VENAURA" alt="Venaura" id="venauraLogo">
             </div>
+            <div class="venaura-info">
+                <h3>Venaura App</h3>
+                <p>Connect with Venaura</p>
+            </div>
+            <i class="bx bx-right-arrow-alt arrow-icon"></i>
         </div>
         
         <ul class="sidebar-menu">
@@ -125,18 +141,6 @@
             </div>
         </div>
         <div class="search-results" id="searchResults"></div>
-    </div>
-
-    <!-- PROMO BANNER -->
-    <div class="promo">
-        <div class="promo-icon">
-            <i class="bx bxs-gift"></i>
-        </div>
-        <div class="promo-text">
-            <h2>Free Venocoins</h2>
-            <p>Claim your daily bonus now!</p>
-        </div>
-        <button class="claim" id="claimBtn">Claim</button>
     </div>
 
     <!-- LOADER -->
@@ -235,28 +239,16 @@
 <script src="nav.js"></script>
 <script type="module" src="home.js"></script>
 
-<!-- Add this small script for immediate functionality -->
 <script>
     // Immediate UI enhancements
     document.addEventListener('DOMContentLoaded', function() {
-        // Claim button toast
-        const claimBtn = document.getElementById('claimBtn');
-        if (claimBtn) {
-            claimBtn.addEventListener('click', function() {
-                showToast('🎮 50 Venocoins claimed!');
-            });
-        }
-        
-        // View all link
-        const viewAllLink = document.getElementById('viewAllLink');
-        if (viewAllLink) {
-            viewAllLink.addEventListener('click', function(e) {
+        // Keyboard shortcut (Ctrl/Cmd + K) to focus search
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
                 e.preventDefault();
-                document.querySelector('.games-section').scrollIntoView({ 
-                    behavior: 'smooth' 
-                });
-            });
-        }
+                document.getElementById('searchInput').focus();
+            }
+        });
         
         // Toast function
         window.showToast = function(message) {
@@ -273,14 +265,6 @@
                 }, 2500);
             }, 100);
         }
-        
-        // Keyboard shortcut (Ctrl/Cmd + K) to focus search
-        document.addEventListener('keydown', function(e) {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
-                e.preventDefault();
-                document.getElementById('searchInput').focus();
-            }
-        });
     });
 </script>
 </body>
