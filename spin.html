@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Spin & Win - Crunk Games</title>
+    
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="home.css">
+    <link rel="stylesheet" href="nav.css">
+    
+    <style>
+        .spin-container {
+            max-width: 500px;
+            margin: 20px auto;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .wheel-wrapper {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transition: transform 0.3s ease;
+        }
+        
+        .spin-btn {
+            margin-top: 30px;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border: none;
+            border-radius: 50px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .spin-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .result-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: var(--bg-secondary);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            z-index: 10000;
+            transition: transform 0.3s ease;
+            border: 2px solid #10b981;
+            max-width: 300px;
+            width: 90%;
+        }
+        
+        .result-popup.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+        
+        .result-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .result-amount {
+            font-size: 36px;
+            font-weight: bold;
+            color: #fbbf24;
+            margin: 10px 0;
+        }
+        
+        .close-result {
+            margin-top: 15px;
+            padding: 8px 25px;
+            background: #10b981;
+            border: none;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        .info-card {
+            background: var(--bg-tertiary);
+            border-radius: 16px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        
+        .prize-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .prize-item {
+            background: var(--bg-secondary);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+        }
+        
+        .current-coins {
+            font-size: 24px;
+            font-weight: bold;
+            color: #fbbf24;
+            margin: 10px 0;
+        }
+        
+        @keyframes spinWheel {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(3600deg); }
+        }
+        
+        .spinning {
+            animation: spinWheel 3s cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <header class="topbar">
+        <div class="menu" id="menuBtn"><i class="bx bx-menu"></i></div>
+        <div class="brand"><h1>🎰 Spin & Win</h1></div>
+        <div class="icons">
+            <div class="veno-coins-container">
+                <div class="veno-coins-display">
+                    <i class="fas fa-coins"></i>
+                    <span id="venoCoinsAmount">0</span>
+                </div>
+            </div>
+            <div class="profile-dropdown" id="profileDropdown">
+                <img id="googleProfilePic" class="profile-pic" src="https://ui-avatars.com/api/?name=User&background=10b981&color=fff&size=128">
+                <div class="profile-popup" id="profilePopup">
+                    <div class="account-info"><img id="popupProfilePic"><div><p id="accountName"></p><p id="accountEmail"></p></div></div>
+                    <button id="logoutBtn"><i class="bx bx-log-out"></i> Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header"><h3>Menu</h3><span class="close-sidebar" id="closeSidebar"><i class="bx bx-x"></i></span></div>
+        <ul class="sidebar-menu">
+            <li id="menuHome"><i class="bx bx-home"></i> Home</li>
+            <li id="menuTournaments"><i class="bx bx-trophy"></i> Tournaments</li>
+            <li id="menuSpin" class="active"><i class="fas fa-chart-simple"></i> Spin & Win</li>
+        </ul>
+    </div>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="spin-container">
+        <div class="info-card">
+            <h3>💰 Your Balance</h3>
+            <div class="current-coins">
+                <i class="fas fa-coins"></i> <span id="balance">0</span> Veno Coins
+            </div>
+            <p>Cost per spin: <strong>200 Veno Coins</strong></p>
+        </div>
+
+        <div class="wheel-wrapper">
+            <canvas id="wheelCanvas" width="500" height="500"></canvas>
+        </div>
+
+        <button class="spin-btn" id="spinBtn">
+            <i class="fas fa-chart-simple"></i> SPIN (200 Coins)
+        </button>
+
+        <div class="info-card">
+            <h3>🎁 Prize List</h3>
+            <div class="prize-list">
+                <div class="prize-item">🏆 5000 Coins (1%)</div>
+                <div class="prize-item">⭐ 1000 Coins (5%)</div>
+                <div class="prize-item">🎁 500 Coins (10%)</div>
+                <div class="prize-item">🎫 200 Coins (20%)</div>
+                <div class="prize-item">🎖️ 100 Coins (30%)</div>
+                <div class="prize-item">✨ 50 Coins (34%)</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="resultPopup" class="result-popup">
+        <div class="result-icon" id="resultIcon">🎉</div>
+        <h3 id="resultTitle">You Won!</h3>
+        <div class="result-amount" id="resultAmount">+0</div>
+        <button class="close-result" onclick="closeResult()">Continue</button>
+    </div>
+
+    <div id="toastContainer" class="toast-container"></div>
+</div>
+
+<script>
+    // Wheel prizes and colors
+    const prizes = [
+        { name: "50 Coins", value: 50, color: "#3b82f6", chance: 34 },
+        { name: "100 Coins", value: 100, color: "#10b981", chance: 30 },
+        { name: "200 Coins", value: 200, color: "#f59e0b", chance: 20 },
+        { name: "500 Coins", value: 500, color: "#8b5cf6", chance: 10 },
+        { name: "1000 Coins", value: 1000, color: "#ec489a", chance: 5 },
+        { name: "5000 Coins", value: 5000, color: "#ef4444", chance: 1 }
+    ];
+    
+    let currentRotation = 0;
+    let isSpinning = false;
+    let canvas, ctx;
+    
+    function drawWheel() {
+        const size = 500;
+        canvas.width = size;
+        canvas.height = size;
+        ctx = canvas.getContext('2d');
+        
+        const centerX = size / 2;
+        const centerY = size / 2;
+        const radius = size / 2;
+        
+        const anglePerSlice = (Math.PI * 2) / prizes.length;
+        
+        for (let i = 0; i < prizes.length; i++) {
+            const startAngle = i * anglePerSlice + currentRotation;
+            const endAngle = (i + 1) * anglePerSlice + currentRotation;
+            
+            // Draw slice
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+            ctx.fillStyle = prizes[i].color;
+            ctx.fill();
+            ctx.strokeStyle = "white";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            
+            // Draw text
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(startAngle + anglePerSlice / 2);
+            ctx.textAlign = "center";
+            ctx.fillStyle = "white";
+            ctx.font = "bold 16px Arial";
+            ctx.shadowBlur = 0;
+            ctx.fillText(prizes[i].name, radius * 0.6, 10);
+            ctx.restore();
+        }
+        
+        // Draw center circle
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, 40, 0, Math.PI * 2);
+        ctx.fillStyle = "#1f2937";
+        ctx.fill();
+        ctx.strokeStyle = "#10b981";
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        
+        ctx.fillStyle = "white";
+        ctx.font = "bold 20px Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        ctx.fillText("SPIN", centerX, centerY);
+    }
+    
+    function getPrizeByRotation(rotation) {
+        const anglePerSlice = (Math.PI * 2) / prizes.length;
+        const pointerAngle = (Math.PI * 2 - (rotation % (Math.PI * 2)) + Math.PI / 2) % (Math.PI * 2);
+        const index = Math.floor(pointerAngle / anglePerSlice) % prizes.length;
+        return prizes[index];
+    }
+    
+    function spin() {
+        if (isSpinning) return;
+        
+        const coins = getVenoCoins();
+        if (coins < 200) {
+            showToast("Not enough Veno Coins! Need 200 to spin.", "error");
+            return;
+        }
+        
+        // Deduct coins
+        localStorage.setItem('venoCoins', coins - 200);
+        updateBalance();
+        
+        isSpinning = true;
+        const spinButton = document.getElementById('spinBtn');
+        spinButton.disabled = true;
+        
+        const spins = 10 + Math.random() * 10;
+        const targetRotation = currentRotation + (Math.PI * 2 * spins);
+        
+        const startTime = performance.now();
+        const duration = 3000;
+        
+        function animateSpin(now) {
+            const elapsed = now - startTime;
+            const progress = Math.min(elapsed / duration, 1);
+            
+            // Easing function
+            const easeOut = 1 - Math.pow(1 - progress, 3);
+            currentRotation = targetRotation * easeOut;
+            
+            drawWheel();
+            
+            if (progress < 1) {
+                requestAnimationFrame(animateSpin);
+            } else {
+                // Spin complete
+                currentRotation = targetRotation % (Math.PI * 2);
+                drawWheel();
+                
+                const prize = getPrizeByRotation(currentRotation);
+                const newCoins = getVenoCoins() + prize.value;
+                localStorage.setItem('venoCoins', newCoins);
+                updateBalance();
+                
+                showResult(prize);
+                
+                isSpinning = false;
+                spinButton.disabled = false;
+                
+                // Add to transaction history
+                addTransaction(prize.value);
+            }
+        }
+        
+        requestAnimationFrame(animateSpin);
+    }
+    
+    function showResult(prize) {
+        const popup = document.getElementById('resultPopup');
+        const icon = document.getElementById('resultIcon');
+        const title = document.getElementById('resultTitle');
+        const amount = document.getElementById('resultAmount');
+        
+        if (prize.value >= 1000) {
+            icon.innerHTML = '🏆';
+            title.innerHTML = 'JACKPOT! 🎉';
+        } else if (prize.value >= 500) {
+            icon.innerHTML = '⭐';
+            title.innerHTML = 'Great Win!';
+        } else {
+            icon.innerHTML = '🎁';
+            title.innerHTML = 'You Won!';
+        }
+        
+        amount.innerHTML = `+${prize.value} Coins`;
+        popup.classList.add('show');
+        
+        // Confetti effect for big wins
+        if (prize.value >= 1000) {
+            createConfetti();
+        }
+    }
+    
+    function closeResult() {
+        document.getElementById('resultPopup').classList.remove('show');
+    }
+    
+    function createConfetti() {
+        for (let i = 0; i < 100; i++) {
+            const confetti = document.createElement('div');
+            confetti.style.position = 'fixed';
+            confetti.style.width = '10px';
+            confetti.style.height = '10px';
+            confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+            confetti.style.left = Math.random() * window.innerWidth + 'px';
+            confetti.style.top = '-10px';
+            confetti.style.borderRadius = '50%';
+            confetti.style.pointerEvents = 'none';
+            confetti.style.zIndex = '10001';
+            document.body.appendChild(confetti);
+            
+            const animation = confetti.animate([
+                { transform: `translateY(0) rotate(0deg)`, opacity: 1 },
+                { transform: `translateY(${window.innerHeight}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+            ], {
+                duration: 2000 + Math.random() * 1000,
+                easing: 'cubic-bezier(0.2, 0.8, 0.3, 1)'
+            });
+            
+            animation.onfinish = () => confetti.remove();
+        }
+    }
+    
+    function addTransaction(amount) {
+        const history = JSON.parse(localStorage.getItem('spinHistory') || '[]');
+        history.unshift({
+            date: new Date().toISOString(),
+            amount: amount,
+            type: 'win'
+        });
+        localStorage.setItem('spinHistory', JSON.stringify(history.slice(0, 20)));
+    }
+    
+    function getVenoCoins() {
+        return parseInt(localStorage.getItem('venoCoins') || '0');
+    }
+    
+    function updateBalance() {
+        const balanceSpan = document.getElementById('balance');
+        const coinsSpan = document.getElementById('venoCoinsAmount');
+        const newBalance = getVenoCoins();
+        if (balanceSpan) balanceSpan.innerText = newBalance;
+        if (coinsSpan) coinsSpan.innerText = newBalance;
+    }
+    
+    function showToast(message, type) {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.classList.add('show'), 10);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+        canvas = document.getElementById('wheelCanvas');
+        drawWheel();
+        updateBalance();
+        
+        document.getElementById('spinBtn').addEventListener('click', spin);
+        
+        // Sidebar navigation
+        document.getElementById('menuHome')?.addEventListener('click', () => window.location.href = 'home.html');
+        document.getElementById('menuTournaments')?.addEventListener('click', () => window.location.href = 'tournaments.html');
+        
+        // Menu button
+        const menuBtn = document.getElementById('menuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        
+        menuBtn?.addEventListener('click', () => {
+            sidebar.classList.add('open');
+            overlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        });
+        
+        function closeSidebarFunc() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        closeSidebar?.addEventListener('click', closeSidebarFunc);
+        overlay?.addEventListener('click', closeSidebarFunc);
+    });
+</script>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
+    
+    const firebaseConfig = {
+        apiKey: "AIzaSyBW0Sz7TODfa8tQJTfNUaLhfK9qJhdA1yE",
+        authDomain: "crunck-app.firebaseapp.com",
+        projectId: "crunck-app",
+        storageBucket: "crunck-app.firebasestorage.app",
+        messagingSenderId: "475953302982",
+        appId: "1:475953302982:web:607e08379adb12f985f6c7"
+    };
+    
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            document.getElementById('googleProfilePic').src = user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=10b981&color=fff`;
+            document.getElementById('popupProfilePic').src = user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=10b981&color=fff`;
+            document.getElementById('accountName').innerText = user.displayName;
+            document.getElementById('accountEmail').innerText = user.email;
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+</script>
+
+<script src="nav.js"></script>
+</body>
+</html>
