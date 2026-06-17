@@ -131,16 +131,32 @@
     <!-- SIDEBAR OVERLAY -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
+    <!-- TOP NAVIGATION TABS -->
+    <nav class="top-nav" id="topNav">
+        <a href="#" class="nav-tab active" data-page="home">Home</a>
+        <a href="#" class="nav-tab" data-page="pc-games">PC Games</a>
+        <a href="#" class="nav-tab" data-page="mobile-games">Mobile Games</a>
+        <a href="#" class="nav-tab" data-page="apk-games">APK Games</a>
+        <a href="#" class="nav-tab" data-page="html5-games">HTML5 Games</a>
+    </nav>
+
     <!-- SEARCH SECTION -->
     <div class="search-container">
         <div class="search">
             <i class="bx bx-search"></i>
-            <input type="text" id="searchInput" placeholder="Search for Games, Competitions..." autocomplete="off" />
+            <input type="text" id="searchInput" placeholder="Search for Games, Genres, Developers..." autocomplete="off" />
             <div class="search-clear" id="searchClear">
                 <i class="bx bx-x"></i>
             </div>
         </div>
         <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <!-- GENRES BAR -->
+    <div class="genres-bar" id="genresBar">
+        <div class="genres-scroll" id="genresScroll">
+            <!-- Genres will be loaded dynamically -->
+        </div>
     </div>
 
     <!-- LOADER -->
@@ -152,20 +168,82 @@
         </div>
     </div>
 
-    <!-- SLIDER / HERO SECTION -->
-    <div class="slider">
-        <div class="slides" id="slides"></div>
-        <div class="dots" id="dots"></div>
-    </div>
+    <!-- MAIN CONTENT -->
+    <main id="mainContent">
+        <!-- SLIDER / FEATURED SLIDER -->
+        <section class="featured-slider-section">
+            <div class="section-header">
+                <h2>Featured Games</h2>
+            </div>
+            <div class="slider">
+                <div class="slides" id="slides"></div>
+                <div class="dots" id="dots"></div>
+            </div>
+        </section>
 
-    <!-- GAMES GRID SECTION -->
-    <section class="games-section">
-        <div class="section-header">
-            <h2>Popular Games</h2>
-            <a href="#" id="viewAllLink">View All <i class="bx bx-chevron-right"></i></a>
-        </div>
-        <div class="games" id="gamesContainer"></div>
-    </section>
+        <!-- TRENDING GAMES -->
+        <section class="games-section" id="trendingSection">
+            <div class="section-header">
+                <h2>Trending Games</h2>
+                <a href="#" class="view-all-link" data-section="trending">View All <i class="bx bx-chevron-right"></i></a>
+            </div>
+            <div class="games" id="trendingGames"></div>
+        </section>
+
+        <!-- NEW RELEASES -->
+        <section class="games-section" id="newReleasesSection">
+            <div class="section-header">
+                <h2>New Releases</h2>
+                <a href="#" class="view-all-link" data-section="new-releases">View All <i class="bx bx-chevron-right"></i></a>
+            </div>
+            <div class="games" id="newReleasesGames"></div>
+        </section>
+
+        <!-- RECENTLY UPDATED -->
+        <section class="games-section" id="recentlyUpdatedSection">
+            <div class="section-header">
+                <h2>Recently Updated</h2>
+                <a href="#" class="view-all-link" data-section="recently-updated">View All <i class="bx bx-chevron-right"></i></a>
+            </div>
+            <div class="games" id="recentlyUpdatedGames"></div>
+        </section>
+
+        <!-- UPCOMING GAMES -->
+        <section class="games-section" id="upcomingSection">
+            <div class="section-header">
+                <h2>Upcoming Games</h2>
+                <a href="#" class="view-all-link" data-section="upcoming">View All <i class="bx bx-chevron-right"></i></a>
+            </div>
+            <div class="games" id="upcomingGames"></div>
+        </section>
+
+        <!-- POPULAR PC GAMES -->
+        <section class="games-section" id="popularPcSection">
+            <div class="section-header">
+                <h2>Popular PC Games</h2>
+                <a href="#" class="view-all-link" data-section="popular-pc">View All <i class="bx bx-chevron-right"></i></a>
+            </div>
+            <div class="games" id="popularPcGames"></div>
+        </section>
+
+        <!-- POPULAR MOBILE GAMES -->
+        <section class="games-section" id="popularMobileSection">
+            <div class="section-header">
+                <h2>Popular Mobile Games</h2>
+                <a href="#" class="view-all-link" data-section="popular-mobile">View All <i class="bx bx-chevron-right"></i></a>
+            </div>
+            <div class="games" id="popularMobileGames"></div>
+        </section>
+
+        <!-- FEATURED HTML5 GAMES -->
+        <section class="games-section" id="html5Section">
+            <div class="section-header">
+                <h2>Featured HTML5 Games</h2>
+                <a href="#" class="view-all-link" data-section="html5">View All <i class="bx bx-chevron-right"></i></a>
+            </div>
+            <div class="games" id="html5Games"></div>
+        </section>
+    </main>
 
     <!-- GAME DETAIL POPUP -->
     <div id="gamePopup" class="popup">
@@ -183,12 +261,24 @@
                     <h2 id="popupTitle">Game Title</h2>
                     
                     <div class="popup-meta">
-                        <span class="popup-rating" id="popupRating">⭐ 0.0</span>
+                        <span class="popup-rating" id="popupRating">8.9</span>
                         <span class="popup-release" id="popupRelease">2024</span>
                         <span class="popup-platforms" id="popupPlatforms">PC</span>
+                        <span class="popup-genre" id="popupGenre">Action</span>
+                    </div>
+                    
+                    <div class="popup-badges" id="popupBadges">
+                        <!-- Badges will be added dynamically -->
                     </div>
                     
                     <p id="popupDesc" class="popup-description">Game description will appear here...</p>
+                    
+                    <!-- Additional Info -->
+                    <div class="popup-details">
+                        <div class="detail-row"><strong>Developer:</strong> <span id="popupDeveloper">N/A</span></div>
+                        <div class="detail-row"><strong>Publisher:</strong> <span id="popupPublisher">N/A</span></div>
+                        <div class="detail-row"><strong>Stores:</strong> <span id="popupStores">N/A</span></div>
+                    </div>
                     
                     <!-- Screenshots -->
                     <div class="popup-screenshots">
@@ -222,11 +312,30 @@
     <!-- FOOTER -->
     <footer class="footer">
         <div class="footer-content">
-            <p>Venocyber2026 © 2026 | Crunk Games</p>
+            <div class="footer-brand">
+                <h3>Crunk Games</h3>
+                <p>Your ultimate gaming destination</p>
+            </div>
             <div class="footer-links">
-                <a href="#">Terms</a>
-                <a href="#">Privacy</a>
-                <a href="#">Contact</a>
+                <div class="footer-column">
+                    <a href="#">PC Games</a>
+                    <a href="#">Mobile Games</a>
+                    <a href="#">APK Games</a>
+                    <a href="#">HTML5 Games</a>
+                </div>
+                <div class="footer-column">
+                    <a href="#">Genres</a>
+                    <a href="#">About</a>
+                    <a href="#">Privacy</a>
+                    <a href="#">Terms</a>
+                </div>
+                <div class="footer-column">
+                    <a href="#">Support</a>
+                    <a href="#">Contact</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>Copyright © 2026 Crunk Games. All rights reserved.</p>
             </div>
         </div>
     </footer>
