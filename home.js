@@ -279,30 +279,27 @@ function createGameCard(game) {
     const genres    = game.genres    ? game.genres.slice(0, 2).map(g => g.name).join(', ')         : 'N/A';
     const badge     = getBadgeHTML(game);
     const img       = game.background_image || 'https://via.placeholder.com/300x200?text=🎮';
-
+    
     card.innerHTML = `
-        <div class="game-card-inner">
-            <div class="game-card-img-wrap">
-                <img src="${img}" alt="${game.name}" loading="lazy"
-                     onerror="this.src='https://via.placeholder.com/300x200?text=🎮'">
-                <div class="game-overlay">
-                    <span class="game-rating-badge">${rating}</span>
-                    ${badge}
-                </div>
+    <div class="game-card-inner">
+        <div class="game-card-img-wrap">
+            <img src="${img}" alt="${game.name}" loading="lazy"
+                 onerror="this.src='https://via.placeholder.com/300x450?text=🎮'">
+            <div class="game-overlay">
+                <span class="game-rating-badge">${rating}</span>
+                ${badge}
             </div>
             <div class="game-info">
                 <div class="game-title">${game.name}</div>
-                <div class="game-meta">
-                    <span>${platforms}</span>
-                    <span>${genres}</span>
-                </div>
                 <div class="game-footer">
                     <span class="game-year">${year}</span>
                     <span class="game-rating">${rating}</span>
                 </div>
             </div>
         </div>
-    `;
+    </div>
+`;
+
     card.onclick = () => openGame(game.id);
     return card;
 }
