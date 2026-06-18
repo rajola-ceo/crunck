@@ -97,14 +97,14 @@ const menuHelp     = document.getElementById("menuHelp");
 const menuRate     = document.getElementById("menuRate");
 const menuAbout    = document.getElementById("menuAbout");
 
-// Toast container - FIXED: properly create if missing
-let toastContainer = document.getElementById("toastContainer");
-if (!toastContainer) {
-    toastContainer = document.createElement('div');
-    toastContainer.id = 'toastContainer';
-    toastContainer.className = 'toast-container';
-    document.body.appendChild(toastContainer);
-}
+// Toast container
+const toastContainer = document.getElementById("toastContainer") || (() => {
+    const el = document.createElement('div');
+    el.id = 'toastContainer';
+    el.className = 'toast-container';
+    document.body.appendChild(el);
+    return el;
+})();
 
 // ===============================
 // CACHED GENRES
@@ -223,17 +223,10 @@ if (notificationBell) {
 }
 
 // ===============================
-// TOAST - FIXED: improved error handling
+// TOAST
 // ===============================
 function showToast(message, type = 'success') {
-    if (!toastContainer) {
-        // Create container if it doesn't exist
-        toastContainer = document.createElement('div');
-        toastContainer.id = 'toastContainer';
-        toastContainer.className = 'toast-container';
-        document.body.appendChild(toastContainer);
-    }
-    
+    if (!toastContainer) return;
     const toast = document.createElement("div");
     toast.className = "toast";
     const icon = type === 'success' ? 'bx bx-check-circle' : 'bx bx-error-circle';
@@ -274,14 +267,9 @@ function getBadgeHTML(game) {
 }
 
 // ===============================
-// CREATE GAME CARD - FIXED: safer rendering
+// CREATE GAME CARD  (numeric rating only)
 // ===============================
 function createGameCard(game) {
-    if (!game || !game.id) {
-        console.warn('Invalid game data:', game);
-        return document.createElement('div'); // Return empty div if invalid
-    }
-    
     const card = document.createElement("div");
     card.className = "game-card";
 
@@ -291,66 +279,57 @@ function createGameCard(game) {
     const genres    = game.genres    ? game.genres.slice(0, 2).map(g => g.name).join(', ')         : 'N/A';
     const badge     = getBadgeHTML(game);
     const img       = game.background_image || 'https://via.placeholder.com/300x200?text=🎮';
-    
+
     card.innerHTML = `
-    <div class="game-card-inner">
-        <div class="game-card-img-wrap">
-            <img src="${img}" alt="${game.name || 'Game'}" loading="lazy"
-                 onerror="this.src='https://via.placeholder.com/300x450?text=🎮'">
-            <div class="game-overlay">
-                <span class="game-rating-badge">${rating}</span>
-                ${badge}
+        <div class="game-card-inner">
+            <div class="game-card-img-wrap">
+                <img src="${img}" alt="${game.name}" loading="lazy"
+                     onerror="this.src='https://via.placeholder.com/300x200?text=🎮'">
+                <div class="game-overlay">
+                    <span class="game-rating-badge">${rating}</span>
+                    ${badge}
+                </div>
             </div>
             <div class="game-info">
-                <div class="game-title">${game.name || 'Unknown Game'}</div>
+                <div class="game-title">${game.name}</div>
+                <div class="game-meta">
+                    <span>${platforms}</span>
+                    <span>${genres}</span>
+                </div>
                 <div class="game-footer">
                     <span class="game-year">${year}</span>
                     <span class="game-rating">${rating}</span>
                 </div>
             </div>
         </div>
-    </div>
-`;
-
+    `;
     card.onclick = () => openGame(game.id);
     return card;
 }
 
 // ===============================
-// RENDER INTO CONTAINER - FIXED: better error handling
+// RENDER INTO CONTAINER
 // ===============================
 function renderGamesIntoContainer(games, container) {
-    if (!container) {
-        console.warn('Container not found for rendering');
-        return;
-    }
+    if (!container) return;
     container.innerHTML = "";
     if (!games || games.length === 0) {
         container.innerHTML = "<div class='error-message'><i class='bx bx-search'></i><br>No games found</div>";
         return;
     }
-    games.forEach(g => {
-        if (g && g.id) {
-            container.appendChild(createGameCard(g));
-        }
-    });
+    games.forEach(g => container.appendChild(createGameCard(g)));
 }
 
 // ===============================
-// GENERIC API FETCH HELPER - FIXED: better error handling
+// GENERIC API FETCH HELPER
 // ===============================
 async function fetchGames(params = {}) {
-    try {
-        const defaults = { key: API_KEY, page_size: 24 };
-        const query = new URLSearchParams({...defaults, ...params}).toString();
-        const res = await fetch(`${BASE_URL}/games?${query}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        return data.results || [];
-    } catch (error) {
-        console.error('API Error:', error);
-        return [];
-    }
+    const defaults = { key: API_KEY, page_size: 24 };
+    const query = new URLSearchParams({...defaults, ...params}).toString();
+    const res = await fetch(`${BASE_URL}/games?${query}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    return data.results || [];
 }
 
 // ===============================
@@ -436,7 +415,7 @@ function buildPageGenresBar(container, onSelect) {
         scroll.appendChild(tag);
     });
 
-    container.insertBefore(wrap, container.firstChild.nextSibling);
+    container.insertBefore(wrap, container.firstChild.nextSibling); // after section-header
 }
 
 function setActivePageGenre(scroll, gid) {
@@ -487,7 +466,7 @@ function loadPageContent(page) {
 }
 
 // ===============================
-// PC GAMES PAGE
+// PC GAMES PAGE  (with genre bar + sub-sections)
 // ===============================
 function showPcGamesPage() {
     document.querySelectorAll('.games-section, .featured-slider-section').forEach(s => s.style.display = 'none');
@@ -544,8 +523,8 @@ async function loadPcSubSections(genreExtra = {}) {
     const future = futureStr(90);
 
     const [newGames, upcoming] = await Promise.all([
-        fetchGames({ platforms: 4, ordering: '-released', page_size: 8, ...genreExtra }),
-        fetchGames({ platforms: 4, dates: `${today},${future}`, ordering: 'released', page_size: 8, ...genreExtra })
+        fetchGames({ platforms: 4, ordering: '-released', page_size: 8, ...genreExtra }).catch(() => []),
+        fetchGames({ platforms: 4, dates: `${today},${future}`, ordering: 'released', page_size: 8, ...genreExtra }).catch(() => [])
     ]);
     renderGamesIntoContainer(newGames, document.getElementById('pcNewReleasesGrid'));
     renderGamesIntoContainer(upcoming, document.getElementById('pcUpcomingGrid'));
@@ -567,7 +546,6 @@ async function loadPcGames(filter = 'newest', genreExtra = {}) {
         }
         renderGamesIntoContainer(await fetchGames(params), grid);
     } catch (e) {
-        console.error('Error loading PC games:', e);
         grid.innerHTML = '<div class="error-message"><i class="bx bx-error"></i><br>Failed to load PC games</div>';
     } finally {
         hideLoader();
@@ -575,7 +553,7 @@ async function loadPcGames(filter = 'newest', genreExtra = {}) {
 }
 
 // ===============================
-// MOBILE GAMES PAGE
+// MOBILE GAMES PAGE (with genre bar + sub-sections)
 // ===============================
 function showMobileGamesPage() {
     document.querySelectorAll('.games-section, .featured-slider-section').forEach(s => s.style.display = 'none');
@@ -626,8 +604,8 @@ function showMobileGamesPage() {
 
 async function loadMobileSubSections(genreExtra = {}) {
     const [newGames, recent] = await Promise.all([
-        fetchGames({ platforms: 187, ordering: '-released', page_size: 8, ...genreExtra }),
-        fetchGames({ platforms: 187, ordering: '-updated',  page_size: 8, ...genreExtra })
+        fetchGames({ platforms: 187, ordering: '-released', page_size: 8, ...genreExtra }).catch(() => []),
+        fetchGames({ platforms: 187, ordering: '-updated',  page_size: 8, ...genreExtra }).catch(() => [])
     ]);
     renderGamesIntoContainer(newGames, document.getElementById('mobileNewGrid'));
     renderGamesIntoContainer(recent,   document.getElementById('mobileRecentGrid'));
@@ -645,7 +623,6 @@ async function loadMobileGames(filter = 'newest', genreExtra = {}) {
         if (filter === 'top-rated') params.ordering = '-rating';
         renderGamesIntoContainer(await fetchGames(params), grid);
     } catch (e) {
-        console.error('Error loading mobile games:', e);
         grid.innerHTML = '<div class="error-message"><i class="bx bx-error"></i><br>Failed to load mobile games</div>';
     } finally {
         hideLoader();
@@ -653,19 +630,14 @@ async function loadMobileGames(filter = 'newest', genreExtra = {}) {
 }
 
 // ===============================
-// HTML5 GAMES - FIXED: safer element handling
+// HTML5 GAMES
 // ===============================
 async function loadHtml5Games() {
     const grid = document.getElementById('html5GamesGrid') || document.getElementById('html5Games');
-    if (!grid) {
-        console.warn('HTML5 grid not found');
-        return;
-    }
+    if (!grid) return;
     try {
-        const games = await fetchGames({ tags: 'browser', page_size: 12 });
-        renderGamesIntoContainer(games, grid);
-    } catch (e) {
-        console.error('Error loading HTML5 games:', e);
+        renderGamesIntoContainer(await fetchGames({ tags: 'browser', page_size: 12 }), grid);
+    } catch (_) {
         grid.innerHTML = '<div class="error-message">Failed to load HTML5 games</div>';
     }
 }
@@ -733,8 +705,8 @@ function showHtml5GamesPage() {
 
 async function loadHtml5SubSections(genreExtra = {}) {
     const [newGames, recent] = await Promise.all([
-        fetchGames({ tags: 'browser', ordering: '-released', page_size: 8, ...genreExtra }),
-        fetchGames({ tags: 'browser', ordering: '-updated',  page_size: 8, ...genreExtra })
+        fetchGames({ tags: 'browser', ordering: '-released', page_size: 8, ...genreExtra }).catch(() => []),
+        fetchGames({ tags: 'browser', ordering: '-updated',  page_size: 8, ...genreExtra }).catch(() => [])
     ]);
     renderGamesIntoContainer(newGames, document.getElementById('html5NewGrid'));
     renderGamesIntoContainer(recent,   document.getElementById('html5RecentGrid'));
@@ -745,10 +717,8 @@ async function loadHtml5GamesForPage(genreExtra = {}) {
     if (!grid) return;
     showLoader();
     try {
-        const games = await fetchGames({ tags: 'browser', page_size: 24, ...genreExtra });
-        renderGamesIntoContainer(games, grid);
-    } catch (e) {
-        console.error('Error loading HTML5 page games:', e);
+        renderGamesIntoContainer(await fetchGames({ tags: 'browser', page_size: 24, ...genreExtra }), grid);
+    } catch (_) {
         grid.innerHTML = '<div class="error-message">Failed to load HTML5 games</div>';
     } finally {
         hideLoader();
@@ -756,34 +726,19 @@ async function loadHtml5GamesForPage(genreExtra = {}) {
 }
 
 // ===============================
-// SESSION CHECK - FIXED: safer user validation
+// SESSION CHECK
 // ===============================
-try {
-    const userData = localStorage.getItem("crunkUser");
-    let user = null;
-    if (userData) {
-        try {
-            user = JSON.parse(userData);
-        } catch (e) {
-            console.warn('Invalid user data in localStorage');
-            user = null;
-        }
-    }
-    
-    if (!user) {
-        window.location.href = "index.html";
-    } else {
-        const avatar = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.username || 'User')}&background=34d399&color=fff&size=128`;
-        if (googleProfilePic) googleProfilePic.src = avatar;
-        if (popupProfilePic)  popupProfilePic.src  = avatar;
-        if (accountName)  accountName.innerText  = user.displayName || user.username || "User";
-        if (accountEmail) accountEmail.innerText = user.email || "";
-        updateVenoCoinsDisplay();
-        updateClaimButton();
-    }
-} catch (e) {
-    console.error('Session check error:', e);
+const user = JSON.parse(localStorage.getItem("crunkUser"));
+if (!user) {
     window.location.href = "index.html";
+} else {
+    const avatar = u => u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || u.username || 'User')}&background=34d399&color=fff&size=128`;
+    if (googleProfilePic) googleProfilePic.src = avatar(user);
+    if (popupProfilePic)  popupProfilePic.src  = avatar(user);
+    if (accountName)  accountName.innerText  = user.displayName || user.username || "User";
+    if (accountEmail) accountEmail.innerText = user.email || "";
+    updateVenoCoinsDisplay();
+    updateClaimButton();
 }
 
 // ===============================
@@ -952,15 +907,14 @@ function showSearchDropdown(games, query) {
         }
 
         games.slice(0, 5).forEach(game => {
-            if (!game || !game.id) return;
             const item = document.createElement("div");
             item.className = "search-item";
             const rating = game.rating ? game.rating.toFixed(1) : 'N/A';
             item.innerHTML = `
-                <img src="${game.background_image || 'https://via.placeholder.com/40x40?text=🎮'}" alt="${game.name || 'Game'}"
+                <img src="${game.background_image || 'https://via.placeholder.com/40x40?text=🎮'}" alt="${game.name}"
                      onerror="this.src='https://via.placeholder.com/40x40?text=🎮'">
                 <div class="search-item-info">
-                    <div class="search-item-title">${game.name || 'Unknown Game'}</div>
+                    <div class="search-item-title">${game.name}</div>
                     <div class="search-item-meta">${game.released ? game.released.split('-')[0] : 'N/A'} · ${rating}</div>
                 </div>
             `;
@@ -1007,8 +961,7 @@ async function performSearch(query) {
         `;
         renderGamesIntoContainer(games, document.getElementById('searchResultsGrid'));
         saveSearchHistory(query);
-    } catch (e) {
-        console.error('Search error:', e);
+    } catch (_) {
         showToast("Search failed", "error");
     } finally {
         hideLoader();
@@ -1024,9 +977,7 @@ searchInput?.addEventListener("input", async () => {
         try {
             const games = await fetchGames({ search: q, page_size: 10 });
             showSearchDropdown(games, q);
-        } catch (e) {
-            console.error('Search suggestion error:', e);
-        }
+        } catch (_) {}
     }, 300);
 });
 
@@ -1070,7 +1021,6 @@ async function loadHomePage() {
         ]);
     } catch (e) {
         console.error("Error loading home page:", e);
-        showToast("Error loading some games", "error");
     } finally {
         hideLoader();
     }
@@ -1078,14 +1028,10 @@ async function loadHomePage() {
 
 async function loadSection(containerId, params) {
     const el = document.getElementById(containerId);
-    if (!el) {
-        console.warn(`Container #${containerId} not found`);
-        return;
-    }
+    if (!el) return;
     try {
         renderGamesIntoContainer(await fetchGames(params), el);
-    } catch (e) {
-        console.error(`Error loading section ${containerId}:`, e);
+    } catch (_) {
         el.innerHTML = '<div class="error-message">Failed to load</div>';
     }
 }
@@ -1094,9 +1040,7 @@ async function loadFeaturedSlider() {
     try {
         const games = await fetchGames({ ordering: '-added', page_size: 5 });
         createSlider(games);
-    } catch (e) {
-        console.error('Error loading featured slider:', e);
-    }
+    } catch (_) {}
 }
 
 // ===============================
@@ -1141,7 +1085,7 @@ function goSlide(index) {
 }
 
 // ===============================
-// GAME POPUP - FIXED: better error handling
+// GAME POPUP
 // ===============================
 async function openGame(id) {
     if (!gamePopup) return;
@@ -1151,12 +1095,9 @@ async function openGame(id) {
         if (!res.ok) throw new Error('Fetch failed');
         const game = await res.json();
 
-        if (popupTitle)    popupTitle.innerText    = game.name || 'Unknown Game';
+        if (popupTitle)    popupTitle.innerText    = game.name;
         if (popupDesc)     popupDesc.innerText      = game.description_raw || "No description available.";
-        if (popupImg)      { 
-            popupImg.src = game.background_image || 'https://via.placeholder.com/300x450?text=🎮'; 
-            popupImg.onerror = () => { popupImg.src = 'https://via.placeholder.com/300x450?text=🎮'; }; 
-        }
+        if (popupImg)      { popupImg.src = game.background_image || 'https://via.placeholder.com/300x450?text=🎮'; popupImg.onerror = () => { popupImg.src = 'https://via.placeholder.com/300x450?text=🎮'; }; }
         if (popupRating)   popupRating.textContent  = game.rating ? game.rating.toFixed(1) : 'N/A';
         if (popupRelease)  popupRelease.textContent  = game.released ? new Date(game.released).toLocaleDateString() : 'TBA';
         if (popupPlatforms)popupPlatforms.textContent= game.platforms?.map(p => p.platform.name).join(', ') || 'Various';
@@ -1172,60 +1113,50 @@ async function openGame(id) {
 
         // Screenshots
         if (popupScreens) {
-            try {
-                const shotRes  = await fetch(`${BASE_URL}/games/${id}/screenshots?key=${API_KEY}`);
-                const shots    = await shotRes.json();
-                popupScreens.innerHTML = "";
-                if (shots.results?.length) {
-                    shots.results.slice(0, 6).forEach(s => {
-                        const img = document.createElement("img");
-                        img.src = s.image;
-                        img.loading = "lazy";
-                        img.onerror = () => { img.src = 'https://via.placeholder.com/200x150?text=📷'; };
-                        img.onclick = () => window.open(s.image, '_blank');
-                        popupScreens.appendChild(img);
-                    });
-                } else {
-                    popupScreens.innerHTML = "<p style='color:var(--text-secondary);font-size:13px;'>No screenshots available</p>";
-                }
-            } catch (e) {
-                console.error('Error loading screenshots:', e);
-                popupScreens.innerHTML = "<p style='color:var(--text-secondary);font-size:13px;'>Failed to load screenshots</p>";
+            const shotRes  = await fetch(`${BASE_URL}/games/${id}/screenshots?key=${API_KEY}`);
+            const shots    = await shotRes.json();
+            popupScreens.innerHTML = "";
+            if (shots.results?.length) {
+                shots.results.slice(0, 6).forEach(s => {
+                    const img = document.createElement("img");
+                    img.src = s.image;
+                    img.loading = "lazy";
+                    img.onerror = () => { img.src = 'https://via.placeholder.com/200x150?text=📷'; };
+                    img.onclick = () => window.open(s.image, '_blank');
+                    popupScreens.appendChild(img);
+                });
+            } else {
+                popupScreens.innerHTML = "<p style='color:var(--text-secondary);font-size:13px;'>No screenshots available</p>";
             }
         }
 
         // Trailer
         if (popupTrailer) {
             popupTrailer.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:13px;">Loading trailer…</div>';
-            try {
-                const trailerRes  = await fetch(`${BASE_URL}/games/${id}/movies?key=${API_KEY}`);
-                const trailerData = await trailerRes.json();
-                const trailer     = trailerData.results?.[0]?.data?.max || "";
+            const trailerRes  = await fetch(`${BASE_URL}/games/${id}/movies?key=${API_KEY}`);
+            const trailerData = await trailerRes.json();
+            const trailer     = trailerData.results?.[0]?.data?.max || "";
 
-                if (trailer) {
-                    popupTrailer.innerHTML = `
-                        <video controls width="100%" style="border-radius:12px;background:#000;max-height:280px;">
-                            <source src="${trailer}" type="video/mp4">
-                        </video>
-                    `;
-                } else {
-                    const q = encodeURIComponent(`${game.name} trailer gameplay`);
-                    popupTrailer.innerHTML = `
-                        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;">
-                            <iframe src="https://www.youtube.com/embed?listType=search&list=${q}"
-                                style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-                                allowfullscreen loading="lazy"
-                                allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture">
-                            </iframe>
-                        </div>
-                        <p style="font-size:11px;color:var(--text-secondary);text-align:center;margin-top:5px;">
-                            <i class="bx bxl-youtube" style="color:#ff0000;"></i> YouTube: "${game.name}"
-                        </p>
-                    `;
-                }
-            } catch (e) {
-                console.error('Error loading trailer:', e);
-                popupTrailer.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;">Trailer not available</p>';
+            if (trailer) {
+                popupTrailer.innerHTML = `
+                    <video controls width="100%" style="border-radius:12px;background:#000;max-height:280px;">
+                        <source src="${trailer}" type="video/mp4">
+                    </video>
+                `;
+            } else {
+                const q = encodeURIComponent(`${game.name} trailer gameplay`);
+                popupTrailer.innerHTML = `
+                    <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;">
+                        <iframe src="https://www.youtube.com/embed?listType=search&list=${q}"
+                            style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                            allowfullscreen loading="lazy"
+                            allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture">
+                        </iframe>
+                    </div>
+                    <p style="font-size:11px;color:var(--text-secondary);text-align:center;margin-top:5px;">
+                        <i class="bx bxl-youtube" style="color:#ff0000;"></i> YouTube: "${game.name}"
+                    </p>
+                `;
             }
         }
 
@@ -1236,7 +1167,7 @@ async function openGame(id) {
         document.body.style.overflow = "hidden";
 
     } catch (e) {
-        console.error('Error opening game:', e);
+        console.error(e);
         showToast("Failed to load game details", "error");
     } finally {
         hideLoader();
@@ -1282,47 +1213,30 @@ document.addEventListener('click', e => {
 });
 
 // ===============================
-// CLEANUP - Added to prevent memory leaks
-// ===============================
-window.addEventListener('beforeunload', () => {
-    if (slideInterval) {
-        clearInterval(slideInterval);
-        slideInterval = null;
-    }
-});
-
-// ===============================
 // INITIALIZE
 // ===============================
 document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        // Welcome toast
-        const welcomeToast = document.createElement("div");
-        welcomeToast.className = "welcome-toast";
-        welcomeToast.innerHTML = `<i class="bx bx-game"></i> Welcome to Crunk Games! 🎮`;
-        document.body.appendChild(welcomeToast);
+    // Welcome toast
+    const welcomeToast = document.createElement("div");
+    welcomeToast.className = "welcome-toast";
+    welcomeToast.innerHTML = `<i class="bx bx-game"></i> Welcome to Crunk Games! 🎮`;
+    document.body.appendChild(welcomeToast);
+    setTimeout(() => {
+        welcomeToast.classList.add("show");
         setTimeout(() => {
-            welcomeToast.classList.add("show");
-            setTimeout(() => {
-                welcomeToast.classList.remove("show");
-                setTimeout(() => welcomeToast.remove(), 500);
-            }, 3000);
-        }, 500);
+            welcomeToast.classList.remove("show");
+            setTimeout(() => welcomeToast.remove(), 500);
+        }, 3000);
+    }, 500);
 
-        claimVenoCoinsBtn?.addEventListener("click", claimVenoCoins);
-        updateClaimButton();
+    claimVenoCoinsBtn?.addEventListener("click", claimVenoCoins);
+    updateClaimButton();
 
-        await loadGenres();
-        await loadHomePage();
+    await loadGenres();
+    await loadHomePage();
 
-        renderNotifications();
-        updateNotificationBell();
-        
-        console.log("✅ Crunk Games loaded successfully");
-    } catch (e) {
-        console.error("Initialization error:", e);
-        showToast("Error initializing app", "error");
-    }
+    renderNotifications();
+    updateNotificationBell();
 });
 
 console.log("✅ Crunk Games loaded");
