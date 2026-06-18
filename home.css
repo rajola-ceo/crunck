@@ -954,7 +954,6 @@ body.light-theme {
     padding: 0 15px;
 }
 
-/* =============================== GAME CARD — IMPROVED =============================== */
 .game-card {
     background: var(--bg-tertiary);
     border-radius: var(--card-radius);
@@ -964,19 +963,12 @@ body.light-theme {
                 box-shadow 0.25s ease,
                 border-color 0.25s ease;
     border: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
     animation: fadeInUp 0.4s ease forwards;
     opacity: 0;
     will-change: transform;
+    position: relative;
 }
 
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* Staggered card animations */
 .game-card:nth-child(1)  { animation-delay: 0.04s; }
 .game-card:nth-child(2)  { animation-delay: 0.08s; }
 .game-card:nth-child(3)  { animation-delay: 0.12s; }
@@ -994,32 +986,29 @@ body.light-theme {
 
 .game-card-inner {
     position: relative;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
 }
 
-/* Image wrapper keeps aspect ratio */
+/* Poster-style: image is the card */
 .game-card-img-wrap {
     position: relative;
+    width: 100%;
+    aspect-ratio: 2 / 3;
     overflow: hidden;
-    aspect-ratio: 16 / 10;
-    background: var(--bg-secondary);
 }
 
 .game-card img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
     display: block;
+    transition: transform 0.4s ease;
 }
 
 .game-card:hover img {
     transform: scale(1.06);
 }
 
-/* Top overlay row: rating left, badge right */
+/* Rating top-left, badge top-right */
 .game-overlay {
     position: absolute;
     top: 8px;
@@ -1028,6 +1017,7 @@ body.light-theme {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
+    z-index: 2;
     pointer-events: none;
 }
 
@@ -1036,7 +1026,7 @@ body.light-theme {
     color: var(--primary);
     padding: 3px 9px;
     border-radius: 20px;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.3px;
     backdrop-filter: blur(6px);
@@ -1044,7 +1034,6 @@ body.light-theme {
     line-height: 1.4;
 }
 
-/* Badges */
 .badge {
     padding: 3px 9px;
     border-radius: 20px;
@@ -1055,78 +1044,63 @@ body.light-theme {
     line-height: 1.4;
 }
 
-.badge.new {
-    background: var(--primary);
-    color: var(--bg-primary);
-}
+.badge.new          { background: var(--primary); color: var(--bg-primary); }
+.badge.updated      { background: #3b82f6; color: white; }
+.badge.coming-soon  { background: var(--warning); color: var(--bg-primary); }
 
-.badge.updated {
-    background: #3b82f6;
-    color: white;
-}
-
-.badge.coming-soon {
-    background: var(--warning);
-    color: var(--bg-primary);
-}
-
-/* Card info panel */
+/* Info overlaid at bottom of image */
 .game-info {
-    padding: 10px 11px 11px;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 28px 10px 10px;
+    background: linear-gradient(
+        to top,
+        rgba(5, 7, 13, 0.97) 0%,
+        rgba(5, 7, 13, 0.7) 55%,
+        transparent 100%
+    );
+    z-index: 2;
     display: flex;
     flex-direction: column;
-    gap: 5px;
-    flex: 1;
+    gap: 4px;
 }
 
 .game-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
-    line-height: 1.35;
+    line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    color: var(--text-primary);
+    color: #e6e6e6;
 }
 
+/* Hide genre meta on poster cards — too cramped */
 .game-meta {
-    display: flex;
-    gap: 5px;
-    font-size: 10px;
-    color: var(--text-secondary);
-    flex-wrap: wrap;
-}
-
-.game-meta span {
-    background: var(--bg-secondary);
-    padding: 2px 7px;
-    border-radius: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
+    display: none;
 }
 
 .game-footer {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 4px;
-    padding-top: 7px;
-    border-top: 1px solid var(--border-color);
+    border-top: none;
+    padding-top: 2px;
+    margin-top: 0;
 }
 
 .game-year {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--text-secondary);
 }
 
 .game-rating {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 800;
     color: var(--primary);
-    letter-spacing: 0.2px;
 }
 
 /* =============================== POPUP =============================== */
