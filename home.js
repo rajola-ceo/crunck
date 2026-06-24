@@ -80,7 +80,7 @@ const venoCoinsAmount   = document.getElementById("venoCoinsAmount");
 const claimVenoCoinsBtn = document.getElementById("claimVenoCoinsBtn");
 
 // Notifications
-const notificationBell  = document.getElementById("notificationBtn");
+const notificationBell  = document.getElementById("notificationBtn") || document.getElementById("notificationBell");
 const notificationPopup = document.getElementById("notificationPopup");
 const notificationCount = document.getElementById("notificationCount");
 const notificationList  = document.getElementById("notificationList");
@@ -98,13 +98,13 @@ const menuRate      = document.getElementById("menuRate");
 const menuAbout     = document.getElementById("menuAbout");
 
 // Toast container
-const toastContainer = document.getElementById("toastContainer") || (() => {
-    const el = document.createElement('div');
-    el.id = 'toastContainer';
-    el.className = 'toast-container';
-    document.body.appendChild(el);
-    return el;
-})();
+let toastContainer = document.getElementById("toastContainer");
+if (!toastContainer) {
+    toastContainer = document.createElement('div');
+    toastContainer.id = 'toastContainer';
+    toastContainer.className = 'toast-container';
+    document.body.appendChild(toastContainer);
+}
 
 // ===============================
 // CACHED GENRES
@@ -112,51 +112,63 @@ const toastContainer = document.getElementById("toastContainer") || (() => {
 let cachedGenres = [];
 
 // ===============================
-// FALLBACK IMAGE GENERATOR - FIXED: uses emoji instead of external service
+// FALLBACK IMAGE GENERATOR
 // ===============================
-function getFallbackImage(seed = '🎮', size = '300x450') {
-    // Create a canvas-based fallback that doesn't rely on external services
-    const canvas = document.createElement('canvas');
-    canvas.width = 300;
-    canvas.height = 450;
-    const ctx = canvas.getContext('2d');
-    
-    // Dark gradient background
-    const gradient = ctx.createLinearGradient(0, 0, 300, 450);
-    gradient.addColorStop(0, '#1a1a2e');
-    gradient.addColorStop(0.5, '#16213e');
-    gradient.addColorStop(1, '#0f3460');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, 300, 450);
-    
-    // Add border
-    ctx.strokeStyle = '#34d399';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(10, 10, 280, 430);
-    
-    // Draw emoji
-    ctx.font = '120px Arial';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#ffffff';
-    ctx.fillText(seed, 150, 180);
-    
-    // Draw "NO IMAGE" text
-    ctx.font = 'bold 24px Arial';
-    ctx.fillStyle = '#888';
-    ctx.fillText('NO IMAGE', 150, 310);
-    
-    return canvas.toDataURL('image/png');
+function getFallbackImage(seed = '🎮', width = 300, height = 450) {
+    try {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        
+        // Dark gradient background
+        const gradient = ctx.createLinearGradient(0, 0, width, height);
+        gradient.addColorStop(0, '#1a1a2e');
+        gradient.addColorStop(0.5, '#16213e');
+        gradient.addColorStop(1, '#0f3460');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, height);
+        
+        // Add border
+        ctx.strokeStyle = '#34d399';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(10, 10, width - 20, height - 20);
+        
+        // Draw emoji
+        const fontSize = Math.min(width, height) * 0.4;
+        ctx.font = `${fontSize}px Arial, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(seed, width/2, height/2 - 20);
+        
+        // Draw "NO IMAGE" text
+        ctx.font = `bold ${Math.min(width, height) * 0.08}px Arial, sans-serif`;
+        ctx.fillStyle = '#888';
+        ctx.fillText('NO IMAGE', width/2, height/2 + fontSize/2 + 30);
+        
+        return canvas.toDataURL('image/png');
+    } catch (e) {
+        console.warn('Fallback image generation failed:', e);
+        return 'data:image/svg+xml,' + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">
+                <rect width="${width}" height="${height}" fill="#1a1a2e"/>
+                <rect x="10" y="10" width="${width-20}" height="${height-20}" stroke="#34d399" stroke-width="3" fill="none"/>
+                <text x="${width/2}" y="${height/2-20}" font-size="${Math.min(width,height)*0.4}px" text-anchor="middle" fill="white">${seed}</text>
+                <text x="${width/2}" y="${height/2+60}" font-size="${Math.min(width,height)*0.08}px" text-anchor="middle" fill="#888">NO IMAGE</text>
+            </svg>
+        `);
+    }
 }
 
-// Cache fallback images
 const fallbackCache = {};
 
-function getCachedFallback(seed = '🎮') {
-    if (!fallbackCache[seed]) {
-        fallbackCache[seed] = getFallbackImage(seed);
+function getCachedFallback(seed = '🎮', width = 300, height = 450) {
+    const key = `${seed}_${width}_${height}`;
+    if (!fallbackCache[key]) {
+        fallbackCache[key] = getFallbackImage(seed, width, height);
     }
-    return fallbackCache[seed];
+    return fallbackCache[key];
 }
 
 // ===============================
@@ -274,7 +286,12 @@ if (notificationBell) {
 // TOAST
 // ===============================
 function showToast(message, type = 'success') {
-    if (!toastContainer) return;
+    if (!toastContainer) {
+        toastContainer = document.createElement('div');
+        toastContainer.id = 'toastContainer';
+        toastContainer.className = 'toast-container';
+        document.body.appendChild(toastContainer);
+    }
     const toast = document.createElement("div");
     toast.className = "toast";
     const icon = type === 'success' ? 'bx bx-check-circle' : 'bx bx-error-circle';
@@ -315,7 +332,7 @@ function getBadgeHTML(game) {
 }
 
 // ===============================
-// CREATE GAME CARD - FIXED: uses local fallback
+// CREATE GAME CARD - DEBUG VERSION
 // ===============================
 function createGameCard(game) {
     if (!game || !game.id) {
@@ -333,19 +350,18 @@ function createGameCard(game) {
     const year   = game.released ? new Date(game.released).getFullYear() : 'TBA';
     const badge  = getBadgeHTML(game);
     
-    // Use game image or generate fallback
-    let imgSrc = game.background_image;
-    if (!imgSrc) {
-        // Generate a game-specific fallback using first letter or emoji
-        const seed = game.name ? game.name.charAt(0).toUpperCase() : '🎮';
-        imgSrc = getCachedFallback(seed);
-    }
+    // Generate fallback using game name first letter or emoji
+    const seed = game.name ? game.name.charAt(0).toUpperCase() : '🎮';
+    const fallbackImg = getCachedFallback(seed);
+    
+    // Use game image or fallback
+    let imgSrc = game.background_image || fallbackImg;
 
     card.innerHTML = `
         <div class="game-card-inner">
             <div class="game-card-img-wrap">
                 <img src="${imgSrc}" alt="${game.name || 'Game'}" loading="lazy"
-                     onerror="this.src='${getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🎮')}'">
+                     onerror="this.onerror=null; this.src='${fallbackImg}';">
                 <div class="game-overlay">
                     <span class="game-rating-badge">${rating}</span>
                     ${badge}
@@ -365,38 +381,54 @@ function createGameCard(game) {
 }
 
 // ===============================
-// RENDER INTO CONTAINER
+// RENDER INTO CONTAINER - DEBUG VERSION
 // ===============================
 function renderGamesIntoContainer(games, container) {
     if (!container) {
-        console.warn('Container not found');
+        console.warn('❌ Container not found for rendering');
         return;
     }
+    
+    console.log(`📦 Rendering ${games ? games.length : 0} games into container:`, container.id || 'unnamed');
+    
     container.innerHTML = "";
+    
     if (!games || games.length === 0) {
+        console.warn('⚠️ No games to render');
         container.innerHTML = "<div class='error-message'><i class='bx bx-search'></i><br>No games found</div>";
         return;
     }
+    
+    let renderedCount = 0;
     games.forEach(g => {
         if (g && g.id) {
             container.appendChild(createGameCard(g));
+            renderedCount++;
+        } else {
+            console.warn('⚠️ Skipping invalid game:', g);
         }
     });
+    
+    console.log(`✅ Rendered ${renderedCount} game cards`);
 }
 
 // ===============================
-// GENERIC API FETCH HELPER
+// GENERIC API FETCH HELPER - DEBUG VERSION
 // ===============================
 async function fetchGames(params = {}) {
     try {
         const defaults = { key: API_KEY, page_size: 24 };
         const query = new URLSearchParams({...defaults, ...params}).toString();
-        const res = await fetch(`${BASE_URL}/games?${query}`);
+        const url = `${BASE_URL}/games?${query}`;
+        console.log('🌐 Fetching:', url);
+        
+        const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
+        console.log(`✅ Fetched ${data.results ? data.results.length : 0} games`);
         return data.results || [];
     } catch (error) {
-        console.error('API Error:', error);
+        console.error('❌ API Error:', error);
         return [];
     }
 }
@@ -420,9 +452,11 @@ async function loadGenres() {
         const res  = await fetch(`${BASE_URL}/genres?key=${API_KEY}`);
         const data = await res.json();
         cachedGenres = data.results || [];
+        console.log(`✅ Loaded ${cachedGenres.length} genres`);
     } catch (_) {
         cachedGenres = ['Action','Adventure','FPS','RPG','Simulation','Sports','Racing','Horror','Puzzle','Fighting','Indie','Casual','Strategy']
             .map((name, id) => ({ id: name, name }));
+        console.log('⚠️ Using fallback genres');
     }
 
     genresScroll.innerHTML = '';
@@ -605,6 +639,7 @@ async function loadPcGames(filter = 'newest', genreExtra = {}) {
         }
         renderGamesIntoContainer(await fetchGames(params), grid);
     } catch (e) {
+        console.error('PC games error:', e);
         grid.innerHTML = '<div class="error-message"><i class="bx bx-error"></i><br>Failed to load PC games</div>';
     } finally {
         hideLoader();
@@ -682,6 +717,7 @@ async function loadMobileGames(filter = 'newest', genreExtra = {}) {
         if (filter === 'top-rated') params.ordering = '-rating';
         renderGamesIntoContainer(await fetchGames(params), grid);
     } catch (e) {
+        console.error('Mobile games error:', e);
         grid.innerHTML = '<div class="error-message"><i class="bx bx-error"></i><br>Failed to load mobile games</div>';
     } finally {
         hideLoader();
@@ -693,10 +729,14 @@ async function loadMobileGames(filter = 'newest', genreExtra = {}) {
 // ===============================
 async function loadHtml5Games() {
     const grid = document.getElementById('html5GamesGrid') || document.getElementById('html5Games');
-    if (!grid) return;
+    if (!grid) {
+        console.warn('HTML5 grid not found');
+        return;
+    }
     try {
         renderGamesIntoContainer(await fetchGames({ tags: 'browser', page_size: 12 }), grid);
-    } catch (_) {
+    } catch (e) {
+        console.error('HTML5 error:', e);
         grid.innerHTML = '<div class="error-message">Failed to load HTML5 games</div>';
     }
 }
@@ -777,7 +817,8 @@ async function loadHtml5GamesForPage(genreExtra = {}) {
     showLoader();
     try {
         renderGamesIntoContainer(await fetchGames({ tags: 'browser', page_size: 24, ...genreExtra }), grid);
-    } catch (_) {
+    } catch (e) {
+        console.error('HTML5 page error:', e);
         grid.innerHTML = '<div class="error-message">Failed to load HTML5 games</div>';
     } finally {
         hideLoader();
@@ -785,7 +826,7 @@ async function loadHtml5GamesForPage(genreExtra = {}) {
 }
 
 // ===============================
-// SESSION CHECK - FIXED: safe parsing
+// SESSION CHECK - FIXED
 // ===============================
 try {
     const userData = localStorage.getItem("crunkUser");
@@ -986,12 +1027,13 @@ function showSearchDropdown(games, query) {
             item.className = "search-item";
             const rating = game.rating ? game.rating.toFixed(1) : 'N/A';
             
-            // Use fallback for search images too
-            const imgSrc = game.background_image || getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🔍');
+            const seed = game.name ? game.name.charAt(0).toUpperCase() : '🔍';
+            const fallbackImg = getCachedFallback(seed, 40, 40);
+            const imgSrc = game.background_image || fallbackImg;
             
             item.innerHTML = `
                 <img src="${imgSrc}" alt="${game.name || 'Game'}"
-                     onerror="this.src='${getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🔍')}'">
+                     onerror="this.onerror=null; this.src='${fallbackImg}';">
                 <div class="search-item-info">
                     <div class="search-item-title">${game.name || 'Unknown'}</div>
                     <div class="search-item-meta">${game.released ? game.released.split('-')[0] : 'N/A'} · ${rating}</div>
@@ -1040,7 +1082,8 @@ async function performSearch(query) {
         `;
         renderGamesIntoContainer(games, document.getElementById('searchResultsGrid'));
         saveSearchHistory(query);
-    } catch (_) {
+    } catch (e) {
+        console.error('Search error:', e);
         showToast("Search failed", "error");
     } finally {
         hideLoader();
@@ -1056,7 +1099,9 @@ searchInput?.addEventListener("input", async () => {
         try {
             const games = await fetchGames({ search: q, page_size: 10 });
             showSearchDropdown(games, q);
-        } catch (_) {}
+        } catch (e) {
+            console.error('Search suggestion error:', e);
+        }
     }, 300);
 });
 
@@ -1082,6 +1127,7 @@ searchClear?.addEventListener("click", () => {
 // HOME PAGE DATA LOADING
 // ===============================
 async function loadHomePage() {
+    console.log('🏠 Loading home page...');
     showLoader();
     try {
         await Promise.all([
@@ -1098,8 +1144,10 @@ async function loadHomePage() {
             loadSection('popularMobileGames', { platforms: 187, ordering: '-rating', page_size: 8 }),
             loadHtml5Games()
         ]);
+        console.log('✅ Home page loaded successfully');
     } catch (e) {
-        console.error("Error loading home page:", e);
+        console.error("❌ Error loading home page:", e);
+        showToast("Error loading some games", "error");
     } finally {
         hideLoader();
     }
@@ -1107,10 +1155,15 @@ async function loadHomePage() {
 
 async function loadSection(containerId, params) {
     const el = document.getElementById(containerId);
-    if (!el) return;
+    if (!el) {
+        console.warn(`⚠️ Container #${containerId} not found`);
+        return;
+    }
     try {
-        renderGamesIntoContainer(await fetchGames(params), el);
-    } catch (_) {
+        const games = await fetchGames(params);
+        renderGamesIntoContainer(games, el);
+    } catch (e) {
+        console.error(`❌ Error loading section ${containerId}:`, e);
         el.innerHTML = '<div class="error-message">Failed to load</div>';
     }
 }
@@ -1119,14 +1172,19 @@ async function loadFeaturedSlider() {
     try {
         const games = await fetchGames({ ordering: '-added', page_size: 5 });
         createSlider(games);
-    } catch (_) {}
+    } catch (e) {
+        console.error('❌ Error loading featured slider:', e);
+    }
 }
 
 // ===============================
-// SLIDER - FIXED: uses local fallback
+// SLIDER
 // ===============================
 function createSlider(games) {
-    if (!slidesContainer || !dotsContainer) return;
+    if (!slidesContainer || !dotsContainer) {
+        console.warn('⚠️ Slider containers not found');
+        return;
+    }
     sliderGames = games;
     slidesContainer.innerHTML = "";
     dotsContainer.innerHTML   = "";
@@ -1134,7 +1192,11 @@ function createSlider(games) {
     games.forEach((game, i) => {
         const slide = document.createElement("div");
         slide.className = "slide";
-        const imgSrc = game.background_image || getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🎬');
+        
+        const seed = game.name ? game.name.charAt(0).toUpperCase() : '🎬';
+        const fallbackImg = getCachedFallback(seed, 800, 400);
+        const imgSrc = game.background_image || fallbackImg;
+        
         slide.style.backgroundImage = `url(${imgSrc})`;
         slide.onclick = () => openGame(game.id);
 
@@ -1165,7 +1227,7 @@ function goSlide(index) {
 }
 
 // ===============================
-// GAME POPUP - FIXED: uses local fallback
+// GAME POPUP
 // ===============================
 async function openGame(id) {
     if (!gamePopup) return;
@@ -1178,9 +1240,10 @@ async function openGame(id) {
         if (popupTitle)     popupTitle.innerText     = game.name || 'Unknown Game';
         if (popupDesc)      popupDesc.innerText       = game.description_raw || "No description available.";
         if (popupImg) {
-            const imgSrc = game.background_image || getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🎮');
-            popupImg.src = imgSrc;
-            popupImg.onerror = () => { popupImg.src = getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🎮'); };
+            const seed = game.name ? game.name.charAt(0).toUpperCase() : '🎮';
+            const fallbackImg = getCachedFallback(seed, 300, 450);
+            popupImg.src = game.background_image || fallbackImg;
+            popupImg.onerror = function() { this.onerror=null; this.src=fallbackImg; };
         }
         if (popupRating)    popupRating.textContent   = game.rating ? game.rating.toFixed(1) : 'N/A';
         if (popupRelease)   popupRelease.textContent   = game.released ? new Date(game.released).toLocaleDateString() : 'TBA';
@@ -1205,7 +1268,7 @@ async function openGame(id) {
                         const img = document.createElement("img");
                         img.src = s.image;
                         img.loading = "lazy";
-                        img.onerror = () => { img.src = getCachedFallback('📷'); };
+                        img.onerror = function() { this.onerror=null; this.src=getCachedFallback('📷', 200, 150); };
                         img.onclick = () => window.open(s.image, '_blank');
                         popupScreens.appendChild(img);
                     });
@@ -1318,6 +1381,8 @@ window.addEventListener('beforeunload', () => {
 // ===============================
 document.addEventListener('DOMContentLoaded', async () => {
     try {
+        console.log('🚀 Initializing Crunk Games...');
+        
         // Welcome toast
         const welcomeToast = document.createElement("div");
         welcomeToast.className = "welcome-toast";
@@ -1340,9 +1405,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderNotifications();
         updateNotificationBell();
         
-        console.log("✅ Crunk Games loaded successfully");
+        console.log("✅ Crunk Games initialized successfully");
     } catch (e) {
-        console.error("Initialization error:", e);
+        console.error("❌ Initialization error:", e);
         showToast("Error initializing app", "error");
     }
 });
