@@ -121,7 +121,6 @@ function getFallbackImage(seed = '🎮', width = 300, height = 450) {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
         
-        // Dark gradient background
         const gradient = ctx.createLinearGradient(0, 0, width, height);
         gradient.addColorStop(0, '#1a1a2e');
         gradient.addColorStop(0.5, '#16213e');
@@ -129,12 +128,10 @@ function getFallbackImage(seed = '🎮', width = 300, height = 450) {
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, width, height);
         
-        // Add border
         ctx.strokeStyle = '#34d399';
         ctx.lineWidth = 3;
         ctx.strokeRect(10, 10, width - 20, height - 20);
         
-        // Draw emoji
         const fontSize = Math.min(width, height) * 0.4;
         ctx.font = `${fontSize}px Arial, "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
         ctx.textAlign = 'center';
@@ -142,7 +139,6 @@ function getFallbackImage(seed = '🎮', width = 300, height = 450) {
         ctx.fillStyle = '#ffffff';
         ctx.fillText(seed, width/2, height/2 - 20);
         
-        // Draw "NO IMAGE" text
         ctx.font = `bold ${Math.min(width, height) * 0.08}px Arial, sans-serif`;
         ctx.fillStyle = '#888';
         ctx.fillText('NO IMAGE', width/2, height/2 + fontSize/2 + 30);
@@ -332,7 +328,7 @@ function getBadgeHTML(game) {
 }
 
 // ===============================
-// CREATE GAME CARD - DEBUG VERSION
+// CREATE GAME CARD
 // ===============================
 function createGameCard(game) {
     if (!game || !game.id) {
@@ -350,11 +346,9 @@ function createGameCard(game) {
     const year   = game.released ? new Date(game.released).getFullYear() : 'TBA';
     const badge  = getBadgeHTML(game);
     
-    // Generate fallback using game name first letter or emoji
     const seed = game.name ? game.name.charAt(0).toUpperCase() : '🎮';
     const fallbackImg = getCachedFallback(seed);
     
-    // Use game image or fallback
     let imgSrc = game.background_image || fallbackImg;
 
     card.innerHTML = `
@@ -381,7 +375,7 @@ function createGameCard(game) {
 }
 
 // ===============================
-// RENDER INTO CONTAINER - DEBUG VERSION
+// RENDER INTO CONTAINER
 // ===============================
 function renderGamesIntoContainer(games, container) {
     if (!container) {
@@ -400,20 +394,26 @@ function renderGamesIntoContainer(games, container) {
     }
     
     let renderedCount = 0;
+    const fragment = document.createDocumentFragment();
+    
     games.forEach(g => {
         if (g && g.id) {
-            container.appendChild(createGameCard(g));
-            renderedCount++;
+            const card = createGameCard(g);
+            if (card) {
+                fragment.appendChild(card);
+                renderedCount++;
+            }
         } else {
             console.warn('⚠️ Skipping invalid game:', g);
         }
     });
     
+    container.appendChild(fragment);
     console.log(`✅ Rendered ${renderedCount} game cards`);
 }
 
 // ===============================
-// GENERIC API FETCH HELPER - DEBUG VERSION
+// GENERIC API FETCH HELPER
 // ===============================
 async function fetchGames(params = {}) {
     try {
@@ -425,8 +425,9 @@ async function fetchGames(params = {}) {
         const res = await fetch(url);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-        console.log(`✅ Fetched ${data.results ? data.results.length : 0} games`);
-        return data.results || [];
+        const results = data.results || [];
+        console.log(`✅ Fetched ${results.length} games`);
+        return results;
     } catch (error) {
         console.error('❌ API Error:', error);
         return [];
@@ -826,7 +827,7 @@ async function loadHtml5GamesForPage(genreExtra = {}) {
 }
 
 // ===============================
-// SESSION CHECK - FIXED
+// SESSION CHECK
 // ===============================
 try {
     const userData = localStorage.getItem("crunkUser");
@@ -1054,10 +1055,11 @@ function showSearchDropdown(games, query) {
             viewAll.className = "search-view-all";
             viewAll.innerHTML = `View all ${games.length} results <i class="bx bx-chevron-right"></i>`;
             viewAll.onclick = () => {
+                const searchTerm = searchInput?.value || '';
                 searchResults.classList.remove("active");
                 if (searchInput) searchInput.value = "";
                 if (searchClear) searchClear.style.display = "none";
-                performSearch(searchInput?.value || '');
+                performSearch(searchTerm);
             };
             searchResults.appendChild(viewAll);
         }
@@ -1383,7 +1385,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         console.log('🚀 Initializing Crunk Games...');
         
-        // Welcome toast
         const welcomeToast = document.createElement("div");
         welcomeToast.className = "welcome-toast";
         welcomeToast.innerHTML = `<i class="bx bx-game"></i> Welcome to Crunk Games! 🎮`;
