@@ -27,33 +27,33 @@ const genresScroll       = document.getElementById("genresScroll");
 const topNav             = document.getElementById("topNav");
 
 // Section containers
-const trendingGames       = document.getElementById("trendingGames");
-const newReleasesGames    = document.getElementById("newReleasesGames");
-const recentlyUpdatedGames= document.getElementById("recentlyUpdatedGames");
-const upcomingGames       = document.getElementById("upcomingGames");
-const popularPcGames      = document.getElementById("popularPcGames");
-const popularMobileGames  = document.getElementById("popularMobileGames");
-const html5Games          = document.getElementById("html5Games");
+const trendingGames        = document.getElementById("trendingGames");
+const newReleasesGames     = document.getElementById("newReleasesGames");
+const recentlyUpdatedGames = document.getElementById("recentlyUpdatedGames");
+const upcomingGames        = document.getElementById("upcomingGames");
+const popularPcGames       = document.getElementById("popularPcGames");
+const popularMobileGames   = document.getElementById("popularMobileGames");
+const html5Games           = document.getElementById("html5Games");
 
 // Game popup
-const gamePopup       = document.getElementById("gamePopup");
-const popupContent    = document.querySelector(".popup-content");
-const popupClose      = document.querySelector(".popup-content .close");
-const popupTitle      = document.getElementById("popupTitle");
-const popupDesc       = document.getElementById("popupDesc");
-const popupImg        = document.getElementById("popupImg");
-const popupTrailer    = document.getElementById("popupTrailer");
-const popupScreens    = document.getElementById("popupScreens");
-const popupDownload   = document.getElementById("popupDownload");
-const popupFavorite   = document.getElementById("popupFavorite");
-const popupRating     = document.getElementById("popupRating");
-const popupRelease    = document.getElementById("popupRelease");
-const popupPlatforms  = document.getElementById("popupPlatforms");
-const popupGenre      = document.getElementById("popupGenre");
-const popupDeveloper  = document.getElementById("popupDeveloper");
-const popupPublisher  = document.getElementById("popupPublisher");
-const popupStores     = document.getElementById("popupStores");
-const popupBadges     = document.getElementById("popupBadges");
+const gamePopup      = document.getElementById("gamePopup");
+const popupContent   = document.querySelector(".popup-content");
+const popupClose     = document.querySelector(".popup-content .close");
+const popupTitle     = document.getElementById("popupTitle");
+const popupDesc      = document.getElementById("popupDesc");
+const popupImg       = document.getElementById("popupImg");
+const popupTrailer   = document.getElementById("popupTrailer");
+const popupScreens   = document.getElementById("popupScreens");
+const popupDownload  = document.getElementById("popupDownload");
+const popupFavorite  = document.getElementById("popupFavorite");
+const popupRating    = document.getElementById("popupRating");
+const popupRelease   = document.getElementById("popupRelease");
+const popupPlatforms = document.getElementById("popupPlatforms");
+const popupGenre     = document.getElementById("popupGenre");
+const popupDeveloper = document.getElementById("popupDeveloper");
+const popupPublisher = document.getElementById("popupPublisher");
+const popupStores    = document.getElementById("popupStores");
+const popupBadges    = document.getElementById("popupBadges");
 
 // Sidebar
 const menuBtn        = document.getElementById("menuBtn");
@@ -64,38 +64,38 @@ const themeLabel     = document.getElementById("themeLabel");
 const sidebarOverlay = document.querySelector(".sidebar-overlay");
 
 // Profile
-const profileDropdown   = document.getElementById("profileDropdown");
-const profilePopup      = document.getElementById("profilePopup");
-const googleProfilePic  = document.getElementById("googleProfilePic");
-const popupProfilePic   = document.getElementById("popupProfilePic");
-const accountName       = document.getElementById("accountName");
-const accountEmail      = document.getElementById("accountEmail");
-const logoutBtn         = document.getElementById("logoutBtn");
+const profileDropdown  = document.getElementById("profileDropdown");
+const profilePopup     = document.getElementById("profilePopup");
+const googleProfilePic = document.getElementById("googleProfilePic");
+const popupProfilePic  = document.getElementById("popupProfilePic");
+const accountName      = document.getElementById("accountName");
+const accountEmail     = document.getElementById("accountEmail");
+const logoutBtn        = document.getElementById("logoutBtn");
 
 // Venaura App Icon
 const venauraIcon = document.getElementById("venauraIcon");
 
 // Veno Coins
-const venoCoinsAmount  = document.getElementById("venoCoinsAmount");
-const claimVenoCoinsBtn= document.getElementById("claimVenoCoinsBtn");
+const venoCoinsAmount   = document.getElementById("venoCoinsAmount");
+const claimVenoCoinsBtn = document.getElementById("claimVenoCoinsBtn");
 
-// Notifications
-const notificationBell  = document.getElementById("notificationBell");
+// Notifications — HTML uses id="notificationBtn", not "notificationBell"
+const notificationBell  = document.getElementById("notificationBtn");
 const notificationPopup = document.getElementById("notificationPopup");
 const notificationCount = document.getElementById("notificationCount");
 const notificationList  = document.getElementById("notificationList");
 const markAllReadBtn    = document.getElementById("markAllRead");
 
 // Sidebar menu items
-const menuHome     = document.getElementById("menuHome");
-const menuLibrary  = document.getElementById("menuLibrary");
-const menuFavorites= document.getElementById("menuFavorites");
-const menuSettings = document.getElementById("menuSettings");
-const menuPrivacy  = document.getElementById("menuPrivacy");
-const menuShare    = document.getElementById("menuShare");
-const menuHelp     = document.getElementById("menuHelp");
-const menuRate     = document.getElementById("menuRate");
-const menuAbout    = document.getElementById("menuAbout");
+const menuHome      = document.getElementById("menuHome");
+const menuLibrary   = document.getElementById("menuLibrary");
+const menuFavorites = document.getElementById("menuFavorites");
+const menuSettings  = document.getElementById("menuSettings");
+const menuPrivacy   = document.getElementById("menuPrivacy");
+const menuShare     = document.getElementById("menuShare");
+const menuHelp      = document.getElementById("menuHelp");
+const menuRate      = document.getElementById("menuRate");
+const menuAbout     = document.getElementById("menuAbout");
 
 // Toast container
 const toastContainer = document.getElementById("toastContainer") || (() => {
@@ -267,38 +267,33 @@ function getBadgeHTML(game) {
 }
 
 // ===============================
-// CREATE GAME CARD  (numeric rating only)
+// CREATE GAME CARD
+// FIX: game-info is INSIDE game-card-img-wrap so position:absolute works correctly
 // ===============================
 function createGameCard(game) {
     const card = document.createElement("div");
     card.className = "game-card";
 
-    const rating    = game.rating ? game.rating.toFixed(1) : 'N/A';
-    const year      = game.released ? new Date(game.released).getFullYear() : 'TBA';
-    const platforms = game.platforms ? game.platforms.slice(0, 2).map(p => p.platform.name).join(', ') : 'Various';
-    const genres    = game.genres    ? game.genres.slice(0, 2).map(g => g.name).join(', ')         : 'N/A';
-    const badge     = getBadgeHTML(game);
-    const img       = game.background_image || 'https://via.placeholder.com/300x200?text=🎮';
+    const rating = game.rating ? game.rating.toFixed(1) : 'N/A';
+    const year   = game.released ? new Date(game.released).getFullYear() : 'TBA';
+    const badge  = getBadgeHTML(game);
+    const img    = game.background_image || 'https://via.placeholder.com/300x450?text=🎮';
 
     card.innerHTML = `
         <div class="game-card-inner">
             <div class="game-card-img-wrap">
                 <img src="${img}" alt="${game.name}" loading="lazy"
-                     onerror="this.src='https://via.placeholder.com/300x200?text=🎮'">
+                     onerror="this.src='https://via.placeholder.com/300x450?text=🎮'">
                 <div class="game-overlay">
                     <span class="game-rating-badge">${rating}</span>
                     ${badge}
                 </div>
-            </div>
-            <div class="game-info">
-                <div class="game-title">${game.name}</div>
-                <div class="game-meta">
-                    <span>${platforms}</span>
-                    <span>${genres}</span>
-                </div>
-                <div class="game-footer">
-                    <span class="game-year">${year}</span>
-                    <span class="game-rating">${rating}</span>
+                <div class="game-info">
+                    <div class="game-title">${game.name}</div>
+                    <div class="game-footer">
+                        <span class="game-year">${year}</span>
+                        <span class="game-rating">${rating}</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -335,7 +330,7 @@ async function fetchGames(params = {}) {
 // ===============================
 // DATE UTILITIES
 // ===============================
-function todayStr()  { return new Date().toISOString().split('T')[0]; }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
 function futureStr(days = 90) {
     const d = new Date();
     d.setDate(d.getDate() + days);
@@ -343,7 +338,7 @@ function futureStr(days = 90) {
 }
 
 // ===============================
-// GLOBAL GENRE FILTER BAR (home genres-bar)
+// GLOBAL GENRE FILTER BAR
 // ===============================
 async function loadGenres() {
     if (!genresScroll) return;
@@ -367,8 +362,8 @@ function appendGenreTag(container, name, id, onClick, active = false) {
     const tag = document.createElement('span');
     tag.className = `genre-tag${active ? ' active' : ''}`;
     tag.textContent = name;
-    tag.dataset.id   = id;
-    tag.onclick      = onClick;
+    tag.dataset.id  = id;
+    tag.onclick     = onClick;
     container.appendChild(tag);
 }
 
@@ -386,21 +381,17 @@ function filterByGenre(genreId) {
 function buildPageGenresBar(container, onSelect) {
     if (!cachedGenres.length) return;
 
-    const wrap  = document.createElement('div');
+    const wrap = document.createElement('div');
     wrap.className = 'page-genres-bar';
     const scroll = document.createElement('div');
     scroll.className = 'page-genres-scroll';
     wrap.appendChild(scroll);
 
-    // "All" tag
     const allTag = document.createElement('span');
     allTag.className = 'page-genre-tag active';
     allTag.textContent = 'All';
     allTag.dataset.gid = '';
-    allTag.onclick = () => {
-        setActivePageGenre(scroll, '');
-        onSelect(null);
-    };
+    allTag.onclick = () => { setActivePageGenre(scroll, ''); onSelect(null); };
     scroll.appendChild(allTag);
 
     cachedGenres.forEach(genre => {
@@ -408,14 +399,11 @@ function buildPageGenresBar(container, onSelect) {
         tag.className = 'page-genre-tag';
         tag.textContent = genre.name;
         tag.dataset.gid = genre.id;
-        tag.onclick = () => {
-            setActivePageGenre(scroll, genre.id);
-            onSelect(genre.id);
-        };
+        tag.onclick = () => { setActivePageGenre(scroll, genre.id); onSelect(genre.id); };
         scroll.appendChild(tag);
     });
 
-    container.insertBefore(wrap, container.firstChild.nextSibling); // after section-header
+    container.insertBefore(wrap, container.firstChild.nextSibling);
 }
 
 function setActivePageGenre(scroll, gid) {
@@ -466,7 +454,7 @@ function loadPageContent(page) {
 }
 
 // ===============================
-// PC GAMES PAGE  (with genre bar + sub-sections)
+// PC GAMES PAGE
 // ===============================
 function showPcGamesPage() {
     document.querySelectorAll('.games-section, .featured-slider-section').forEach(s => s.style.display = 'none');
@@ -519,12 +507,9 @@ function getActivePageGenre(section) {
 }
 
 async function loadPcSubSections(genreExtra = {}) {
-    const today = todayStr();
-    const future = futureStr(90);
-
     const [newGames, upcoming] = await Promise.all([
         fetchGames({ platforms: 4, ordering: '-released', page_size: 8, ...genreExtra }).catch(() => []),
-        fetchGames({ platforms: 4, dates: `${today},${future}`, ordering: 'released', page_size: 8, ...genreExtra }).catch(() => [])
+        fetchGames({ platforms: 4, dates: `${todayStr()},${futureStr(90)}`, ordering: 'released', page_size: 8, ...genreExtra }).catch(() => [])
     ]);
     renderGamesIntoContainer(newGames, document.getElementById('pcNewReleasesGrid'));
     renderGamesIntoContainer(upcoming, document.getElementById('pcUpcomingGrid'));
@@ -536,10 +521,10 @@ async function loadPcGames(filter = 'newest', genreExtra = {}) {
     showLoader();
     try {
         const params = { platforms: 4, page_size: 24, ...genreExtra };
-        if (filter === 'newest')   params.ordering = '-released';
-        if (filter === 'updated')  params.ordering = '-updated';
-        if (filter === 'trending') params.ordering = '-added';
-        if (filter === 'top-rated')params.ordering = '-rating';
+        if (filter === 'newest')    params.ordering = '-released';
+        if (filter === 'updated')   params.ordering = '-updated';
+        if (filter === 'trending')  params.ordering = '-added';
+        if (filter === 'top-rated') params.ordering = '-rating';
         if (filter === 'upcoming') {
             params.ordering = 'released';
             params.dates = `${todayStr()},${futureStr(90)}`;
@@ -553,7 +538,7 @@ async function loadPcGames(filter = 'newest', genreExtra = {}) {
 }
 
 // ===============================
-// MOBILE GAMES PAGE (with genre bar + sub-sections)
+// MOBILE GAMES PAGE
 // ===============================
 function showMobileGamesPage() {
     document.querySelectorAll('.games-section, .featured-slider-section').forEach(s => s.style.display = 'none');
@@ -822,7 +807,7 @@ if (localStorage.getItem("theme") === "light") {
     if (themeLabel) themeLabel.innerText = "Light";
     const sun  = menuTheme?.querySelector(".bx-sun");
     const moon = menuTheme?.querySelector(".bx-moon");
-    if (sun  && moon) { sun.style.display = "inline-block"; moon.style.display = "none"; }
+    if (sun && moon) { sun.style.display = "inline-block"; moon.style.display = "none"; }
 }
 
 // ===============================
@@ -933,10 +918,10 @@ function showSearchDropdown(games, query) {
             viewAll.className = "search-view-all";
             viewAll.innerHTML = `View all ${games.length} results <i class="bx bx-chevron-right"></i>`;
             viewAll.onclick = () => {
-                renderGames(games);
                 searchResults.classList.remove("active");
                 if (searchInput) searchInput.value = "";
                 if (searchClear) searchClear.style.display = "none";
+                performSearch(searchInput?.value || '');
             };
             searchResults.appendChild(viewAll);
         }
@@ -1007,9 +992,9 @@ async function loadHomePage() {
     try {
         await Promise.all([
             loadFeaturedSlider(),
-            loadSection('trendingGames',        { ordering: '-added',    page_size: 8 }),
-            loadSection('newReleasesGames',      { ordering: '-released', page_size: 8 }),
-            loadSection('recentlyUpdatedGames',  { ordering: '-updated',  page_size: 8 }),
+            loadSection('trendingGames',       { ordering: '-added',    page_size: 8 }),
+            loadSection('newReleasesGames',     { ordering: '-released', page_size: 8 }),
+            loadSection('recentlyUpdatedGames', { ordering: '-updated',  page_size: 8 }),
             loadSection('upcomingGames', {
                 dates: `${todayStr()},${futureStr(90)}`,
                 ordering: 'released',
@@ -1095,26 +1080,25 @@ async function openGame(id) {
         if (!res.ok) throw new Error('Fetch failed');
         const game = await res.json();
 
-        if (popupTitle)    popupTitle.innerText    = game.name;
-        if (popupDesc)     popupDesc.innerText      = game.description_raw || "No description available.";
-        if (popupImg)      { popupImg.src = game.background_image || 'https://via.placeholder.com/300x450?text=🎮'; popupImg.onerror = () => { popupImg.src = 'https://via.placeholder.com/300x450?text=🎮'; }; }
-        if (popupRating)   popupRating.textContent  = game.rating ? game.rating.toFixed(1) : 'N/A';
-        if (popupRelease)  popupRelease.textContent  = game.released ? new Date(game.released).toLocaleDateString() : 'TBA';
-        if (popupPlatforms)popupPlatforms.textContent= game.platforms?.map(p => p.platform.name).join(', ') || 'Various';
-        if (popupGenre)    popupGenre.textContent    = game.genres?.map(g => g.name).join(', ') || 'N/A';
-        if (popupDeveloper)popupDeveloper.textContent= game.developers?.map(d => d.name).join(', ') || 'N/A';
-        if (popupPublisher)popupPublisher.textContent= game.publishers?.map(p => p.name).join(', ') || 'N/A';
-        if (popupStores)   popupStores.textContent   = game.stores?.map(s => s.store.name).join(', ') || 'N/A';
+        if (popupTitle)     popupTitle.innerText     = game.name;
+        if (popupDesc)      popupDesc.innerText       = game.description_raw || "No description available.";
+        if (popupImg)       { popupImg.src = game.background_image || 'https://via.placeholder.com/300x450?text=🎮'; popupImg.onerror = () => { popupImg.src = 'https://via.placeholder.com/300x450?text=🎮'; }; }
+        if (popupRating)    popupRating.textContent   = game.rating ? game.rating.toFixed(1) : 'N/A';
+        if (popupRelease)   popupRelease.textContent   = game.released ? new Date(game.released).toLocaleDateString() : 'TBA';
+        if (popupPlatforms) popupPlatforms.textContent = game.platforms?.map(p => p.platform.name).join(', ') || 'Various';
+        if (popupGenre)     popupGenre.textContent     = game.genres?.map(g => g.name).join(', ') || 'N/A';
+        if (popupDeveloper) popupDeveloper.textContent = game.developers?.map(d => d.name).join(', ') || 'N/A';
+        if (popupPublisher) popupPublisher.textContent = game.publishers?.map(p => p.name).join(', ') || 'N/A';
+        if (popupStores)    popupStores.textContent    = game.stores?.map(s => s.store.name).join(', ') || 'N/A';
 
         if (popupBadges) {
             const badge = getBadgeHTML(game);
             popupBadges.innerHTML = badge || '<span style="color:var(--text-secondary);font-size:12px;">—</span>';
         }
 
-        // Screenshots
         if (popupScreens) {
-            const shotRes  = await fetch(`${BASE_URL}/games/${id}/screenshots?key=${API_KEY}`);
-            const shots    = await shotRes.json();
+            const shotRes = await fetch(`${BASE_URL}/games/${id}/screenshots?key=${API_KEY}`);
+            const shots   = await shotRes.json();
             popupScreens.innerHTML = "";
             if (shots.results?.length) {
                 shots.results.slice(0, 6).forEach(s => {
@@ -1130,7 +1114,6 @@ async function openGame(id) {
             }
         }
 
-        // Trailer
         if (popupTrailer) {
             popupTrailer.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:13px;">Loading trailer…</div>';
             const trailerRes  = await fetch(`${BASE_URL}/games/${id}/movies?key=${API_KEY}`);
@@ -1174,7 +1157,6 @@ async function openGame(id) {
     }
 }
 
-// Close popup
 popupClose?.addEventListener("click", () => {
     if (gamePopup) { gamePopup.style.display = "none"; document.body.style.overflow = ""; }
 });
@@ -1208,7 +1190,7 @@ document.addEventListener('click', e => {
     const link = e.target.closest('.view-all-link');
     if (link) {
         e.preventDefault();
-        showToast(`Viewing all ${link.dataset.section?.replace(/-/g,' ')} games`);
+        showToast(`Viewing all ${link.dataset.section?.replace(/-/g, ' ')} games`);
     }
 });
 
