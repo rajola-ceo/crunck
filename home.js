@@ -79,7 +79,7 @@ const venauraIcon = document.getElementById("venauraIcon");
 const venoCoinsAmount   = document.getElementById("venoCoinsAmount");
 const claimVenoCoinsBtn = document.getElementById("claimVenoCoinsBtn");
 
-// Notifications — HTML uses id="notificationBtn", not "notificationBell"
+// Notifications
 const notificationBell  = document.getElementById("notificationBtn");
 const notificationPopup = document.getElementById("notificationPopup");
 const notificationCount = document.getElementById("notificationCount");
@@ -110,6 +110,54 @@ const toastContainer = document.getElementById("toastContainer") || (() => {
 // CACHED GENRES
 // ===============================
 let cachedGenres = [];
+
+// ===============================
+// FALLBACK IMAGE GENERATOR - FIXED: uses emoji instead of external service
+// ===============================
+function getFallbackImage(seed = '🎮', size = '300x450') {
+    // Create a canvas-based fallback that doesn't rely on external services
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 450;
+    const ctx = canvas.getContext('2d');
+    
+    // Dark gradient background
+    const gradient = ctx.createLinearGradient(0, 0, 300, 450);
+    gradient.addColorStop(0, '#1a1a2e');
+    gradient.addColorStop(0.5, '#16213e');
+    gradient.addColorStop(1, '#0f3460');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 300, 450);
+    
+    // Add border
+    ctx.strokeStyle = '#34d399';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(10, 10, 280, 430);
+    
+    // Draw emoji
+    ctx.font = '120px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(seed, 150, 180);
+    
+    // Draw "NO IMAGE" text
+    ctx.font = 'bold 24px Arial';
+    ctx.fillStyle = '#888';
+    ctx.fillText('NO IMAGE', 150, 310);
+    
+    return canvas.toDataURL('image/png');
+}
+
+// Cache fallback images
+const fallbackCache = {};
+
+function getCachedFallback(seed = '🎮') {
+    if (!fallbackCache[seed]) {
+        fallbackCache[seed] = getFallbackImage(seed);
+    }
+    return fallbackCache[seed];
+}
 
 // ===============================
 // VENO COINS SYSTEM
@@ -267,29 +315,43 @@ function getBadgeHTML(game) {
 }
 
 // ===============================
-// CREATE GAME CARD
-// FIX: game-info is INSIDE game-card-img-wrap so position:absolute works correctly
+// CREATE GAME CARD - FIXED: uses local fallback
 // ===============================
 function createGameCard(game) {
+    if (!game || !game.id) {
+        console.warn('Invalid game data:', game);
+        const emptyCard = document.createElement("div");
+        emptyCard.className = "game-card";
+        emptyCard.innerHTML = `<div class="game-card-inner"><div class="game-card-img-wrap"><div class="game-info"><div class="game-title">Invalid Game</div></div></div></div>`;
+        return emptyCard;
+    }
+
     const card = document.createElement("div");
     card.className = "game-card";
 
     const rating = game.rating ? game.rating.toFixed(1) : 'N/A';
     const year   = game.released ? new Date(game.released).getFullYear() : 'TBA';
     const badge  = getBadgeHTML(game);
-    const img    = game.background_image || 'https://via.placeholder.com/300x450?text=🎮';
+    
+    // Use game image or generate fallback
+    let imgSrc = game.background_image;
+    if (!imgSrc) {
+        // Generate a game-specific fallback using first letter or emoji
+        const seed = game.name ? game.name.charAt(0).toUpperCase() : '🎮';
+        imgSrc = getCachedFallback(seed);
+    }
 
     card.innerHTML = `
         <div class="game-card-inner">
             <div class="game-card-img-wrap">
-                <img src="${img}" alt="${game.name}" loading="lazy"
-                     onerror="this.src='https://via.placeholder.com/300x450?text=🎮'">
+                <img src="${imgSrc}" alt="${game.name || 'Game'}" loading="lazy"
+                     onerror="this.src='${getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🎮')}'">
                 <div class="game-overlay">
                     <span class="game-rating-badge">${rating}</span>
                     ${badge}
                 </div>
                 <div class="game-info">
-                    <div class="game-title">${game.name}</div>
+                    <div class="game-title">${game.name || 'Unknown Game'}</div>
                     <div class="game-footer">
                         <span class="game-year">${year}</span>
                         <span class="game-rating">${rating}</span>
@@ -306,25 +368,37 @@ function createGameCard(game) {
 // RENDER INTO CONTAINER
 // ===============================
 function renderGamesIntoContainer(games, container) {
-    if (!container) return;
+    if (!container) {
+        console.warn('Container not found');
+        return;
+    }
     container.innerHTML = "";
     if (!games || games.length === 0) {
         container.innerHTML = "<div class='error-message'><i class='bx bx-search'></i><br>No games found</div>";
         return;
     }
-    games.forEach(g => container.appendChild(createGameCard(g)));
+    games.forEach(g => {
+        if (g && g.id) {
+            container.appendChild(createGameCard(g));
+        }
+    });
 }
 
 // ===============================
 // GENERIC API FETCH HELPER
 // ===============================
 async function fetchGames(params = {}) {
-    const defaults = { key: API_KEY, page_size: 24 };
-    const query = new URLSearchParams({...defaults, ...params}).toString();
-    const res = await fetch(`${BASE_URL}/games?${query}`);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data = await res.json();
-    return data.results || [];
+    try {
+        const defaults = { key: API_KEY, page_size: 24 };
+        const query = new URLSearchParams({...defaults, ...params}).toString();
+        const res = await fetch(`${BASE_URL}/games?${query}`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        return data.results || [];
+    } catch (error) {
+        console.error('API Error:', error);
+        return [];
+    }
 }
 
 // ===============================
@@ -508,8 +582,8 @@ function getActivePageGenre(section) {
 
 async function loadPcSubSections(genreExtra = {}) {
     const [newGames, upcoming] = await Promise.all([
-        fetchGames({ platforms: 4, ordering: '-released', page_size: 8, ...genreExtra }).catch(() => []),
-        fetchGames({ platforms: 4, dates: `${todayStr()},${futureStr(90)}`, ordering: 'released', page_size: 8, ...genreExtra }).catch(() => [])
+        fetchGames({ platforms: 4, ordering: '-released', page_size: 8, ...genreExtra }),
+        fetchGames({ platforms: 4, dates: `${todayStr()},${futureStr(90)}`, ordering: 'released', page_size: 8, ...genreExtra })
     ]);
     renderGamesIntoContainer(newGames, document.getElementById('pcNewReleasesGrid'));
     renderGamesIntoContainer(upcoming, document.getElementById('pcUpcomingGrid'));
@@ -589,8 +663,8 @@ function showMobileGamesPage() {
 
 async function loadMobileSubSections(genreExtra = {}) {
     const [newGames, recent] = await Promise.all([
-        fetchGames({ platforms: 187, ordering: '-released', page_size: 8, ...genreExtra }).catch(() => []),
-        fetchGames({ platforms: 187, ordering: '-updated',  page_size: 8, ...genreExtra }).catch(() => [])
+        fetchGames({ platforms: 187, ordering: '-released', page_size: 8, ...genreExtra }),
+        fetchGames({ platforms: 187, ordering: '-updated',  page_size: 8, ...genreExtra })
     ]);
     renderGamesIntoContainer(newGames, document.getElementById('mobileNewGrid'));
     renderGamesIntoContainer(recent,   document.getElementById('mobileRecentGrid'));
@@ -690,8 +764,8 @@ function showHtml5GamesPage() {
 
 async function loadHtml5SubSections(genreExtra = {}) {
     const [newGames, recent] = await Promise.all([
-        fetchGames({ tags: 'browser', ordering: '-released', page_size: 8, ...genreExtra }).catch(() => []),
-        fetchGames({ tags: 'browser', ordering: '-updated',  page_size: 8, ...genreExtra }).catch(() => [])
+        fetchGames({ tags: 'browser', ordering: '-released', page_size: 8, ...genreExtra }),
+        fetchGames({ tags: 'browser', ordering: '-updated',  page_size: 8, ...genreExtra })
     ]);
     renderGamesIntoContainer(newGames, document.getElementById('html5NewGrid'));
     renderGamesIntoContainer(recent,   document.getElementById('html5RecentGrid'));
@@ -711,19 +785,34 @@ async function loadHtml5GamesForPage(genreExtra = {}) {
 }
 
 // ===============================
-// SESSION CHECK
+// SESSION CHECK - FIXED: safe parsing
 // ===============================
-const user = JSON.parse(localStorage.getItem("crunkUser"));
-if (!user) {
+try {
+    const userData = localStorage.getItem("crunkUser");
+    let user = null;
+    if (userData) {
+        try {
+            user = JSON.parse(userData);
+        } catch (e) {
+            console.warn('Invalid user data');
+            user = null;
+        }
+    }
+    
+    if (!user) {
+        window.location.href = "index.html";
+    } else {
+        const avatar = user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || user.username || 'User')}&background=34d399&color=fff&size=128`;
+        if (googleProfilePic) googleProfilePic.src = avatar;
+        if (popupProfilePic)  popupProfilePic.src  = avatar;
+        if (accountName)  accountName.innerText  = user.displayName || user.username || "User";
+        if (accountEmail) accountEmail.innerText = user.email || "";
+        updateVenoCoinsDisplay();
+        updateClaimButton();
+    }
+} catch (e) {
+    console.error('Session error:', e);
     window.location.href = "index.html";
-} else {
-    const avatar = u => u.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.displayName || u.username || 'User')}&background=34d399&color=fff&size=128`;
-    if (googleProfilePic) googleProfilePic.src = avatar(user);
-    if (popupProfilePic)  popupProfilePic.src  = avatar(user);
-    if (accountName)  accountName.innerText  = user.displayName || user.username || "User";
-    if (accountEmail) accountEmail.innerText = user.email || "";
-    updateVenoCoinsDisplay();
-    updateClaimButton();
 }
 
 // ===============================
@@ -892,14 +981,19 @@ function showSearchDropdown(games, query) {
         }
 
         games.slice(0, 5).forEach(game => {
+            if (!game || !game.id) return;
             const item = document.createElement("div");
             item.className = "search-item";
             const rating = game.rating ? game.rating.toFixed(1) : 'N/A';
+            
+            // Use fallback for search images too
+            const imgSrc = game.background_image || getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🔍');
+            
             item.innerHTML = `
-                <img src="${game.background_image || 'https://via.placeholder.com/40x40?text=🎮'}" alt="${game.name}"
-                     onerror="this.src='https://via.placeholder.com/40x40?text=🎮'">
+                <img src="${imgSrc}" alt="${game.name || 'Game'}"
+                     onerror="this.src='${getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🔍')}'">
                 <div class="search-item-info">
-                    <div class="search-item-title">${game.name}</div>
+                    <div class="search-item-title">${game.name || 'Unknown'}</div>
                     <div class="search-item-meta">${game.released ? game.released.split('-')[0] : 'N/A'} · ${rating}</div>
                 </div>
             `;
@@ -1029,7 +1123,7 @@ async function loadFeaturedSlider() {
 }
 
 // ===============================
-// SLIDER
+// SLIDER - FIXED: uses local fallback
 // ===============================
 function createSlider(games) {
     if (!slidesContainer || !dotsContainer) return;
@@ -1040,12 +1134,13 @@ function createSlider(games) {
     games.forEach((game, i) => {
         const slide = document.createElement("div");
         slide.className = "slide";
-        slide.style.backgroundImage = `url(${game.background_image || 'https://via.placeholder.com/800x400?text=🎮'})`;
+        const imgSrc = game.background_image || getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🎬');
+        slide.style.backgroundImage = `url(${imgSrc})`;
         slide.onclick = () => openGame(game.id);
 
         const overlay = document.createElement("div");
         overlay.className = "slide-overlay";
-        overlay.innerHTML = `<h3>${game.name}</h3><p>${game.rating ? game.rating.toFixed(1) : 'N/A'} &bull; ${game.released ? new Date(game.released).getFullYear() : 'TBA'}</p>`;
+        overlay.innerHTML = `<h3>${game.name || 'Unknown'}</h3><p>${game.rating ? game.rating.toFixed(1) : 'N/A'} &bull; ${game.released ? new Date(game.released).getFullYear() : 'TBA'}</p>`;
         slide.appendChild(overlay);
         slidesContainer.appendChild(slide);
 
@@ -1070,7 +1165,7 @@ function goSlide(index) {
 }
 
 // ===============================
-// GAME POPUP
+// GAME POPUP - FIXED: uses local fallback
 // ===============================
 async function openGame(id) {
     if (!gamePopup) return;
@@ -1080,9 +1175,13 @@ async function openGame(id) {
         if (!res.ok) throw new Error('Fetch failed');
         const game = await res.json();
 
-        if (popupTitle)     popupTitle.innerText     = game.name;
+        if (popupTitle)     popupTitle.innerText     = game.name || 'Unknown Game';
         if (popupDesc)      popupDesc.innerText       = game.description_raw || "No description available.";
-        if (popupImg)       { popupImg.src = game.background_image || 'https://via.placeholder.com/300x450?text=🎮'; popupImg.onerror = () => { popupImg.src = 'https://via.placeholder.com/300x450?text=🎮'; }; }
+        if (popupImg) {
+            const imgSrc = game.background_image || getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🎮');
+            popupImg.src = imgSrc;
+            popupImg.onerror = () => { popupImg.src = getCachedFallback(game.name ? game.name.charAt(0).toUpperCase() : '🎮'); };
+        }
         if (popupRating)    popupRating.textContent   = game.rating ? game.rating.toFixed(1) : 'N/A';
         if (popupRelease)   popupRelease.textContent   = game.released ? new Date(game.released).toLocaleDateString() : 'TBA';
         if (popupPlatforms) popupPlatforms.textContent = game.platforms?.map(p => p.platform.name).join(', ') || 'Various';
@@ -1097,49 +1196,59 @@ async function openGame(id) {
         }
 
         if (popupScreens) {
-            const shotRes = await fetch(`${BASE_URL}/games/${id}/screenshots?key=${API_KEY}`);
-            const shots   = await shotRes.json();
-            popupScreens.innerHTML = "";
-            if (shots.results?.length) {
-                shots.results.slice(0, 6).forEach(s => {
-                    const img = document.createElement("img");
-                    img.src = s.image;
-                    img.loading = "lazy";
-                    img.onerror = () => { img.src = 'https://via.placeholder.com/200x150?text=📷'; };
-                    img.onclick = () => window.open(s.image, '_blank');
-                    popupScreens.appendChild(img);
-                });
-            } else {
-                popupScreens.innerHTML = "<p style='color:var(--text-secondary);font-size:13px;'>No screenshots available</p>";
+            try {
+                const shotRes = await fetch(`${BASE_URL}/games/${id}/screenshots?key=${API_KEY}`);
+                const shots   = await shotRes.json();
+                popupScreens.innerHTML = "";
+                if (shots.results?.length) {
+                    shots.results.slice(0, 6).forEach(s => {
+                        const img = document.createElement("img");
+                        img.src = s.image;
+                        img.loading = "lazy";
+                        img.onerror = () => { img.src = getCachedFallback('📷'); };
+                        img.onclick = () => window.open(s.image, '_blank');
+                        popupScreens.appendChild(img);
+                    });
+                } else {
+                    popupScreens.innerHTML = "<p style='color:var(--text-secondary);font-size:13px;'>No screenshots available</p>";
+                }
+            } catch (e) {
+                console.error('Screenshot error:', e);
+                popupScreens.innerHTML = "<p style='color:var(--text-secondary);font-size:13px;'>Failed to load screenshots</p>";
             }
         }
 
         if (popupTrailer) {
             popupTrailer.innerHTML = '<div style="text-align:center;padding:16px;color:var(--text-secondary);font-size:13px;">Loading trailer…</div>';
-            const trailerRes  = await fetch(`${BASE_URL}/games/${id}/movies?key=${API_KEY}`);
-            const trailerData = await trailerRes.json();
-            const trailer     = trailerData.results?.[0]?.data?.max || "";
+            try {
+                const trailerRes  = await fetch(`${BASE_URL}/games/${id}/movies?key=${API_KEY}`);
+                const trailerData = await trailerRes.json();
+                const trailer     = trailerData.results?.[0]?.data?.max || "";
 
-            if (trailer) {
-                popupTrailer.innerHTML = `
-                    <video controls width="100%" style="border-radius:12px;background:#000;max-height:280px;">
-                        <source src="${trailer}" type="video/mp4">
-                    </video>
-                `;
-            } else {
-                const q = encodeURIComponent(`${game.name} trailer gameplay`);
-                popupTrailer.innerHTML = `
-                    <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;">
-                        <iframe src="https://www.youtube.com/embed?listType=search&list=${q}"
-                            style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
-                            allowfullscreen loading="lazy"
-                            allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture">
-                        </iframe>
-                    </div>
-                    <p style="font-size:11px;color:var(--text-secondary);text-align:center;margin-top:5px;">
-                        <i class="bx bxl-youtube" style="color:#ff0000;"></i> YouTube: "${game.name}"
-                    </p>
-                `;
+                if (trailer) {
+                    popupTrailer.innerHTML = `
+                        <video controls width="100%" style="border-radius:12px;background:#000;max-height:280px;">
+                            <source src="${trailer}" type="video/mp4">
+                        </video>
+                    `;
+                } else {
+                    const q = encodeURIComponent(`${game.name} trailer gameplay`);
+                    popupTrailer.innerHTML = `
+                        <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;border-radius:12px;">
+                            <iframe src="https://www.youtube.com/embed?listType=search&list=${q}"
+                                style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"
+                                allowfullscreen loading="lazy"
+                                allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture">
+                            </iframe>
+                        </div>
+                        <p style="font-size:11px;color:var(--text-secondary);text-align:center;margin-top:5px;">
+                            <i class="bx bxl-youtube" style="color:#ff0000;"></i> YouTube: "${game.name}"
+                        </p>
+                    `;
+                }
+            } catch (e) {
+                console.error('Trailer error:', e);
+                popupTrailer.innerHTML = '<p style="color:var(--text-secondary);font-size:13px;">Trailer not available</p>';
             }
         }
 
@@ -1150,7 +1259,7 @@ async function openGame(id) {
         document.body.style.overflow = "hidden";
 
     } catch (e) {
-        console.error(e);
+        console.error('Open game error:', e);
         showToast("Failed to load game details", "error");
     } finally {
         hideLoader();
@@ -1195,30 +1304,47 @@ document.addEventListener('click', e => {
 });
 
 // ===============================
+// CLEANUP
+// ===============================
+window.addEventListener('beforeunload', () => {
+    if (slideInterval) {
+        clearInterval(slideInterval);
+        slideInterval = null;
+    }
+});
+
+// ===============================
 // INITIALIZE
 // ===============================
 document.addEventListener('DOMContentLoaded', async () => {
-    // Welcome toast
-    const welcomeToast = document.createElement("div");
-    welcomeToast.className = "welcome-toast";
-    welcomeToast.innerHTML = `<i class="bx bx-game"></i> Welcome to Crunk Games! 🎮`;
-    document.body.appendChild(welcomeToast);
-    setTimeout(() => {
-        welcomeToast.classList.add("show");
+    try {
+        // Welcome toast
+        const welcomeToast = document.createElement("div");
+        welcomeToast.className = "welcome-toast";
+        welcomeToast.innerHTML = `<i class="bx bx-game"></i> Welcome to Crunk Games! 🎮`;
+        document.body.appendChild(welcomeToast);
         setTimeout(() => {
-            welcomeToast.classList.remove("show");
-            setTimeout(() => welcomeToast.remove(), 500);
-        }, 3000);
-    }, 500);
+            welcomeToast.classList.add("show");
+            setTimeout(() => {
+                welcomeToast.classList.remove("show");
+                setTimeout(() => welcomeToast.remove(), 500);
+            }, 3000);
+        }, 500);
 
-    claimVenoCoinsBtn?.addEventListener("click", claimVenoCoins);
-    updateClaimButton();
+        claimVenoCoinsBtn?.addEventListener("click", claimVenoCoins);
+        updateClaimButton();
 
-    await loadGenres();
-    await loadHomePage();
+        await loadGenres();
+        await loadHomePage();
 
-    renderNotifications();
-    updateNotificationBell();
+        renderNotifications();
+        updateNotificationBell();
+        
+        console.log("✅ Crunk Games loaded successfully");
+    } catch (e) {
+        console.error("Initialization error:", e);
+        showToast("Error initializing app", "error");
+    }
 });
 
 console.log("✅ Crunk Games loaded");
